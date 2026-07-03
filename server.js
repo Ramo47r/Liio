@@ -27,6 +27,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static(__dirname));
+app.use('/assets', express.static(path.join(__dirname, 'assets'))); // <-- HIER WURDE DER ORDNER FREIGEGEBEN
 
 // ── Rate Limit (Spam-Schutz) ───────────────
 const chatLimiter = rateLimit({
