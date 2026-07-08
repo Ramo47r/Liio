@@ -110,9 +110,13 @@ body {
 }
 
 .age-platform {
-  position: absolute; bottom: -50; left: 50%;
-  transform: translateX(-50%); width: 110%;
-  pointer-events: none; z-index: 2;
+  position: absolute; 
+  bottom: -20px; /* HIER ÄNDERN: Minus-Wert = weiter runter, Plus-Wert = weiter hoch */
+  left: 50%;
+  transform: translateX(-50%); 
+  width: 110%;
+  pointer-events: none; 
+  z-index: 2;
   filter: drop-shadow(0 0 30px rgba(0, 200, 255, 0.7));
 }
 .age-platform img { display: block; width: 100%; height: auto; }
