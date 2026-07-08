@@ -164,29 +164,36 @@ body {
 .age-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px; /* Abstand zwischen den Kästen */
+  gap: 12px;
   width: 100%; 
-  max-width: 260px; /* HIER WIRD ES SCHMALER: Vorher 320px. Je kleiner die Zahl, desto schmaler alle Kästen */
-  margin: 0 auto; /* Hält alles perfekt in der Bildschirmmitte */
+  max-width: 320px; /* HIER WIEDER ZURÜCKGESETZT: Breite ist wieder wie vorher */
+  margin: 0 auto;
 }
 
-/* ── MODERNE 3D-KARTEN ── */
+/* ── MODERNE 3D-KARTEN (FLACHER GEMACHT) ── */
 .age-card {
   background: linear-gradient(135deg, var(--c1), var(--c2));
-  border-radius: 24px;
-  padding: 8px 6px;
+  border-radius: 20px; /* Etwas kleinerer Radius, sieht bei flachen Karten besser aus */
+  padding: 4px 6px; /* HIER ÄNDERN: Weniger Polsterung oben/unten macht es flacher (vorher 8px) */
   cursor: pointer;
   display: flex; flex-direction: column;
-  align-items: center; gap: 2px;
+  align-items: center; gap: 1px;
   transition: transform 0.2s;
   color: white; font-weight: 800; font-family: inherit;
-  box-shadow: 0 8px 0 rgba(0,0,0,0.15), 0 15px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 0 rgba(0,0,0,0.15), 0 10px 15px rgba(0,0,0,0.1); /* 3D-Kante flacher gemacht (vorher 8px) */
   border: 2px solid rgba(255,255,255,0.3);
-  min-height: 55px;
+  min-height: 40px; /* HIER ÄNDERN: Mindesthöhe deutlich verringert (vorher 55px) */
 }
+
 .age-card:active { 
-  transform: translateY(6px); 
-  box-shadow: 0 2px 0 rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.1); 
+  transform: translateY(4px); /* An den flacheren 3D-Effekt angepasst */
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1); 
+}
+
+.age-card .age-icon { 
+  font-size: clamp(24px, 6vw, 32px); /* HIER ÄNDERN: Icons etwas verkleinert, damit sie in die flache Box passen */
+  line-height: 1; 
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); 
 }
 .age-card .age-icon { font-size: clamp(32px, 8vw, 40px); line-height: 1; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
 .age-card .age-range { font-size: clamp(15px, 4vw, 18px); font-weight: 900; letter-spacing: 0.5px; }
