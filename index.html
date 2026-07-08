@@ -58,13 +58,16 @@ body {
 .screen.active { display:flex; }
 
 /* ════════════════════════════════════════
-   AGE SELECT SCREEN
+   AGE SELECT SCREEN (Hier sind die Fixes!)
 ═══════════════════════════════════════ */
 #screen-age {
   justify-content: space-between;
   text-align: center;
-  z-index: 1;
+  z-index: 9999; /* Zwingt den Bildschirm ÜBER die Menüleiste */
   padding: 20px 16px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
 }
 
 .age-top { width: 100%; flex-shrink: 0; }
@@ -91,15 +94,15 @@ body {
 .age-scene {
   position: relative;
   width: min(300px, 75vw);
-  height: 100%;
-  max-height: min(380px, 52vh);
+  height: 250px; /* Fester Rahmen, damit nichts an die Decke fliegt */
   display: flex; align-items: center; justify-content: center;
+  margin-top: 20px;
 }
 
 .age-halo {
   position: absolute;
-  top: 38%; left: 50%;
-  width: 90%; height: 70%;
+  top: 50%; left: 50%;
+  width: 100%; height: 100%;
   transform: translate(-50%, -50%);
   background: radial-gradient(ellipse at center,
     rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 70%);
@@ -111,10 +114,10 @@ body {
 
 .age-platform {
   position: absolute; 
-  bottom: -80px; /* HIER ÄNDERN: Minus-Wert = weiter runter, Plus-Wert = weiter hoch */
+  bottom: 0px; /* Sitzt jetzt fest am Boden der Szene */
   left: 50%;
   transform: translateX(-50%); 
-  width: 110%;
+  width: 120%;
   pointer-events: none; 
   z-index: 2;
   filter: drop-shadow(0 0 30px rgba(0, 200, 255, 0.7));
@@ -122,9 +125,12 @@ body {
 .age-platform img { display: block; width: 100%; height: auto; }
 
 .age-robot-wrap {
-  position: absolute; top: -90%; left: 0%;
-  transform: translate(-50%, -50%);
-  width: 86%; z-index: 3;
+  position: absolute; 
+  bottom: 50px; /* HIER KANNST DU LIO HOCH/RUNTER SCHIEBEN */
+  left: 50%; 
+  width: 80%; 
+  z-index: 3;
+  transform: translateX(-50%);
   animation: robotFloat 3.6s ease-in-out infinite;
   filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
 }
@@ -135,7 +141,7 @@ body {
 
 /* ── MODERNE SPRECHBLASE (Milchglas-Effekt) ── */
 .age-bubble {
-  position: absolute; top: 0; left: 50%;
+  position: absolute; top: -40px; left: 50%;
   transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -195,14 +201,14 @@ body {
   50%       { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
 }
 @keyframes robotFloat {
-  /* HIER IST DER FIX FÜR DAS SCHWEBEN (Rutscht nicht mehr nach links weg!) */
-  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-  50%       { transform: translate(-50%, -50%) translateY(-12px); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(-12px); }
 }
 @keyframes robotTalk {
   0%, 100% { filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3)); }
   50%       { filter: drop-shadow(0 12px 40px rgba(0,220,255,.85)); }
 }
+
 /* ════════════════════════════════════════
    MAIN SCREEN — Buddy.ai style
 ═══════════════════════════════════════ */
@@ -313,11 +319,8 @@ body {
   50% { transform: translate(-50%, -50%) translateY(-18px); }
 }
 
-/* animation states moved to main robot-wrap rule */
-
 /* SPEECH BUBBLE - prominent like in Buddy.ai */
 .speech-bubble {
-  /* NOT inside .scene — rendered as flex item below Lio-area */
   background: white;
   color: #1a3050;
   padding: 12px 18px;
@@ -424,7 +427,6 @@ body {
   transform: scale(1.15);
   box-shadow: 0 0 14px rgba(255,216,77,0.9);
 }
-
 /* ════════════════════════════════════════
    BOTTOM ACTION AREA — Big mic + scrollable lesson cards
 ═══════════════════════════════════════ */
