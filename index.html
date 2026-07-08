@@ -164,8 +164,10 @@ body {
 .age-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  width: 100%; max-width: 320px; margin: 0 auto;
+  gap: 12px; /* Abstand zwischen den Kästen */
+  width: 100%; 
+  max-width: 260px; /* HIER WIRD ES SCHMALER: Vorher 320px. Je kleiner die Zahl, desto schmaler alle Kästen */
+  margin: 0 auto; /* Hält alles perfekt in der Bildschirmmitte */
 }
 
 /* ── MODERNE 3D-KARTEN ── */
