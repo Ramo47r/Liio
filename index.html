@@ -171,33 +171,45 @@ body {
 }
 
 /* ── MODERNE 3D-KARTEN (FLACHER GEMACHT) ── */
+/* ── MODERNE 3D-KARTEN (WIRKLICH FLACHER) ── */
 .age-card {
   background: linear-gradient(135deg, var(--c1), var(--c2));
-  border-radius: 20px; /* Etwas kleinerer Radius, sieht bei flachen Karten besser aus */
-  padding: 4px 6px; /* HIER ÄNDERN: Weniger Polsterung oben/unten macht es flacher (vorher 8px) */
+  border-radius: 18px; 
+  padding: 6px 4px; 
   cursor: pointer;
   display: flex; flex-direction: column;
-  align-items: center; gap: 1px;
+  align-items: center; justify-content: center; 
+  gap: 0px; 
   transition: transform 0.2s;
   color: white; font-weight: 800; font-family: inherit;
-  box-shadow: 0 5px 0 rgba(0,0,0,0.15), 0 10px 15px rgba(0,0,0,0.1); /* 3D-Kante flacher gemacht (vorher 8px) */
+  box-shadow: 0 5px 0 rgba(0,0,0,0.15), 0 10px 15px rgba(0,0,0,0.1); 
   border: 2px solid rgba(255,255,255,0.3);
-  min-height: -50px; /* HIER ÄNDERN: Mindesthöhe deutlich verringert (vorher 55px) */
+  height: 70px; 
 }
 
 .age-card:active { 
-  transform: translateY(4px); /* An den flacheren 3D-Effekt angepasst */
+  transform: translateY(4px); 
   box-shadow: 0 1px 0 rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1); 
 }
 
 .age-card .age-icon { 
-  font-size: clamp(24px, 6vw, 32px); /* HIER ÄNDERN: Icons etwas verkleinert, damit sie in die flache Box passen */
+  font-size: clamp(20px, 5vw, 24px); 
   line-height: 1; 
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); 
+  margin-bottom: 2px;
 }
-.age-card .age-icon { font-size: clamp(32px, 8vw, 40px); line-height: 1; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
-.age-card .age-range { font-size: clamp(15px, 4vw, 18px); font-weight: 900; letter-spacing: 0.5px; }
-.age-card .age-desc { font-size: clamp(10px, 2.5vw, 12px); font-weight: 600; opacity: 0.95; line-height: 1.1; }
+.age-card .age-range { 
+  font-size: clamp(12px, 3.5vw, 15px); 
+  font-weight: 900; 
+  letter-spacing: 0.5px; 
+  line-height: 1.1; 
+}
+.age-card .age-desc { 
+  font-size: clamp(9px, 2.5vw, 11px); 
+  font-weight: 600; 
+  opacity: 0.95; 
+  line-height: 1; 
+}
 
 /* Frische Farben für die Karten */
 .age-1 { --c1: #ff7eb3; --c2: #ff477e; }
