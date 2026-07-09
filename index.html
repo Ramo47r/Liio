@@ -94,27 +94,14 @@ body {
 .age-scene {
   position: relative;
   width: min(300px, 75vw);
-  height: 250px; /* Fester Rahmen, damit nichts an die Decke fliegt */
+  aspect-ratio: 1.2 / 1; /* HIER DER TRICK: Die Box schrumpft jetzt auf dem Handy proportional mit! */
   display: flex; align-items: center; justify-content: center;
   margin-top: 20px;
 }
 
-.age-halo {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 100%; height: 100%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at center,
-    rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 70%);
-  pointer-events: none;
-  border-radius: 50%;
-  animation: haloPulse 4s ease-in-out infinite;
-  z-index: 1;
-}
-
 .age-platform {
   position: absolute; 
-  bottom: -180px; /* Sitzt jetzt fest am Boden der Szene */
+  bottom: 0%; /* % statt px */
   left: 50%;
   transform: translateX(-50%); 
   width: 120%;
@@ -126,8 +113,8 @@ body {
 
 .age-robot-wrap {
   position: absolute; 
-  bottom: 50px; /* HIER KANNST DU LIO HOCH/RUNTER SCHIEBEN */
-  left: 80%; 
+  bottom: 20%; /* GUMMIBAND-ABSTAND: 20% wächst und schrumpft jetzt perfekt mit dem Gerät mit! */
+  left: 50%; 
   width: 80%; 
   z-index: 3;
   transform: translateX(-50%);
