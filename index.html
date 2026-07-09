@@ -121,7 +121,12 @@ body {
   animation: robotFloat 3.6s ease-in-out infinite;
   filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
 }
-.age-robot-wrap img { display: block; width: 100%; height: auto; }
+.age-robot-wrap img { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+  transform: translateX(-15px); /* HIER STEUERST DU LIO! */
+}
 .age-robot-wrap.talking {
   animation: robotFloat 3.6s ease-in-out infinite, robotTalk 0.4s ease-in-out infinite;
 }
