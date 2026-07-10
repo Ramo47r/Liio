@@ -275,14 +275,53 @@ body {
   padding: 0 16px;
 }
 
-.scene {
-  position: relative;
-  width: min(380px, 88vw);
-  height: 100%;
-  max-height: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.platform {
+  position: absolute; 
+  bottom: 0%; /* Prozent statt Pixel */
+  left: 50%;
+  transform: translateX(-50%); 
+  width: 120%;
+  pointer-events: none; 
+  z-index: 2;
+  filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.3));
+}
+.platform img { display: block; width: 100%; height: auto; }
+
+@keyframes platform-glow {
+  0%, 100% { filter: drop-shadow(0 0 50px rgba(0, 220, 255, 0.8)) drop-shadow(0 0 80px rgba(0, 150, 255, 0.5)); }
+  50% { filter: drop-shadow(0 0 70px rgba(0, 220, 255, 1)) drop-shadow(0 0 100px rgba(0, 150, 255, 0.7)); }
+}
+
+/* LIO SAUBER PLATZIEREN */
+.robot-wrap {
+  position: absolute;
+  bottom: 25%; /* ELASTISCHER ABSTAND ZUR PLATTFORM (hier kannst du Lio hoch/runter schieben) */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 86%; 
+  z-index: 3;
+  animation: LioFloat 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+  will-change: transform;
+}
+.robot-wrap img { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+  /* transform: translateX(-15px); <--- WENN DU IHN WIEDER OPTISCH NACH LINKS/RECHTS KORRIGIEREN WILLST! */
+}
+
+/* Mood / state animations (Bleiben wie sie sind) */
+.robot-wrap.talking   { animation: LioTalk   1.1s  ease-in-out infinite; }
+.robot-wrap.listening { animation: LioListen 2.5s  ease-in-out infinite; }
+.robot-wrap.excited   { animation: LioJoy    1.6s  ease-in-out infinite; }
+.robot-wrap.sad       { animation: LioSad    3.0s  ease-in-out infinite; }
+.robot-wrap.tired     { animation: LioTired  4.0s  ease-in-out infinite; }
+
+/* ANIMATION ANGEPASST (sonst reißt sie Lio wieder an die Decke) */
+@keyframes LioFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0px); }
+  50% { transform: translateX(-50%) translateY(-18px); }
 }
 
 .halo {
