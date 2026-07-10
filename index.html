@@ -275,53 +275,15 @@ body {
   padding: 0 16px;
 }
 
-.platform {
-  position: absolute; 
-  bottom: 0%; /* Prozent statt Pixel */
-  left: 50%;
-  transform: translateX(-50%); 
-  width: 120%;
-  pointer-events: none; 
-  z-index: 2;
-  filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.3));
-}
-.platform img { display: block; width: 100%; height: auto; }
-
-@keyframes platform-glow {
-  0%, 100% { filter: drop-shadow(0 0 50px rgba(0, 220, 255, 0.8)) drop-shadow(0 0 80px rgba(0, 150, 255, 0.5)); }
-  50% { filter: drop-shadow(0 0 70px rgba(0, 220, 255, 1)) drop-shadow(0 0 100px rgba(0, 150, 255, 0.7)); }
-}
-
-/* LIO SAUBER PLATZIEREN */
-.robot-wrap {
-  position: absolute;
-  bottom: 25%; /* ELASTISCHER ABSTAND ZUR PLATTFORM (hier kannst du Lio hoch/runter schieben) */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 86%; 
-  z-index: 3;
-  animation: LioFloat 3.6s ease-in-out infinite;
-  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
-  will-change: transform;
-}
-.robot-wrap img { 
-  display: block; 
-  width: 100%; 
-  height: auto; 
-  /* transform: translateX(-15px); <--- WENN DU IHN WIEDER OPTISCH NACH LINKS/RECHTS KORRIGIEREN WILLST! */
-}
-
-/* Mood / state animations (Bleiben wie sie sind) */
-.robot-wrap.talking   { animation: LioTalk   1.1s  ease-in-out infinite; }
-.robot-wrap.listening { animation: LioListen 2.5s  ease-in-out infinite; }
-.robot-wrap.excited   { animation: LioJoy    1.6s  ease-in-out infinite; }
-.robot-wrap.sad       { animation: LioSad    3.0s  ease-in-out infinite; }
-.robot-wrap.tired     { animation: LioTired  4.0s  ease-in-out infinite; }
-
-/* ANIMATION ANGEPASST (sonst reißt sie Lio wieder an die Decke) */
-@keyframes LioFloat {
-  0%, 100% { transform: translateX(-50%) translateY(0px); }
-  50% { transform: translateX(-50%) translateY(-18px); }
+/* 1. Szene bekommt die perfekten Gummiband-Maße vom Startbildschirm */
+.scene {
+  position: relative;
+  width: min(350px, 85vw);
+  aspect-ratio: 1.1 / 1; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 .halo {
@@ -341,10 +303,15 @@ body {
 .halo.tired   { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05) 40%, transparent 70%); }
 .halo.excited { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.15) 40%, transparent 70%); }
 
+/* 2. Plattform ist am Boden verankert */
 .platform {
-  position: absolute; bottom: 0; left: 50%;
-  transform: translateX(-50%); width: 120%;
-  pointer-events: none; z-index: 2;
+  position: absolute; 
+  bottom: 5%; 
+  left: 50%;
+  transform: translateX(-50%); 
+  width: 110%;
+  pointer-events: none; 
+  z-index: 2;
   filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.3));
 }
 .platform img { display: block; width: 100%; height: auto; }
@@ -354,26 +321,50 @@ body {
   50% { filter: drop-shadow(0 0 70px rgba(0, 220, 255, 1)) drop-shadow(0 0 100px rgba(0, 150, 255, 0.7)); }
 }
 
+/* 3. Lio schwebt über der Plattform */
 .robot-wrap {
-  position: absolute;
-  top: calc(-10% - 8% + 40%); left: calc(25% + 12%);
-  transform: translate(-50%, -50%);
-  width: 86%; z-index: 3;
-  animation: LioFloat 3.6s ease-in-out infinite;
+  position: absolute; 
+  bottom: 25%; /* HIER STELLST DU DIE HÖHE EIN */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 75%; 
+  z-index: 3;
   filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
   will-change: transform;
+  animation: LioFloat 3.6s ease-in-out infinite;
 }
 .robot-wrap img { display: block; width: 100%; height: auto; }
-/* Mood / state animations */
-.robot-wrap.talking   { animation: LioTalk   1.1s  ease-in-out infinite; }
-.robot-wrap.listening { animation: LioListen 2.5s  ease-in-out infinite; }
-.robot-wrap.excited   { animation: LioJoy    1.6s  ease-in-out infinite; }
-.robot-wrap.sad       { animation: LioSad    3.0s  ease-in-out infinite; }
-.robot-wrap.tired     { animation: LioTired  4.0s  ease-in-out infinite; }
+
+/* 4. Die alten Animationen zwingend an den neuen Platz ketten! */
+.robot-wrap.talking   { animation: LioTalk 1.1s ease-in-out infinite; }
+.robot-wrap.listening { animation: LioListen 2.5s ease-in-out infinite; }
+.robot-wrap.excited   { animation: LioJoy 1.6s ease-in-out infinite; }
+.robot-wrap.sad       { animation: LioSad 3.0s ease-in-out infinite; }
+.robot-wrap.tired     { animation: LioTired 4.0s ease-in-out infinite; }
 
 @keyframes LioFloat {
-  0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
-  50% { transform: translate(-50%, -50%) translateY(-18px); }
+  0%, 100% { transform: translateX(-50%) translateY(0px); }
+  50% { transform: translateX(-50%) translateY(-15px); }
+}
+@keyframes LioTalk {
+  0%, 100% { transform: translateX(-50%) translateY(-5px); }
+  50% { transform: translateX(-50%) translateY(-15px); }
+}
+@keyframes LioListen {
+  0%, 100% { transform: translateX(-50%) translateY(0px) scale(1); }
+  50% { transform: translateX(-50%) translateY(-5px) scale(1.02); }
+}
+@keyframes LioJoy {
+  0%, 100% { transform: translateX(-50%) translateY(0px); }
+  50% { transform: translateX(-50%) translateY(-25px); }
+}
+@keyframes LioSad {
+  0%, 100% { transform: translateX(-50%) translateY(10px); }
+  50% { transform: translateX(-50%) translateY(15px); }
+}
+@keyframes LioTired {
+  0%, 100% { transform: translateX(-50%) translateY(5px); }
+  50% { transform: translateX(-50%) translateY(10px); }
 }
 
 /* SPEECH BUBBLE - prominent like in Buddy.ai */
