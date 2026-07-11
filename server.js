@@ -1,10 +1,10 @@
 // ============================================================
-// Lio Backend — Google Gemini (Chat) & ElevenLabs (Premium Stimme)
+// Robi Backend — sauber, robust, mit korrektem Modell & Sprache
 // ============================================================
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { GoogleGenAI } from '@google/genai';
+import Anthropic from '@anthropic-ai/sdk';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
@@ -12,130 +12,204 @@ import 'dotenv/config';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 const app  = express();
+const PORT = process.env.PORT || 3000;
 
-// Port nur ein einziges Mal definieren
-const PORT = process.env.PORT || 10000; 
-
-// ── API Key Checks ─────────────────────────────────────────
-if (!process.env.GEMINI_API_KEY || !process.env.ELEVENLABS_API_KEY) {
-  console.error('\n❌ FEHLER: GEMINI_API_KEY oder ELEVENLABS_API_KEY fehlt in Render!');
+// ── API Key check ──────────────────────────────────────────
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('\n❌  ANTHROPIC_API_KEY fehlt!');
+  console.error('    .env anlegen: ANTHROPIC_API_KEY=sk-ant-...\n');
+  process.exit(1);
 }
 
-// ── Initialisierung der KI (Nur noch Gemini) ────────────────
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+if (!process.env.ELEVENLABS_API_KEY) {
+  console.error('\n❌  ELEVENLABS_API_KEY fehlt!');
+  console.error('    Bitte in der .env hinterlegen (für die Sprachausgabe).\n');
+  process.exit(1);
+}
 
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// ── Middleware ─────────────────────────────────────────────
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
-app.use(express.static(__dirname));
-app.use('/assets', express.static(path.join(__dirname, 'assets'))); // <-- HIER WURDE DER ORDNER FREIGEGEBEN
 
-// ── Rate Limit (Spam-Schutz) ───────────────
+// ── Static frontend ────────────────────────────────────────
+const frontendPath = path.resolve(__dirname, '../frontend');
+app.use(express.static(frontendPath, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('sw.js'))       res.setHeader('Cache-Control', 'no-cache');
+    if (filePath.endsWith('manifest.json')) res.setHeader('Cache-Control', 'no-cache');
+    if (filePath.endsWith('.html'))        res.setHeader('Cache-Control', 'no-cache');
+  }
+}));
+
+// HTTPS redirect (Render / Railway only)
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production'
+      && req.headers['x-forwarded-proto'] === 'http'
+      && !req.headers.host?.includes('localhost')) {
+    return res.redirect(301, 'https://' + req.headers.host + req.url);
+  }
+  next();
+});
+
+// ── Rate limit ─────────────────────────────────────────────
 const chatLimiter = rateLimit({
-  windowMs: 60_000, 
-  max: 45, 
+  windowMs: 60_000, max: 30,
+  standardHeaders: true, legacyHeaders: false,
   message: { error: 'Zu viele Anfragen — kurz warten!' },
 });
 
 // ── Prompts ────────────────────────────────────────────────
-// 💡 HIER HABEN WIR DEN NAMEN GEÄNDERT!
-const BASE_PROMPT = `Du bist Lio, ein freundlicher Roboter-Freund für Kinder (Deutsch).
+const BASE = `Du bist Robi, ein freundlicher Roboter-Freund für Kinder (Deutsch).
 Persönlichkeit: warmherzig, geduldig, ermutigend, neugierig, spielerisch.
 Sicherheitsregeln: KEIN Gewalt/Sex/Drogen. Bei ernsten Themen sanft auf Eltern hinweisen.
-Stil: kein Markdown, natürlicher Text (wird vorgelesen), Folgefrage stellen.`;
+Stil: kein Markdown, natürlicher Text (wird vorgelesen), gerne Emojis, Folgefrage stellen.`;
 
-const AGE_PROMPTS = {
-  '1-3':  `Alter 1-3 (Kleinkind): Sehr kurze Sätze (3-5 Wörter).`,
-  '4-6':  `Alter 4-6 (Kita): Kurze klare Sätze. Fantasie/Magie.`,
-  '7-9':  `Alter 7-9 (Grundschule): Normale Satzlänge. Spannende Fakten.`,
-  '10-12':`Alter 10-12 (Pre-Teen): Auf Augenhöhe. Humor okay.`
+const AGE = {
+  '1-3':  `Alter 1-3 (Kleinkind): Sehr kurze Sätze (3-5 Wörter). Tier-Geräusche. Verniedlichungen. Wiederholungen okay.`,
+  '4-6':  `Alter 4-6 (Kita): Kurze klare Sätze. Fantasie/Magie. Einfache Erklärungen mit Beispielen.`,
+  '7-9':  `Alter 7-9 (Grundschule): Normale Satzlänge. Spannende Fakten. Leichte Witze. Abenteuer.`,
+  '10-12':`Alter 10-12 (Pre-Teen): Auf Augenhöhe. Humor okay. Wissenschaft/Pop-Kultur. Kein Baby-Ton.`,
 };
 
-// ── /api/chat (Text-Generierung via Google Gemini) ─────────
+const MODE = {
+  talk:     `Modus: Frei reden — sei ein guter Freund, beantworte alles kindgerecht, stelle Folgefragen.`,
+  homework: `Modus: Hausaufgaben — erkläre Schritt für Schritt, verrate NIE einfach die Antwort, frage was das Kind schon weiß.`,
+  stories:  `Modus: Geschichten — erfinde eine kurze spannende Geschichte zum genannten Thema. Klarer Anfang/Mitte/Ende.`,
+  learn:    `Modus: Lernen/Quiz — mache es spielerisch, lobe richtige Antworten, erkläre kurz und spannend.`,
+  jokes:    `Modus: Witze & Rätsel — kindgerechter Humor, gib Tipps bei Rätseln, lache mit.`,
+  creative: `Modus: Kreativ — erfinde zusammen mit dem Kind, sei Sidekick nicht Lehrer, ermutige stark.`,
+  guess:    `Modus: Ratespiel — denke dir etwas aus, gib Hinweise, lobe alle Versuche.`,
+  iSpy:     `Modus: Ich sehe was — erfinde eine Szene, lass das Kind raten, gib Hinweise.`,
+  wouldYou: `Modus: Würdest du eher? — stelle eine Frage mit 2 Optionen, frage nach dem Warum.`,
+};
+
+const MOOD = {
+  happy:   `Stimmung: GLÜCKLICH — teile die Freude, sei energetisch.`,
+  sad:     `Stimmung: TRAURIG — sei sanft, einfühlsam, höre zuerst zu. Bei ernsten Themen: Eltern erwähnen.`,
+  angry:   `Stimmung: WÜTEND — nimm Wut ernst, höre zu, bleibe neutral.`,
+  scared:  `Stimmung: ÄNGSTLICH — besonders warm, beruhige, kurze Sätze.`,
+  tired:   `Stimmung: MÜDE — langsam, leise, kurze Antworten, ruhige Geschichten anbieten.`,
+  excited: `Stimmung: AUFGEREGT — teile die Energie, viele Folgefragen!`,
+};
+
+function buildPrompt(age, mode, mood) {
+  return [
+    BASE,
+    AGE[age]  || AGE['7-9'],
+    MODE[mode] || MODE['talk'],
+    mood && MOOD[mood] ? MOOD[mood] : '',
+  ].filter(Boolean).join('\n\n');
+}
+
+// ── /api/health ────────────────────────────────────────────
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, model: 'claude-sonnet-4-6', ts: new Date().toISOString() });
+});
+
+// ── /api/chat ──────────────────────────────────────────────
 app.post('/api/chat', chatLimiter, async (req, res) => {
   try {
-    const { messages, age, mode, childName, emotion } = req.body;
-    if (!messages || messages.length === 0) return res.status(400).json({ error: 'Keine Nachrichten.' });
+    const { messages, mood, mode, age } = req.body;
 
-    const safeAge = ['1-3','4-6','7-9','10-12'].includes(age) ? age : '7-9';
-    
-    const nameToUse = childName ? childName : "mein kleiner Freund";
-    const currentEmotion = emotion ? emotion : "normal";
-    const currentMode = mode ? mode : "talk";
+    // Validate
+    if (!Array.isArray(messages) || messages.length === 0)
+      return res.status(400).json({ error: 'Keine Nachrichten.' });
+    if (messages.length > 20)
+      return res.status(400).json({ error: 'Zu viele Nachrichten.' });
 
-    const memoryPrompt = `\nWICHTIGE INFOS ÜBER DEIN GEGENÜBER:
-- Name des Kindes: ${nameToUse}
-- Aktuelle Emotion: ${currentEmotion}
-- Aktueller Modus der App: ${currentMode}
-
-REGELN FÜR DIESE ANTWORT:
-Bitte sprich das Kind ab und zu mit seinem Namen "${nameToUse}" an, damit sich das Gespräch persönlich anfühlt. Berücksichtige außerdem, dass sich das Kind gerade "${currentEmotion}" fühlt und reagiere passend und einfühlsam darauf.`;
-
-    const systemInstruction = `${BASE_PROMPT}\n\n${AGE_PROMPTS[safeAge]}\n${memoryPrompt}`;
-
-    const chatContents = messages.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: chatContents,
-      config: { systemInstruction: systemInstruction, temperature: 0.7 }
-    });
-
-    res.json({ reply: response.text?.trim() || 'Hmm, da hat meine Schaltung gewackelt.' });
-  } catch (err) {
-    console.error('[Gemini Fehler]:', err);
-    res.status(500).json({ error: 'Verbindungsfehler' });
-  }
-});
-
-// ── /api/speech (Audio-Generierung via ElevenLabs) ─────────
-app.post('/api/speech', async (req, res) => {
-  try {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: "Kein Text gesendet" });
-
-    const apiKey = process.env.ELEVENLABS_API_KEY; 
-    
-    const voiceId = 'JBFqnCBsd6RMkjVDRZzb'; 
-
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: text,
-        model_id: "eleven_multilingual_v2", 
-        voice_settings: {
-          stability: 0.45, 
-          similarity_boost: 0.75
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error("Fehler bei ElevenLabs API");
+    for (const m of messages) {
+      if (!m || typeof m.content !== 'string' || !m.content.trim())
+        return res.status(400).json({ error: 'Ungültige Nachricht.' });
+      if (!['user','assistant'].includes(m.role))
+        return res.status(400).json({ error: `Ungültige Rolle: ${m.role}` });
+      if (m.content.length > 500)
+        return res.status(400).json({ error: 'Nachricht zu lang (max 500 Zeichen).' });
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    res.set({ 'Content-Type': 'audio/mpeg' });
-    res.send(Buffer.from(arrayBuffer));
+    const safeAge  = ['1-3','4-6','7-9','10-12'].includes(age)  ? age  : '7-9';
+    const safeMode = Object.keys(MODE).includes(mode)           ? mode : 'talk';
+    const safeMood = Object.keys(MOOD).includes(mood)           ? mood : null;
 
-  } catch (error) {
-    console.error("Audio-Server Fehler:", error);
-    res.status(500).json({ error: "Konnte Audio nicht generieren" });
+    const maxTokens = safeAge === '1-3' ? 120
+                    : safeAge === '4-6' ? 220
+                    : safeMode === 'stories' ? 600
+                    : safeAge === '10-12' ? 480 : 380;
+
+    console.log(`[chat] age=${safeAge} mode=${safeMode} mood=${safeMood||'-'} msgs=${messages.length}`);
+
+    const response = await anthropic.messages.create({
+      model:      'claude-sonnet-4-6', // Info: Falls du hier Fehler bekommst, prüfe ob das exakte Modellkürzel bei Anthropic stimmt.
+      max_tokens: maxTokens,
+      system:     buildPrompt(safeAge, safeMode, safeMood),
+      messages,
+    });
+
+    const reply = response.content[0]?.text?.trim() || 'Hmm, da fällt mir nichts ein!';
+    console.log(`[reply] "${reply.slice(0,60)}"`);
+
+    res.json({ reply });
+
+  } catch (err) {
+    console.error('[error]', err.status || '', err.message);
+    const msg =
+      err.status === 401 ? 'API-Key ungültig. Bitte prüfen!' :
+      err.status === 404 ? 'Modell nicht gefunden. Server updaten!' :
+      err.status === 429 ? 'Zu viele Anfragen. Kurz warten!' :
+      err.status === 529 ? 'Anthropic überlastet. Gleich nochmal!' :
+      'Robi schläft kurz — bitte nochmal versuchen!';
+    res.status(500).json({ error: msg });
   }
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// ── /api/speak (ElevenLabs - Jorin) ────────────────────────
+app.post('/api/speak', async (req, res) => {
+  const { text } = req.body;
+  const voiceId = '21m00Tcm4TlvDq8ikWAM'; // Jorins Voice-ID
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+
+  if (!text) return res.status(400).json({ error: 'Kein Text empfangen.' });
+
+  try {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: 'POST',
+          headers: {
+              'xi-api-key': apiKey,
+              'Content-Type': 'application/json',
+              'Accept': 'audio/mpeg'
+          },
+          body: JSON.stringify({
+              text: text,
+              model_id: 'eleven_multilingual_v2', // Das flüssige DACH-Modell
+              voice_settings: {
+                  stability: 0.5,
+                  similarity_boost: 0.75
+              }
+          })
+      });
+
+      if (!response.ok) {
+          throw new Error('Fehler bei ElevenLabs. Ist der API-Key korrekt?');
+      }
+
+      const audioBuffer = await response.arrayBuffer();
+      res.set('Content-Type', 'audio/mpeg');
+      res.send(Buffer.from(audioBuffer));
+
+  } catch (error) {
+      console.error('Sprach-Fehler:', error);
+      res.status(500).json({ error: 'Robi hat gerade einen Frosch im Hals.' });
+  }
 });
 
-// ── Server Start ───────────────────────────────────────
+// ── SPA fallback ───────────────────────────────────────────
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+// Server auf 0.0.0.0 starten (für Render wichtig!)
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🤖 Lio Server ist wach und lauscht auf Port ${PORT}\n`);
+  console.log(`\n🤖  Robi läuft auf http://localhost:${PORT}`);
+  console.log(`    Health: http://localhost:${PORT}/api/health\n`);
 });
