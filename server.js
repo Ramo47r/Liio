@@ -33,7 +33,7 @@ app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
 
 // ── Static frontend ────────────────────────────────────────
-const frontendPath = path.resolve(__dirname, '../frontend');
+const frontendPath = __dirname;
 app.use(express.static(frontendPath, {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('sw.js'))       res.setHeader('Cache-Control', 'no-cache');
