@@ -1,10 +1,10 @@
 // ============================================================
-// Robi Backend — sauber, robust, mit korrektem Modell & Sprache
+// Robi Backend — Gemini als Gehirn & ElevenLabs als Stimme
 // ============================================================
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
@@ -15,19 +15,18 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ── API Key check ──────────────────────────────────────────
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error('\n❌  ANTHROPIC_API_KEY fehlt!');
-  console.error('    .env anlegen: ANTHROPIC_API_KEY=sk-ant-...\n');
+if (!process.env.GEMINI_API_KEY) {
+  console.error('\n❌  GEMINI_API_KEY fehlt!');
   process.exit(1);
 }
 
 if (!process.env.ELEVENLABS_API_KEY) {
-  console.error('\n❌  ELEVENLABS_API_KEY fehlt!');
-  console.error('    Bitte in der .env hinterlegen (für die Sprachausgabe).\n');
+  console.error('\n❌  ELEVENLABS_API_KEY fehlt! (für Sprachausgabe)\n');
   process.exit(1);
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Initialisiere die neue Gemini API
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ── Middleware ─────────────────────────────────────────────
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
@@ -43,7 +42,7 @@ app.use(express.static(frontendPath, {
   }
 }));
 
-// HTTPS redirect (Render / Railway only)
+// HTTPS redirect (Render)
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'production'
       && req.headers['x-forwarded-proto'] === 'http'
@@ -56,7 +55,6 @@ app.use((req, res, next) => {
 // ── Rate limit ─────────────────────────────────────────────
 const chatLimiter = rateLimit({
   windowMs: 60_000, max: 30,
-  standardHeaders: true, legacyHeaders: false,
   message: { error: 'Zu viele Anfragen — kurz warten!' },
 });
 
@@ -76,22 +74,12 @@ const AGE = {
 const MODE = {
   talk:     `Modus: Frei reden — sei ein guter Freund, beantworte alles kindgerecht, stelle Folgefragen.`,
   homework: `Modus: Hausaufgaben — erkläre Schritt für Schritt, verrate NIE einfach die Antwort, frage was das Kind schon weiß.`,
-  stories:  `Modus: Geschichten — erfinde eine kurze spannende Geschichte zum genannten Thema. Klarer Anfang/Mitte/Ende.`,
-  learn:    `Modus: Lernen/Quiz — mache es spielerisch, lobe richtige Antworten, erkläre kurz und spannend.`,
-  jokes:    `Modus: Witze & Rätsel — kindgerechter Humor, gib Tipps bei Rätseln, lache mit.`,
-  creative: `Modus: Kreativ — erfinde zusammen mit dem Kind, sei Sidekick nicht Lehrer, ermutige stark.`,
-  guess:    `Modus: Ratespiel — denke dir etwas aus, gib Hinweise, lobe alle Versuche.`,
-  iSpy:     `Modus: Ich sehe was — erfinde eine Szene, lass das Kind raten, gib Hinweise.`,
-  wouldYou: `Modus: Würdest du eher? — stelle eine Frage mit 2 Optionen, frage nach dem Warum.`,
+  stories:  `Modus: Geschichten — erfinde eine kurze spannende Geschichte zum genannten Thema.`,
 };
 
 const MOOD = {
   happy:   `Stimmung: GLÜCKLICH — teile die Freude, sei energetisch.`,
-  sad:     `Stimmung: TRAURIG — sei sanft, einfühlsam, höre zuerst zu. Bei ernsten Themen: Eltern erwähnen.`,
-  angry:   `Stimmung: WÜTEND — nimm Wut ernst, höre zu, bleibe neutral.`,
-  scared:  `Stimmung: ÄNGSTLICH — besonders warm, beruhige, kurze Sätze.`,
-  tired:   `Stimmung: MÜDE — langsam, leise, kurze Antworten, ruhige Geschichten anbieten.`,
-  excited: `Stimmung: AUFGEREGT — teile die Energie, viele Folgefragen!`,
+  sad:     `Stimmung: TRAURIG — sei sanft, einfühlsam, höre zuerst zu.`,
 };
 
 function buildPrompt(age, mode, mood) {
@@ -103,63 +91,42 @@ function buildPrompt(age, mode, mood) {
   ].filter(Boolean).join('\n\n');
 }
 
-// ── /api/health ────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-  res.json({ ok: true, model: 'claude-sonnet-4-6', ts: new Date().toISOString() });
-});
-
-// ── /api/chat ──────────────────────────────────────────────
+// ── /api/chat (Gemini) ──────────────────────────────────────
 app.post('/api/chat', chatLimiter, async (req, res) => {
   try {
     const { messages, mood, mode, age } = req.body;
 
-    // Validate
     if (!Array.isArray(messages) || messages.length === 0)
       return res.status(400).json({ error: 'Keine Nachrichten.' });
-    if (messages.length > 20)
-      return res.status(400).json({ error: 'Zu viele Nachrichten.' });
-
-    for (const m of messages) {
-      if (!m || typeof m.content !== 'string' || !m.content.trim())
-        return res.status(400).json({ error: 'Ungültige Nachricht.' });
-      if (!['user','assistant'].includes(m.role))
-        return res.status(400).json({ error: `Ungültige Rolle: ${m.role}` });
-      if (m.content.length > 500)
-        return res.status(400).json({ error: 'Nachricht zu lang (max 500 Zeichen).' });
-    }
 
     const safeAge  = ['1-3','4-6','7-9','10-12'].includes(age)  ? age  : '7-9';
     const safeMode = Object.keys(MODE).includes(mode)           ? mode : 'talk';
     const safeMood = Object.keys(MOOD).includes(mood)           ? mood : null;
 
-    const maxTokens = safeAge === '1-3' ? 120
-                    : safeAge === '4-6' ? 220
-                    : safeMode === 'stories' ? 600
-                    : safeAge === '10-12' ? 480 : 380;
+    const maxTokens = safeAge === '1-3' ? 120 : safeAge === '4-6' ? 220 : 400;
+    const systemInstruction = buildPrompt(safeAge, safeMode, safeMood);
 
-    console.log(`[chat] age=${safeAge} mode=${safeMode} mood=${safeMood||'-'} msgs=${messages.length}`);
+    // Gemini braucht die Rollen "user" und "model" (statt assistant)
+    const geminiMessages = messages.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }]
+    }));
 
-    const response = await anthropic.messages.create({
-      model:      'claude-sonnet-4-6', // Info: Falls du hier Fehler bekommst, prüfe ob das exakte Modellkürzel bei Anthropic stimmt.
-      max_tokens: maxTokens,
-      system:     buildPrompt(safeAge, safeMode, safeMood),
-      messages,
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: geminiMessages,
+      config: {
+        systemInstruction: systemInstruction,
+        maxOutputTokens: maxTokens,
+      }
     });
 
-    const reply = response.content[0]?.text?.trim() || 'Hmm, da fällt mir nichts ein!';
-    console.log(`[reply] "${reply.slice(0,60)}"`);
-
+    const reply = response.text || 'Hmm, da fällt mir nichts ein!';
     res.json({ reply });
 
   } catch (err) {
-    console.error('[error]', err.status || '', err.message);
-    const msg =
-      err.status === 401 ? 'API-Key ungültig. Bitte prüfen!' :
-      err.status === 404 ? 'Modell nicht gefunden. Server updaten!' :
-      err.status === 429 ? 'Zu viele Anfragen. Kurz warten!' :
-      err.status === 529 ? 'Anthropic überlastet. Gleich nochmal!' :
-      'Robi schläft kurz — bitte nochmal versuchen!';
-    res.status(500).json({ error: msg });
+    console.error('[error]', err);
+    res.status(500).json({ error: 'Robi schläft kurz — bitte nochmal versuchen!' });
   }
 });
 
@@ -181,17 +148,12 @@ app.post('/api/speak', async (req, res) => {
           },
           body: JSON.stringify({
               text: text,
-              model_id: 'eleven_multilingual_v2', // Das flüssige DACH-Modell
-              voice_settings: {
-                  stability: 0.5,
-                  similarity_boost: 0.75
-              }
+              model_id: 'eleven_multilingual_v2', 
+              voice_settings: { stability: 0.5, similarity_boost: 0.75 }
           })
       });
 
-      if (!response.ok) {
-          throw new Error('Fehler bei ElevenLabs. Ist der API-Key korrekt?');
-      }
+      if (!response.ok) throw new Error('Fehler bei ElevenLabs.');
 
       const audioBuffer = await response.arrayBuffer();
       res.set('Content-Type', 'audio/mpeg');
@@ -208,8 +170,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// Server auf 0.0.0.0 starten (für Render wichtig!)
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🤖  Robi läuft auf http://localhost:${PORT}`);
-  console.log(`    Health: http://localhost:${PORT}/api/health\n`);
+  console.log(`\n🤖  Robi (Gemini-Edition) läuft auf Port ${PORT}\n`);
 });
