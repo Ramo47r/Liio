@@ -1548,7 +1548,7 @@ function initMain(customText = null) {
   
   setBubble(welcome);
   lastLioText = welcome;
-  setTimeout(() => speakLiam(welcome), 200);
+  setTimeout(() => speakJorin(welcome), 200);
 }
 
 function renderLessonCards() {
@@ -1591,7 +1591,7 @@ function switchMode(mode) {
   renderLessonCards();
   setBubble(welcome);
   lastLioText = welcome;
-  speakLiam(welcome);
+  speakJorin(welcome);
 
   document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
   const activeBtn = document.getElementById('m-' + mode);
@@ -1713,7 +1713,7 @@ function awardStar() {
 }
 
 function repeatLast() {
-  if (lastLioText) speakLiam(lastLioText);
+  if (lastLioText) speakJorin(lastLioText);
 }
 
 // ════════════════════════════════════════
@@ -1744,7 +1744,7 @@ function reactToMood(mood) {
     excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
   };
   const text = reactions[mood];
-  if (text) { setBubble(text); lastLioText = text; speakLiam(text); }
+  if (text) { setBubble(text); lastLioText = text; speakJorin(text); }
 
   const robot = document.getElementById('robot');
   if (!robot) return;
@@ -1850,7 +1850,7 @@ function onPitchChange() {
   speechPitch = parseFloat(document.getElementById('pitchSlider').value);
   document.getElementById('pitchVal').textContent = speechPitch.toFixed(2);
 }
-function testVoice() { speakLiam('Hallo! Ich bin Lio, dein Roboter-Freund!'); }
+function testVoice() { speakJorin('Hallo! Ich bin Lio, dein Roboter-Freund!'); }
 
 
 let availableVoices = [];
@@ -2150,7 +2150,7 @@ async function sendMessage(userText) {
     lastLioText = reply;
     setHint('Drück das Mikro und sprich!');
     
-    await speakLiam(reply);
+    await speakJorin(reply);
     if (typeof awardStar === 'function') {
       awardStar();
     }
@@ -2316,5 +2316,3 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 window.addEventListener('unhandledrejection', event => {
   console.error('[Unhandled Promise]', event.reason);
 });
-
-</script>
