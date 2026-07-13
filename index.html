@@ -1532,7 +1532,22 @@ function speakOnAge(text, onDone) {
 // ════════════════════════════════════════
 // MAIN SCREEN INIT
 // ════════════════════════════════════════
-function initMain(customText = null) {
+function selectAge(age) {
+  currentAge = age;
+  localStorage.setItem('Lio_age', age);
+
+  // Altersspezifische Sprach-Einstellungen laden, falls vorhanden
+  if (typeof AGE_GROUPS !== 'undefined' && AGE_GROUPS[age]) {
+    speechRate = AGE_GROUPS[age].rate || 0.95;
+    speechPitch = AGE_GROUPS[age].pitch || 1.0;
+  }
+
+  // Zum Hauptbildschirm wechseln und Chat starten
+  showScreen('main');
+  initMain();
+}
+  
+  function initMain(customText = null) {
   if (!messages) messages = [];
   messages = [];
   renderLessonCards();
