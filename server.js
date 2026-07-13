@@ -133,7 +133,7 @@ app.post('/api/chat', chatLimiter, async (req, res) => {
 // ── /api/speak (ElevenLabs - Jorin) ────────────────────────
 app.post('/api/speak', async (req, res) => {
   const { text } = req.body;
-  const voiceId = 'wloRHjPaKZv3ucH7TQOT'; // NEUE Voice-ID
+  const voiceId = 'pNInz6obpgDQGcFmaJgB'; // NEUE Voice-ID
   const apiKey = process.env.ELEVENLABS_API_KEY;
 
   if (!text) return res.status(400).json({ error: 'Kein Text empfangen.' });
