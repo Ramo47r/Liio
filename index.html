@@ -1288,11 +1288,28 @@ let currentMode = 'talk';
 let currentAge = null;
 let isKaraoke = false;
 let lastLioText = '';
-let starCount = parseInt(localStorage.getItem('Lio_stars') || '0');
-let childName = localStorage.getItem('Lio_name') || ''; // NEU: DSGVO-Name
+let childName = localStorage.getItem('Lio_name') || ''; // DSGVO-Name
+
+// 🚀 NEU: Globale Variablen für den Echo-Schutz und die Klicksperre
+let currentAudio = null;
+let isLioSpeaking = false;
 
 // ERZWINGT DEN STARTBILDSCHIRM BEIM NEULADEN DER SEITE
 window.addEventListener('load', () => {
+  
+  // 🚀 NEU: CSS-Fix für Lios Position direkt über JS einfügen (verhindert das Schweben)
+  const style = document.createElement('style');
+  style.innerHTML = `
+    #robot {
+      position: fixed !important;
+      bottom: 5% !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      z-index: 100 !important;
+    }
+  `;
+  document.head.appendChild(style);
+
   // Schalte alle Bildschirme aus
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   
@@ -1540,7 +1557,6 @@ function initMain(customText = null) {
   if (!messages) messages = [];
   messages = [];
   renderLessonCards();
-  updateStarCount();
   const m = MODES[currentMode];
   if (!m) {
     console.warn('[initMain] Mode nicht gefunden:', currentMode);
@@ -1582,6 +1598,9 @@ function renderLessonCards() {
 }
 
 function switchMode(mode) {
+  // 🚀 NEU: Sperre! Wenn Lio spricht, wird der Klick ignoriert
+  if (isLioSpeaking) return;
+
   if (parentLocks[mode]) {
     setBubble('🔒 Diese Funktion wurde von deinen Eltern gesperrt.');
     return;
@@ -1603,6 +1622,9 @@ function switchMode(mode) {
 }
 
 function goToKaraoke() {
+  // 🚀 NEU: Sperre!
+  if (isLioSpeaking) return;
+
   if (parentLocks['karaoke']) {
     setBubble('🔒 Karaoke wurde von deinen Eltern gesperrt.');
     return;
@@ -1673,7 +1695,7 @@ function closeMenu() {
 }
 
 // ════════════════════════════════════════
-// SPEECH BUBBLE + STAR COUNT
+// SPEECH BUBBLE + NEUES BELOHNUNGSSYSTEM (KONFETTI)
 // ════════════════════════════════════════
 function setBubble(text) {
   const bubble = document.getElementById('bubble');
@@ -1700,20 +1722,37 @@ function setHint(text) {
   }
 }
 
-function updateStarCount() {
-  const starCountEl = document.getElementById('starCount');
-  if (starCountEl) {
-    starCountEl.textContent = starCount;
-  } else {
-    console.warn('[updateStarCount] Element starCount nicht gefunden!');
-  }
-}
+function triggerConfetti() {
+  for (let i = 0; i < 40; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 60%)`; 
+    
+    confetti.style.position = 'fixed';
+    confetti.style.top = '-10px';
+    confetti.style.width = '12px';
+    confetti.style.height = '12px';
+    confetti.style.borderRadius = '50%';
+    confetti.style.zIndex = '9999';
+    confetti.style.pointerEvents = 'none';
+    
+    confetti.animate([
+      { transform: `translate3d(0, 0, 0) rotate(0deg)`, opacity: 1 },
+      { transform: `translate3d(${Math.random()*100 - 50}px, 100vh, 0) rotate(${Math.random()*360}deg)`, opacity: 0 }
+    ], {
+      duration: Math.random() * 2000 + 2000,
+      easing: 'ease-out'
+    });
 
-function awardStar() {
-  starCount++;
-  localStorage.setItem('Lio_stars', starCount);
-  updateStarCount();
-  console.log('[awardStar] Stern vergeben! Gesamt:', starCount);
+    document.body.appendChild(confetti);
+
+    setTimeout(() => {
+      confetti.remove();
+    }, 4000);
+  }
+  console.log('[triggerConfetti] Konfetti-Regen gestartet!');
 }
 
 function repeatLast() {
@@ -1724,6 +1763,9 @@ function repeatLast() {
 // MOOD
 // ════════════════════════════════════════
 function selectMood(btn, mood) {
+  // 🚀 NEU: Sperre!
+  if (isLioSpeaking) return;
+
   if (currentMood === mood) {
     currentMood = null;
     btn.classList.remove('selected');
@@ -1781,50 +1823,52 @@ function loadVoices() {
   const allVoices = synth.getVoices();
   voices = allVoices.filter(v => v.lang.toLowerCase().startsWith('de'));
   const sel = document.getElementById('voiceSel');
-  sel.innerHTML = '';
-  if (voices.length === 0) {
-    const opt = document.createElement('option');
-    opt.textContent = 'Keine deutsche Stimme';
-    sel.appendChild(opt);
-    sel.disabled = true;
-    return;
+  if (sel) {
+    sel.innerHTML = '';
+    if (voices.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = 'Keine deutsche Stimme';
+      sel.appendChild(opt);
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const preferredNames = isMobile
+      ? [
+          'Google Deutsch',
+          'Microsoft Katja',
+          'Anna',
+          'Hanna', 'Microsoft Hanna',
+          'Microsoft Clara',
+          'Microsoft Zira',
+          'Hedda',
+        ]
+      : [
+          'Microsoft Katja',
+          'Anna',
+          'Google Deutsch',
+          'Microsoft Clara',
+          'Hanna', 'Microsoft Hanna',
+          'Microsoft Zira',
+          'Hedda',
+        ];
+    
+    let bestIdx = 0;
+    voices.forEach((v, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(opt);
+      if (preferredNames.some(n => v.name.includes(n))) bestIdx = i;
+    });
+    
+    const savedIdx = parseInt(localStorage.getItem('Lio_voice_idx'));
+    if (!isNaN(savedIdx) && voices[savedIdx]) bestIdx = savedIdx;
+    sel.selectedIndex = bestIdx;
   }
-  sel.disabled = false;
-  
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const preferredNames = isMobile
-    ? [
-        'Google Deutsch',
-        'Microsoft Katja',
-        'Anna',
-        'Hanna', 'Microsoft Hanna',
-        'Microsoft Clara',
-        'Microsoft Zira',
-        'Hedda',
-      ]
-    : [
-        'Microsoft Katja',
-        'Anna',
-        'Google Deutsch',
-        'Microsoft Clara',
-        'Hanna', 'Microsoft Hanna',
-        'Microsoft Zira',
-        'Hedda',
-      ];
-  
-  let bestIdx = 0;
-  voices.forEach((v, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = v.name + ' (' + v.lang + ')';
-    sel.appendChild(opt);
-    if (preferredNames.some(n => v.name.includes(n))) bestIdx = i;
-  });
-  
-  const savedIdx = parseInt(localStorage.getItem('Lio_voice_idx'));
-  if (!isNaN(savedIdx) && voices[savedIdx]) bestIdx = savedIdx;
-  sel.selectedIndex = bestIdx;
-  selectedVoice = voices[bestIdx];
+  selectedVoice = voices[bestIdx || 0];
   console.log('[loadVoices] Stimme:', selectedVoice?.name);
 }
 
@@ -1858,15 +1902,20 @@ function testVoice() { speakJorin('Hallo! Ich bin Lio, dein Roboter-Freund!'); }
 
 
 let availableVoices = [];
-window.speechSynthesis.onvoiceschanged = () => {
-  availableVoices = window.speechSynthesis.getVoices();
-};
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    availableVoices = window.speechSynthesis.getVoices();
+  };
+}
 
 function speak(text) {
   fallbackSpeak(text); // Fallback für alte Befehle
 }
 
 function toggleListen() {
+  // 🚀 NEU: Sperre!
+  if (isLioSpeaking) return;
+
   try {
     if (typeof SR === 'undefined' || !SR) {
       setBubble('Sprache nicht unterstützt. Tipp lieber!');
@@ -1914,6 +1963,9 @@ function closeTextInput() {
   document.getElementById('textInput').value = '';
 }
 function sendText() {
+  // 🚀 NEU: Sperre!
+  if (isLioSpeaking) return;
+
   const inp = document.getElementById('textInput');
   const val = inp.value.trim();
   if (val) {
@@ -1972,12 +2024,23 @@ function parseForSpeech(text) {
 }
 
 // ════════════════════════════════════════
-// PREMIUM KI-STIMME (ELEVENLABS)
+// PREMIUM KI-STIMME (ELEVENLABS) & ECHO-SCHUTZ
 // ════════════════════════════════════════
 async function speakJorin(text) {
   if (!text || !text.trim()) return;
 
+  // 🚀 NEU: Wenn Lio schon spricht, altes Audio sofort unterbrechen und löschen
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
+
   try {
+    // 🚀 NEU: Sperre aktivieren
+    isLioSpeaking = true; 
+    const micBtn = document.getElementById('micBtn');
+    if (micBtn) micBtn.style.opacity = '0.5'; // Macht den Mikro-Knopf leicht grau zur Anzeige
+
     // Fragt deinen Server nach der Audiodatei
     const response = await fetch('/api/speak', {
       method: 'POST',
@@ -1991,10 +2054,33 @@ async function speakJorin(text) {
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
+    
+    // 🚀 NEU: Aktuelles Audio speichern, damit es notfalls gestoppt werden kann
+    currentAudio = audio; 
+
+    // 🚀 NEU: Sperre aufheben, wenn der Satz zu Ende gesprochen wurde
+    audio.onended = () => {
+      isLioSpeaking = false;
+      if (micBtn) micBtn.style.opacity = '1';
+      currentAudio = null;
+    };
+    
+    // 🚀 NEU: Sperre auch aufheben, falls ein technischer Fehler beim Abspielen auftritt
+    audio.onerror = () => {
+      isLioSpeaking = false;
+      if (micBtn) micBtn.style.opacity = '1';
+      currentAudio = null;
+    };
+
     await audio.play();
     
   } catch (err) {
     console.error('Sprachfehler:', err);
+    
+    // 🚀 NEU: Sperre aufheben, falls der Server nicht erreichbar war
+    isLioSpeaking = false;
+    const micBtn = document.getElementById('micBtn');
+    if (micBtn) micBtn.style.opacity = '1';
   }
 }
 
@@ -2055,20 +2141,6 @@ function detectUserEmotionAdvanced(userText) {
   return detectedEmotion;
 }
 
-const liamEmotionalResponses = {
-  happy: { greeting: 'Das freut mich zu hören. Deine Energie kommt an.', follow: 'Das ist wunderbar. Erzähl mir mehr davon.' },
-  sad: { greeting: 'Ich sehe, dass es dir gerade nicht so gut geht.', follow: 'Das ist okay. Deine Gefühle sind wichtig. Ich bin für dich da.' },
-  anxious: { greeting: 'Ich merke, dass dich etwas beunruhigt.', follow: 'Das ist völlig normal. Lass uns das zusammen angehen.' },
-  frustrated: { greeting: 'Ich spüre, dass dich etwas frustriert.', follow: 'Das ist berechtigt. Lass mich dir helfen, das zu sortieren.' },
-  tired: { greeting: 'Du klingst erschöpft. Das ist verständlich.', follow: 'Dein Körper sagt dir, dass du Ruhe brauchst. Das ist wichtig.' },
-  normal: { greeting: 'Hallo. Ich bin Liam. Wie kann ich dir heute helfen?', follow: 'Ich höre dir zu.' }
-};
-
-function generateLiamGreeting(emotion) {
-  const response = liamEmotionalResponses[emotion] || liamEmotionalResponses.normal;
-  return response.greeting + ' ' + response.follow;
-}
-
 function setLioEmotion(emotion) {
   const robot = document.getElementById('robot');
   if (!robot) return;
@@ -2102,8 +2174,6 @@ async function sendMessage(userText) {
 
   try {
     console.log('[sendMessage] Sende Nachricht an /api/chat:', userText);
-    console.log('[sendMessage] Erkannte Emotion:', userEmotion);
-    console.log('[sendMessage] Messages:', JSON.stringify(messages));
     
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -2114,31 +2184,22 @@ async function sendMessage(userText) {
         mode: currentMode, 
         age: currentAge, 
         emotion: userEmotion,
-        childName: childName, // 💡 DSGVO: Name wird an die API übertragen
+        childName: childName, 
         liamMode: true  
       }),
     });
     
-    console.log('[sendMessage] Response Status:', res.status);
-    console.log('[sendMessage] Response OK:', res.ok);
-    
     const text = await res.text();
-    console.log('[sendMessage] Raw Server-Antwort:', text);
-    
     let data;
     try { 
       data = JSON.parse(text); 
-      console.log('[sendMessage] Geparste Daten:', data);
     }
     catch (e) { 
-      console.error('[sendMessage] JSON Parse Fehler:', e.message);
-      console.error('[sendMessage] Text war:', text);
       throw new Error('Server-Antwort ist kein gültiges JSON: ' + text.substring(0, 100)); 
     }
     
     if (!res.ok) {
       const errorMsg = data.error || data.message || 'Server-Fehler ' + res.status;
-      console.error('[sendMessage] Server-Fehler:', errorMsg);
       throw new Error(errorMsg);
     }
 
@@ -2155,9 +2216,8 @@ async function sendMessage(userText) {
     setHint('Drück das Mikro und sprich!');
     
     await speakJorin(reply);
-    if (typeof awardStar === 'function') {
-      awardStar();
-    }
+    
+    triggerConfetti();
 
   } catch (err) {
     console.error('[sendMessage] Fehler abgefangen:', err.message);
@@ -2176,6 +2236,7 @@ async function sendMessage(userText) {
 // ════════════════════════════════════════
 function renderSongList() {
   const list = document.getElementById('songList');
+  if(!list) return;
   list.innerHTML = '';
   const songs = ALL_SONGS.filter(s => !currentAge || s.ages.includes(currentAge));
   songs.forEach((song) => {
@@ -2188,6 +2249,9 @@ function renderSongList() {
 }
 
 function playSong(song) {
+  // 🚀 NEU: Sperre!
+  if (isLioSpeaking) return;
+
   if (!song || !synth) return;
   isKaraoke = true;
   document.getElementById('stopSongBtn').style.display = 'inline-flex';
@@ -2212,7 +2276,9 @@ function stopKaraoke() {
   isKaraoke = false;
   if (synth) synth.cancel();
   document.getElementById('stopSongBtn').style.display = 'none';
-  document.getElementById('songList').style.opacity = '1';
+  if(document.getElementById('songList')) {
+    document.getElementById('songList').style.opacity = '1';
+  }
 }
 
 // ════════════════════════════════════════
@@ -2229,16 +2295,14 @@ function checkPin() {
   if (entered === parentPin) { closePinPanel(); openSettingsPanel(); }
   else { alert('❌ Falsche PIN.'); document.getElementById('pinInput').value = ''; }
 }
-document.getElementById('pinInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') checkPin();
-});
+if(document.getElementById('pinInput')) {
+  document.getElementById('pinInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') checkPin();
+  });
+}
 
 function openSettingsPanel() {
   renderLockToggles();
-  document.getElementById('rateSlider').value = speechRate;
-  document.getElementById('rateVal').textContent = speechRate.toFixed(2);
-  document.getElementById('pitchSlider').value = speechPitch;
-  document.getElementById('pitchVal').textContent = speechPitch.toFixed(2);
   document.getElementById('panelSettings').classList.add('show');
 }
 function closeSettings() {
@@ -2248,6 +2312,7 @@ function closeSettings() {
 
 function renderLockToggles() {
   const container = document.getElementById('lockToggles');
+  if(!container) return;
   container.innerHTML = '';
   const allModes = { ...MODES, karaoke: { icon: '🎤', title: 'Karaoke' } };
   Object.entries(allModes).forEach(([key, m]) => {
@@ -2283,17 +2348,14 @@ const savedName = localStorage.getItem('Lio_name');
 
 // 💡 Die neue Start-Logik:
 if (!savedName) {
-  // Wenn kein Name da ist, zeige den DSGVO / Eltern-Bereich!
   showScreen('parent-gate');
 } else if (savedAge && AGE_GROUPS[savedAge]) {
-  // Wenn Name UND Alter da sind, ab in den Chat!
   currentAge = savedAge;
   speechRate = AGE_GROUPS[savedAge].rate;
   speechPitch = AGE_GROUPS[savedAge].pitch;
   showScreen('main');
   initMain();
 } else {
-  // Wenn Name da ist, aber kein Alter, zeige die Altersauswahl!
   showScreen('age');
 }
 
@@ -2313,7 +2375,7 @@ if ('serviceWorker' in navigator) {
 // ════════════════════════════════════════
 window.onerror = function(msg, url, lineNo, columnNo, error) {
   console.error('[Global Error]', msg);
-  return false; // Don't suppress error
+  return false; 
 };
 
 window.addEventListener('unhandledrejection', event => {
