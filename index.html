@@ -1293,21 +1293,21 @@ let childName = localStorage.getItem('Lio_name') || ''; // NEU: DSGVO-Name
 
 // ERZWINGT DEN STARTBILDSCHIRM BEIM NEULADEN DER SEITE
 window.addEventListener('load', () => {
-    // Schalte alle Bildschirme aus
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    
-    // Aktiviere NUR die Altersauswahl
-    document.getElementById('screen-age').classList.add('active');
-    
-    // Wenn du willst, dass erst der Eltern-Bereich kommt, falls noch kein Name gespeichert ist
-    if (!childName || childName.trim() === '') {
-        document.getElementById('screen-age').classList.remove('active');
-        document.getElementById('screen-parent-gate').classList.add('active');
-    }
+  // Schalte alle Bildschirme aus
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  
+  // Aktiviere NUR die Altersauswahl
+  document.getElementById('screen-age').classList.add('active');
+  
+  // Wenn du willst, dass erst der Eltern-Bereich kommt, falls noch kein Name gespeichert ist
+  if (!childName || childName.trim() === '') {
+    document.getElementById('screen-age').classList.remove('active');
+    document.getElementById('screen-parent-gate').classList.add('active');
+  }
 });
 
 const AGE_GROUPS = {
-  // 🎯 JETZT NATÜRLICH, JUNG & GENDERNEUTRAL — Kein piepsiger Comic-Sound mehr!
+  // 🎯 JETZT NATÜRLICH, JUNG & GENDERNEUTRAL
   '1-3':  { label: '🍼 1-3 Jahre',  rate: 0.98, pitch: 1.15,
              greeting: 'Hallo {name}! Ich bin Lio! Schön, dass du da bist!' },
   '4-6':  { label: '🎈 4-6 Jahre',  rate: 0.98, pitch: 1.15,
@@ -1318,7 +1318,7 @@ const AGE_GROUPS = {
              greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
 };
 
-// Modes — like Buddy.ai's "lessons" / "categories"
+// Modes
 const MODES = {
   talk: {
     icon: '💬', title: 'Chat',
@@ -1431,6 +1431,7 @@ const ALL_SONGS = [
 
 let parentLocks = JSON.parse(localStorage.getItem('Lio_locks') || '{}');
 let parentPin = localStorage.getItem('Lio_pin') || '1234';
+
 // ════════════════════════════════════════
 // DSGVO PARENT GATE LOGIK (NEU)
 // ════════════════════════════════════════
@@ -1453,14 +1454,16 @@ function saveSetup() {
 }
 
 // ════════════════════════════════════════
-// AGE SELECTION
+// AGE SELECTION & INIT
 // ════════════════════════════════════════
 function selectAge(age) {
   currentAge = age;
   localStorage.setItem('Lio_age', age);
-  const grp = AGE_GROUPS[age];
-  speechRate = grp.rate;
-  speechPitch = grp.pitch;
+  
+  // Altersspezifische Sprach-Einstellungen laden
+  const grp = AGE_GROUPS[age] || AGE_GROUPS['7-9'];
+  speechRate = grp.rate || 0.95;
+  speechPitch = grp.pitch || 1.0;
 
   const greeting = grp.greeting.replace('{name}', childName);
   showAgeBubble(greeting);
@@ -1478,10 +1481,12 @@ function goToAgeSelect() {
 
 function showAgeBubble(text) {
   const bubble = document.getElementById('ageBubble');
-  bubble.textContent = text;
-  bubble.classList.add('show');
-  clearTimeout(showAgeBubble._t);
-  showAgeBubble._t = setTimeout(() => bubble.classList.remove('show'), 4500);
+  if(bubble) {
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    clearTimeout(showAgeBubble._t);
+    showAgeBubble._t = setTimeout(() => bubble.classList.remove('show'), 4500);
+  }
 }
 
 function speakOnAge(text, onDone) {
@@ -1504,7 +1509,6 @@ function speakOnAge(text, onDone) {
   const cleanText = String(text).replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
 
   const utter = new SpeechSynthesisUtterance(cleanText);
-  
   const voice = availableVoices.find(v => 
     v.lang.includes('de') && (v.name.includes('Google') || v.name.includes('Premium') || v.name.includes('Neural'))
   ) || availableVoices.find(v => v.lang.includes('de'));
@@ -1532,22 +1536,7 @@ function speakOnAge(text, onDone) {
 // ════════════════════════════════════════
 // MAIN SCREEN INIT
 // ════════════════════════════════════════
-function selectAge(age) {
-  currentAge = age;
-  localStorage.setItem('Lio_age', age);
-
-  // Altersspezifische Sprach-Einstellungen laden, falls vorhanden
-  if (typeof AGE_GROUPS !== 'undefined' && AGE_GROUPS[age]) {
-    speechRate = AGE_GROUPS[age].rate || 0.95;
-    speechPitch = AGE_GROUPS[age].pitch || 1.0;
-  }
-
-  // Zum Hauptbildschirm wechseln und Chat starten
-  showScreen('main');
-  initMain();
-}
-  
-  function initMain(customText = null) {
+function initMain(customText = null) {
   if (!messages) messages = [];
   messages = [];
   renderLessonCards();
@@ -1879,7 +1868,7 @@ function speak(text) {
 
 function toggleListen() {
   try {
-    if (!SR) {
+    if (typeof SR === 'undefined' || !SR) {
       setBubble('Sprache nicht unterstützt. Tipp lieber!');
       openTextInput();
       return;
@@ -1892,7 +1881,7 @@ function toggleListen() {
     const robot = document.getElementById('robot');
     if (robot) robot.classList.remove('talking');
     try { recognition.start(); startListening(); }
-    catch (err) { setBubble('Konnte nicht starten. PLioer nochmal!'); stopListening(); }
+    catch (err) { setBubble('Konnte nicht starten. Probier nochmal!'); stopListening(); }
   } catch (e) {
     console.error('[toggleListen]', e.message);
   }
@@ -2103,7 +2092,7 @@ async function sendMessage(userText) {
   setLioEmotion(userEmotion);
 
   setBubble('Du: "' + userText + '"');
-  setHint('Liam denkt nach... 🤔');
+  setHint('Lio denkt nach... 🤔');
   setTimeout(setBubbleLoading, 800);
 
   messages.push({ role: 'user', content: userText });
@@ -2154,7 +2143,7 @@ async function sendMessage(userText) {
     }
 
     const reply = data.reply || 'Hmm, mir fällt gerade nichts ein!';
-    console.log('[sendMessage] Liams Antwort:', reply);
+    console.log('[sendMessage] Lios Antwort:', reply);
     
     if (typeof validateGenderNeutralLanguage === 'function') {
       validateGenderNeutralLanguage(reply);
@@ -2174,7 +2163,7 @@ async function sendMessage(userText) {
     console.error('[sendMessage] Fehler abgefangen:', err.message);
     const errorDisplay = 'Hoppla! ' + (err.message || 'Etwas ist schiefgelaufen.');
     setBubble(errorDisplay);
-    setHint('PLioer es nochmal!');
+    setHint('Probier es nochmal!');
     if (messages.length > 0) messages.pop();
     setLioEmotion('normal');
   } finally {
@@ -2286,7 +2275,6 @@ function changePin() {
   alert('✓ PIN wurde geändert.');
 }
 
-
 // ════════════════════════════════════════
 // INIT (Angepasst für DSGVO / Parent Gate)
 // ════════════════════════════════════════
@@ -2331,3 +2319,4 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
 window.addEventListener('unhandledrejection', event => {
   console.error('[Unhandled Promise]', event.reason);
 });
+</script>
