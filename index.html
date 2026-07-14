@@ -1297,18 +1297,33 @@ let isLioSpeaking = false;
 // ERZWINGT DEN STARTBILDSCHIRM BEIM NEULADEN DER SEITE
 window.addEventListener('load', () => {
   
-  // 🚀 NEU: CSS-Fix für Lios Position direkt über JS einfügen (verhindert das Schweben)
+  // 🚀 NEU: CSS für Lios feste Positionierung NUR auf dem Hauptbildschirm
   const style = document.createElement('style');
   style.innerHTML = `
-    #robot {
+    #robot.main-active {
       position: fixed !important;
-      bottom: 5% !important;
+      bottom: 20px !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
       z-index: 100 !important;
+      width: 150px !important; /* Verhindert, dass er riesig wird */
+      max-width: 35vw !important;
+      height: auto !important;
     }
   `;
   document.head.appendChild(style);
+
+  // 🚀 NEU: Sterne-Staubsauger (Versteckt die alten HTML-Sterne)
+  const starIds = ['starCount', 'star-count', 'starContainer', 'star-container', 'stars'];
+  starIds.forEach(id => {
+    const el = document.getElementById(id) || document.querySelector('.' + id);
+    if (el) {
+      el.style.setProperty('display', 'none', 'important');
+      if (el.parentElement && (el.parentElement.textContent.includes('⭐') || el.parentElement.textContent.includes('🌟'))) {
+        el.parentElement.style.setProperty('display', 'none', 'important');
+      }
+    }
+  });
 
   // Schalte alle Bildschirme aus
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1598,7 +1613,7 @@ function renderLessonCards() {
 }
 
 function switchMode(mode) {
-  // 🚀 NEU: Sperre! Wenn Lio spricht, wird der Klick ignoriert
+  // 🚀 NEU: Sperre während Lio spricht
   if (isLioSpeaking) return;
 
   if (parentLocks[mode]) {
@@ -1622,7 +1637,7 @@ function switchMode(mode) {
 }
 
 function goToKaraoke() {
-  // 🚀 NEU: Sperre!
+  // 🚀 NEU: Sperre während Lio spricht
   if (isLioSpeaking) return;
 
   if (parentLocks['karaoke']) {
@@ -1654,6 +1669,16 @@ function showScreen(name) {
       screenEl.classList.add('active');
     } else {
       console.warn('[showScreen] Screen nicht gefunden:', name);
+    }
+
+    // 🚀 NEU: Roboter NUR im Main-Screen festnageln
+    const robot = document.getElementById('robot');
+    if (robot) {
+      if (name === 'main') {
+        robot.classList.add('main-active');
+      } else {
+        robot.classList.remove('main-active');
+      }
     }
   } catch (e) {
     console.error('[showScreen] Fehler:', e.message);
@@ -1695,7 +1720,7 @@ function closeMenu() {
 }
 
 // ════════════════════════════════════════
-// SPEECH BUBBLE + NEUES BELOHNUNGSSYSTEM (KONFETTI)
+// SPEECH BUBBLE + KONFETTI
 // ════════════════════════════════════════
 function setBubble(text) {
   const bubble = document.getElementById('bubble');
@@ -1722,6 +1747,7 @@ function setHint(text) {
   }
 }
 
+// NEU: Konfetti-Belohnung (erstellt buntes fallendes Konfetti)
 function triggerConfetti() {
   for (let i = 0; i < 40; i++) {
     const confetti = document.createElement('div');
@@ -1763,7 +1789,7 @@ function repeatLast() {
 // MOOD
 // ════════════════════════════════════════
 function selectMood(btn, mood) {
-  // 🚀 NEU: Sperre!
+  // 🚀 NEU: Sperre während Lio spricht
   if (isLioSpeaking) return;
 
   if (currentMood === mood) {
@@ -1909,11 +1935,11 @@ if (window.speechSynthesis) {
 }
 
 function speak(text) {
-  fallbackSpeak(text); // Fallback für alte Befehle
+  fallbackSpeak(text); 
 }
 
 function toggleListen() {
-  // 🚀 NEU: Sperre!
+  // 🚀 NEU: Sperre während Lio spricht
   if (isLioSpeaking) return;
 
   try {
@@ -1963,7 +1989,7 @@ function closeTextInput() {
   document.getElementById('textInput').value = '';
 }
 function sendText() {
-  // 🚀 NEU: Sperre!
+  // 🚀 NEU: Sperre während Lio spricht
   if (isLioSpeaking) return;
 
   const inp = document.getElementById('textInput');
@@ -2029,17 +2055,17 @@ function parseForSpeech(text) {
 async function speakJorin(text) {
   if (!text || !text.trim()) return;
 
-  // 🚀 NEU: Wenn Lio schon spricht, altes Audio sofort unterbrechen und löschen
+  // 🚀 NEU: Echo-Schutz! Bricht altes Audio sofort ab.
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
   }
 
   try {
-    // 🚀 NEU: Sperre aktivieren
+    // 🚀 NEU: Klicksperre aktivieren
     isLioSpeaking = true; 
     const micBtn = document.getElementById('micBtn');
-    if (micBtn) micBtn.style.opacity = '0.5'; // Macht den Mikro-Knopf leicht grau zur Anzeige
+    if (micBtn) micBtn.style.opacity = '0.5';
 
     // Fragt deinen Server nach der Audiodatei
     const response = await fetch('/api/speak', {
@@ -2055,17 +2081,14 @@ async function speakJorin(text) {
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
     
-    // 🚀 NEU: Aktuelles Audio speichern, damit es notfalls gestoppt werden kann
-    currentAudio = audio; 
+    currentAudio = audio; // Speichern fürs Abbrechen
 
-    // 🚀 NEU: Sperre aufheben, wenn der Satz zu Ende gesprochen wurde
+    // 🚀 NEU: Klicksperre wieder aufheben
     audio.onended = () => {
       isLioSpeaking = false;
       if (micBtn) micBtn.style.opacity = '1';
       currentAudio = null;
     };
-    
-    // 🚀 NEU: Sperre auch aufheben, falls ein technischer Fehler beim Abspielen auftritt
     audio.onerror = () => {
       isLioSpeaking = false;
       if (micBtn) micBtn.style.opacity = '1';
@@ -2076,8 +2099,7 @@ async function speakJorin(text) {
     
   } catch (err) {
     console.error('Sprachfehler:', err);
-    
-    // 🚀 NEU: Sperre aufheben, falls der Server nicht erreichbar war
+    // Sperre auch bei Fehler aufheben
     isLioSpeaking = false;
     const micBtn = document.getElementById('micBtn');
     if (micBtn) micBtn.style.opacity = '1';
@@ -2116,6 +2138,7 @@ function fallbackSpeak(text) {
   window.speechSynthesis.speak(utterance);
 }
 
+// 🚀 RESTAURIERT: Die echte Emotions-Erkennung
 function detectUserEmotionAdvanced(userText) {
   const lower = userText.toLowerCase();
   
@@ -2139,6 +2162,21 @@ function detectUserEmotionAdvanced(userText) {
   });
   
   return detectedEmotion;
+}
+
+// 🚀 RESTAURIERT: Die Liam-Gefühls-Antworten
+const liamEmotionalResponses = {
+  happy: { greeting: 'Das freut mich zu hören. Deine Energie kommt an.', follow: 'Das ist wunderbar. Erzähl mir mehr davon.' },
+  sad: { greeting: 'Ich sehe, dass es dir gerade nicht so gut geht.', follow: 'Das ist okay. Deine Gefühle sind wichtig. Ich bin für dich da.' },
+  anxious: { greeting: 'Ich merke, dass dich etwas beunruhigt.', follow: 'Das ist völlig normal. Lass uns das zusammen angehen.' },
+  frustrated: { greeting: 'Ich spüre, dass dich etwas frustriert.', follow: 'Das ist berechtigt. Lass mich dir helfen, das zu sortieren.' },
+  tired: { greeting: 'Du klingst erschöpft. Das ist verständlich.', follow: 'Dein Körper sagt dir, dass du Ruhe brauchst. Das ist wichtig.' },
+  normal: { greeting: 'Hallo. Ich bin Liam. Wie kann ich dir heute helfen?', follow: 'Ich höre dir zu.' }
+};
+
+function generateLiamGreeting(emotion) {
+  const response = liamEmotionalResponses[emotion] || liamEmotionalResponses.normal;
+  return response.greeting + ' ' + response.follow;
 }
 
 function setLioEmotion(emotion) {
@@ -2184,7 +2222,7 @@ async function sendMessage(userText) {
         mode: currentMode, 
         age: currentAge, 
         emotion: userEmotion,
-        childName: childName, 
+        childName: childName, // 💡 DSGVO: Name wird an die API übertragen
         liamMode: true  
       }),
     });
@@ -2217,6 +2255,7 @@ async function sendMessage(userText) {
     
     await speakJorin(reply);
     
+    // Konfetti-Regen auslösen!
     triggerConfetti();
 
   } catch (err) {
@@ -2249,7 +2288,7 @@ function renderSongList() {
 }
 
 function playSong(song) {
-  // 🚀 NEU: Sperre!
+  // 🚀 NEU: Klicksperre
   if (isLioSpeaking) return;
 
   if (!song || !synth) return;
