@@ -1,5 +1,5 @@
 // ============================================================
-// Robi Backend — Gemini als Gehirn & ElevenLabs als Stimme
+// Lio Backend — Gemini als Gehirn & ElevenLabs als Stimme
 // ============================================================
 import express from 'express';
 import cors from 'cors';
@@ -32,144 +32,110 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
 
-// ── Static frontend ────────────────────────────────────────
-const frontendPath = __dirname;
-app.use(express.static(frontendPath, {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('sw.js'))       res.setHeader('Cache-Control', 'no-cache');
-    if (filePath.endsWith('manifest.json')) res.setHeader('Cache-Control', 'no-cache');
-    if (filePath.endsWith('.html'))        res.setHeader('Cache-Control', 'no-cache');
-  }
-}));
-
-// HTTPS redirect (Render)
-app.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production'
-      && req.headers['x-forwarded-proto'] === 'http'
-      && !req.headers.host?.includes('localhost')) {
-    return res.redirect(301, 'https://' + req.headers.host + req.url);
-  }
-  next();
+// ── Rate Limit (Spam-Schutz) ───────────────────────────────
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 Minuten
+  max: 100, // Maximal 100 Anfragen pro IP
+  message: { error: 'Hoppla! Lio braucht eine kurze Pause. Bitte warte einen Moment!' }
 });
+app.use('/api/', limiter);
 
-// ── Rate limit ─────────────────────────────────────────────
-const chatLimiter = rateLimit({
-  windowMs: 60_000, max: 30,
-  message: { error: 'Zu viele Anfragen — kurz warten!' },
-});
+// ── Statische Dateien (Frontend) ───────────────────────────
+app.use(express.static(__dirname));
 
-// ── Prompts ────────────────────────────────────────────────
-const BASE = `Du bist Robi, ein freundlicher Roboter-Freund für Kinder (Deutsch).
-Persönlichkeit: warmherzig, geduldig, ermutigend, neugierig, spielerisch.
-Sicherheitsregeln: KEIN Gewalt/Sex/Drogen. Bei ernsten Themen sanft auf Eltern hinweisen.
-Stil: kein Markdown, natürlicher Text (wird vorgelesen), gerne Emojis, Folgefrage stellen.`;
-
-const AGE = {
-  '1-3':  `Alter 1-3 (Kleinkind): Sehr kurze Sätze (3-5 Wörter). Tier-Geräusche. Verniedlichungen. Wiederholungen okay.`,
-  '4-6':  `Alter 4-6 (Kita): Kurze klare Sätze. Fantasie/Magie. Einfache Erklärungen mit Beispielen.`,
-  '7-9':  `Alter 7-9 (Grundschule): Normale Satzlänge. Spannende Fakten. Leichte Witze. Abenteuer.`,
-  '10-12':`Alter 10-12 (Pre-Teen): Auf Augenhöhe. Humor okay. Wissenschaft/Pop-Kultur. Kein Baby-Ton.`,
-};
-
-const MODE = {
-  talk:     `Modus: Frei reden — sei ein guter Freund, beantworte alles kindgerecht, stelle Folgefragen.`,
-  homework: `Modus: Hausaufgaben — erkläre Schritt für Schritt, verrate NIE einfach die Antwort, frage was das Kind schon weiß.`,
-  stories:  `Modus: Geschichten — erfinde eine kurze spannende Geschichte zum genannten Thema.`,
-};
-
-const MOOD = {
-  happy:   `Stimmung: GLÜCKLICH — teile die Freude, sei energetisch.`,
-  sad:     `Stimmung: TRAURIG — sei sanft, einfühlsam, höre zuerst zu.`,
-};
-
-function buildPrompt(age, mode, mood) {
-  return [
-    BASE,
-    AGE[age]  || AGE['7-9'],
-    MODE[mode] || MODE['talk'],
-    mood && MOOD[mood] ? MOOD[mood] : '',
-  ].filter(Boolean).join('\n\n');
-}
-
-// ── /api/chat (Gemini) ──────────────────────────────────────
-app.post('/api/chat', chatLimiter, async (req, res) => {
+// ── API: Chat (Gemini) ─────────────────────────────────────
+app.post('/api/chat', async (req, res) => {
   try {
-    const { messages, mood, mode, age } = req.body;
+    const { messages, mood, mode, age, emotion, childName } = req.body;
 
-    if (!Array.isArray(messages) || messages.length === 0)
-      return res.status(400).json({ error: 'Keine Nachrichten.' });
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Nachrichten fehlen.' });
+    }
 
-    const safeAge  = ['1-3','4-6','7-9','10-12'].includes(age)  ? age  : '7-9';
-    const safeMode = Object.keys(MODE).includes(mode)           ? mode : 'talk';
-    const safeMood = Object.keys(MOOD).includes(mood)           ? mood : null;
+    // Kind-Daten für Lios Gehirn aufbereiten
+    const nameStr = childName ? `Das Kind heißt ${childName}. ` : '';
+    const ageStr = age ? `Das Alter des Kindes ist ${age}. ` : '';
+    const moodStr = mood ? `Das Kind fühlt sich gerade: ${mood}. ` : '';
+    const modeStr = mode ? `Aktueller Spiel-Modus: ${mode}. ` : '';
 
-    const maxTokens = safeAge === '1-3' ? 120 : safeAge === '4-6' ? 220 : 400;
-    const systemInstruction = buildPrompt(safeAge, safeMode, safeMood);
+    // Lios strenger Charakter-Prompt!
+    const systemInstruction = `Du bist Lio, ein superfreundlicher, einfühlsamer und fröhlicher Roboter-Freund für Kinder. 
+    ${nameStr}${ageStr}${moodStr}${modeStr}
+    WICHTIG: Du heißt Lio (NICHT Robi!).
+    Antworte immer extrem kindgerecht, warmherzig und in kurzen Sätzen (maximal 2 bis 3 Sätze). 
+    Benutze einfache Wörter, die Kinder gut verstehen. Sprich das Kind direkt an, wenn du seinen Namen weißt. 
+    Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.`;
 
-    // Gemini braucht die Rollen "user" und "model" (statt assistant)
-    const geminiMessages = messages.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }));
+    // Neueste Nachricht des Kindes extrahieren
+    const userMessage = messages[messages.length - 1].content;
 
+    // KI-Anfrage senden
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: geminiMessages,
+      contents: userMessage,
       config: {
         systemInstruction: systemInstruction,
-        maxOutputTokens: maxTokens,
+        temperature: 0.7, // Kreativ, aber nicht zu verrückt
       }
     });
 
-    const reply = response.text || 'Hmm, da fällt mir nichts ein!';
-    res.json({ reply });
-
-  } catch (err) {
-    console.error('[error]', err);
-    res.status(500).json({ error: 'Robi schläft kurz — bitte nochmal versuchen!' });
-  }
-});
-
-// ── /api/speak (ElevenLabs - Jorin) ────────────────────────
-app.post('/api/speak', async (req, res) => {
-  const { text } = req.body;
-  const voiceId = 'pNInz6obpgDQGcFmaJgB'; // NEUE Voice-ID
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-
-  if (!text) return res.status(400).json({ error: 'Kein Text empfangen.' });
-
-  try {
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: 'POST',
-          headers: {
-              'xi-api-key': apiKey,
-              'Content-Type': 'application/json',
-              'Accept': 'audio/mpeg'
-          },
-          body: JSON.stringify({
-              text: text,
-              model_id: 'eleven_multilingual_v2', 
-              voice_settings: { stability: 0.35, similarity_boost: 0.75 }
-          })
-      });
-
-      if (!response.ok) throw new Error('Fehler bei ElevenLabs.');
-
-      const audioBuffer = await response.arrayBuffer();
-      res.set('Content-Type', 'audio/mpeg');
-      res.send(Buffer.from(audioBuffer));
+    const reply = response.text || 'Hmm, mir fällt gerade nichts ein!';
+    res.json({ reply: reply });
 
   } catch (error) {
-      console.error('Sprach-Fehler:', error);
-      res.status(500).json({ error: 'Robi hat gerade einen Frosch im Hals.' });
+    console.error('Gemini Fehler:', error);
+    // Hier ist Lios neue Fehlermeldung!
+    res.status(500).json({ error: 'Hoppla! Lio schläft kurz — bitte nochmal versuchen!' });
   }
 });
 
-// ── SPA fallback ───────────────────────────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+// ── API: Speak (ElevenLabs) ────────────────────────────────
+app.post('/api/speak', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
+
+    // Wenn du in Render unter Environment "ELEVENLABS_VOICE_ID" anlegst, nimmt er diese, 
+    // ansonsten nutzt er als Standard die Test-Stimme Adam (pNInz6obpgDQGcFmaJgB)
+    const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'pNInz6obpgDQGcFmaJgB';
+
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': process.env.ELEVENLABS_API_KEY
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: {
+          stability: 0.35, // Macht Lio emotionaler und ausdrucksstärker!
+          similarity_boost: 0.75
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`ElevenLabs API Fehler: ${response.status}`);
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(audioBuffer);
+
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': buffer.length
+    });
+    res.send(buffer);
+
+  } catch (error) {
+    console.error('ElevenLabs Fehler:', error);
+    res.status(500).json({ error: 'Lios Stimme konnte nicht geladen werden.' });
+  }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🤖  Robi (Gemini-Edition) läuft auf Port ${PORT}\n`);
+// ── Server Start ───────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\n🚀 Lio Server läuft auf Port ${PORT}`);
 });
