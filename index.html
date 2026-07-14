@@ -1290,30 +1290,14 @@ let isKaraoke = false;
 let lastLioText = '';
 let childName = localStorage.getItem('Lio_name') || ''; // DSGVO-Name
 
-// 🚀 NEU: Globale Variablen für den Echo-Schutz und die Klicksperre
+// Globale Variablen für den Echo-Schutz und die Klicksperre
 let currentAudio = null;
 let isLioSpeaking = false;
 
 // ERZWINGT DEN STARTBILDSCHIRM BEIM NEULADEN DER SEITE
 window.addEventListener('load', () => {
   
-  // 🚀 NEU: CSS für Lios feste Positionierung NUR auf dem Hauptbildschirm
-  const style = document.createElement('style');
-  style.innerHTML = `
-    #robot.main-active {
-      position: fixed !important;
-      bottom: 20px !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      z-index: 100 !important;
-      width: 150px !important; /* Verhindert, dass er riesig wird */
-      max-width: 35vw !important;
-      height: auto !important;
-    }
-  `;
-  document.head.appendChild(style);
-
-  // 🚀 NEU: Sterne-Staubsauger (Versteckt die alten HTML-Sterne)
+  // 🚀 STERNE-STAUBSÄUGER: Sucht und versteckt alle alten Stern-Elemente im HTML
   const starIds = ['starCount', 'star-count', 'starContainer', 'star-container', 'stars'];
   starIds.forEach(id => {
     const el = document.getElementById(id) || document.querySelector('.' + id);
@@ -1613,7 +1597,7 @@ function renderLessonCards() {
 }
 
 function switchMode(mode) {
-  // 🚀 NEU: Sperre während Lio spricht
+  // 🚀 Klicksperre während Lio spricht
   if (isLioSpeaking) return;
 
   if (parentLocks[mode]) {
@@ -1637,7 +1621,7 @@ function switchMode(mode) {
 }
 
 function goToKaraoke() {
-  // 🚀 NEU: Sperre während Lio spricht
+  // 🚀 Klicksperre während Lio spricht
   if (isLioSpeaking) return;
 
   if (parentLocks['karaoke']) {
@@ -1671,13 +1655,14 @@ function showScreen(name) {
       console.warn('[showScreen] Screen nicht gefunden:', name);
     }
 
-    // 🚀 NEU: Roboter NUR im Main-Screen festnageln
+    // 🚀 NEU & SAUBER: Lio NUR auf screen-main und screen-age einblenden!
+    // Auf allen anderen Bildschirmen blenden wir ihn aus, anstatt sein CSS zu hacken.
     const robot = document.getElementById('robot');
     if (robot) {
-      if (name === 'main') {
-        robot.classList.add('main-active');
+      if (name === 'main' || name === 'age') {
+        robot.style.display = ''; // Nutzt zu 100% deine originalen CSS-Klassen und -Größen!
       } else {
-        robot.classList.remove('main-active');
+        robot.style.display = 'none'; // Unsichtbar auf allen anderen Screens
       }
     }
   } catch (e) {
@@ -1720,7 +1705,7 @@ function closeMenu() {
 }
 
 // ════════════════════════════════════════
-// SPEECH BUBBLE + KONFETTI
+// SPEECH BUBBLE + NEUES BELOHNUNGSSYSTEM (KONFETTI)
 // ════════════════════════════════════════
 function setBubble(text) {
   const bubble = document.getElementById('bubble');
@@ -1747,7 +1732,7 @@ function setHint(text) {
   }
 }
 
-// NEU: Konfetti-Belohnung (erstellt buntes fallendes Konfetti)
+// Konfetti-Belohnung (erstellt buntes fallendes Konfetti)
 function triggerConfetti() {
   for (let i = 0; i < 40; i++) {
     const confetti = document.createElement('div');
@@ -1789,7 +1774,7 @@ function repeatLast() {
 // MOOD
 // ════════════════════════════════════════
 function selectMood(btn, mood) {
-  // 🚀 NEU: Sperre während Lio spricht
+  // 🚀 Klicksperre während Lio spricht
   if (isLioSpeaking) return;
 
   if (currentMood === mood) {
@@ -1939,7 +1924,7 @@ function speak(text) {
 }
 
 function toggleListen() {
-  // 🚀 NEU: Sperre während Lio spricht
+  // 🚀 Klicksperre während Lio spricht
   if (isLioSpeaking) return;
 
   try {
@@ -1989,7 +1974,7 @@ function closeTextInput() {
   document.getElementById('textInput').value = '';
 }
 function sendText() {
-  // 🚀 NEU: Sperre während Lio spricht
+  // 🚀 Klicksperre während Lio spricht
   if (isLioSpeaking) return;
 
   const inp = document.getElementById('textInput');
@@ -2055,14 +2040,14 @@ function parseForSpeech(text) {
 async function speakJorin(text) {
   if (!text || !text.trim()) return;
 
-  // 🚀 NEU: Echo-Schutz! Bricht altes Audio sofort ab.
+  // 🚀 Echo-Schutz: Bricht vorheriges Vorlesen sofort ab
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
   }
 
   try {
-    // 🚀 NEU: Klicksperre aktivieren
+    // 🚀 Klicksperre für alle Buttons aktivieren
     isLioSpeaking = true; 
     const micBtn = document.getElementById('micBtn');
     if (micBtn) micBtn.style.opacity = '0.5';
@@ -2083,7 +2068,7 @@ async function speakJorin(text) {
     
     currentAudio = audio; // Speichern fürs Abbrechen
 
-    // 🚀 NEU: Klicksperre wieder aufheben
+    // Klicksperre aufheben, wenn Lio fertig gesprochen hat
     audio.onended = () => {
       isLioSpeaking = false;
       if (micBtn) micBtn.style.opacity = '1';
@@ -2099,7 +2084,6 @@ async function speakJorin(text) {
     
   } catch (err) {
     console.error('Sprachfehler:', err);
-    // Sperre auch bei Fehler aufheben
     isLioSpeaking = false;
     const micBtn = document.getElementById('micBtn');
     if (micBtn) micBtn.style.opacity = '1';
@@ -2138,7 +2122,7 @@ function fallbackSpeak(text) {
   window.speechSynthesis.speak(utterance);
 }
 
-// 🚀 RESTAURIERT: Die echte Emotions-Erkennung
+// RESTAURIERT: Die echte Emotions-Erkennung
 function detectUserEmotionAdvanced(userText) {
   const lower = userText.toLowerCase();
   
@@ -2164,7 +2148,7 @@ function detectUserEmotionAdvanced(userText) {
   return detectedEmotion;
 }
 
-// 🚀 RESTAURIERT: Die Liam-Gefühls-Antworten
+// RESTAURIERT: Die Liam-Gefühls-Antworten
 const liamEmotionalResponses = {
   happy: { greeting: 'Das freut mich zu hören. Deine Energie kommt an.', follow: 'Das ist wunderbar. Erzähl mir mehr davon.' },
   sad: { greeting: 'Ich sehe, dass es dir gerade nicht so gut geht.', follow: 'Das ist okay. Deine Gefühle sind wichtig. Ich bin für dich da.' },
@@ -2222,7 +2206,7 @@ async function sendMessage(userText) {
         mode: currentMode, 
         age: currentAge, 
         emotion: userEmotion,
-        childName: childName, // 💡 DSGVO: Name wird an die API übertragen
+        childName: childName, // DSGVO: Name wird an die API übertragen
         liamMode: true  
       }),
     });
@@ -2288,7 +2272,7 @@ function renderSongList() {
 }
 
 function playSong(song) {
-  // 🚀 NEU: Klicksperre
+  // 🚀 Klicksperre während Lio spricht
   if (isLioSpeaking) return;
 
   if (!song || !synth) return;
@@ -2311,6 +2295,9 @@ function playSong(song) {
   setTimeout(speakNext, 200);
 }
 
+// ════════════════════════════════════════
+// STOP KARAOKE
+// ════════════════════════════════════════
 function stopKaraoke() {
   isKaraoke = false;
   if (synth) synth.cancel();
@@ -2321,14 +2308,30 @@ function stopKaraoke() {
 }
 
 // ════════════════════════════════════════
-// PARENT PIN
+// PARENT PIN & LOCKS (Lio ausblenden während PIN/Settings)
 // ════════════════════════════════════════
 function openSettings() {
   document.getElementById('panelPin').classList.add('show');
   document.getElementById('pinInput').value = '';
   setTimeout(() => document.getElementById('pinInput').focus(), 100);
+  
+  // 🚀 Lio während PIN-Eingabe ausblenden
+  const robot = document.getElementById('robot');
+  if (robot) robot.style.display = 'none';
 }
-function closePinPanel() { document.getElementById('panelPin').classList.remove('show'); }
+function closePinPanel() { 
+  document.getElementById('panelPin').classList.remove('show'); 
+  
+  // 🚀 Lio wieder einblenden (aber nur, falls wir wieder im main/age screen sind)
+  const robot = document.getElementById('robot');
+  if (robot) {
+    const mainActive = document.getElementById('screen-main').classList.contains('active');
+    const ageActive = document.getElementById('screen-age').classList.contains('active');
+    if (mainActive || ageActive) {
+      robot.style.display = '';
+    }
+  }
+}
 function checkPin() {
   const entered = document.getElementById('pinInput').value;
   if (entered === parentPin) { closePinPanel(); openSettingsPanel(); }
@@ -2343,10 +2346,24 @@ if(document.getElementById('pinInput')) {
 function openSettingsPanel() {
   renderLockToggles();
   document.getElementById('panelSettings').classList.add('show');
+  
+  // 🚀 Lio während der Einstellungen ausblenden
+  const robot = document.getElementById('robot');
+  if (robot) robot.style.display = 'none';
 }
 function closeSettings() {
   document.getElementById('panelSettings').classList.remove('show');
   renderLessonCards();
+  
+  // 🚀 Lio nach den Einstellungen wieder einblenden
+  const robot = document.getElementById('robot');
+  if (robot) {
+    const mainActive = document.getElementById('screen-main').classList.contains('active');
+    const ageActive = document.getElementById('screen-age').classList.contains('active');
+    if (mainActive || ageActive) {
+      robot.style.display = '';
+    }
+  }
 }
 
 function renderLockToggles() {
@@ -2385,7 +2402,7 @@ function changePin() {
 const savedAge = localStorage.getItem('Lio_age');
 const savedName = localStorage.getItem('Lio_name');
 
-// 💡 Die neue Start-Logik:
+// Die neue Start-Logik:
 if (!savedName) {
   showScreen('parent-gate');
 } else if (savedAge && AGE_GROUPS[savedAge]) {
