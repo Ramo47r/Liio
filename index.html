@@ -1655,12 +1655,11 @@ function showScreen(name) {
       console.warn('[showScreen] Screen nicht gefunden:', name);
     }
 
-    // 🚀 NEU & SAUBER: Lio NUR auf screen-main und screen-age einblenden!
-    // Auf allen anderen Bildschirmen blenden wir ihn aus, anstatt sein CSS zu hacken.
+    // 🚀 Lio NUR auf screen-main und screen-age einblenden!
     const robot = document.getElementById('robot');
     if (robot) {
       if (name === 'main' || name === 'age') {
-        robot.style.display = ''; // Nutzt zu 100% deine originalen CSS-Klassen und -Größen!
+        robot.style.display = ''; // Nutzt zu 100% deine originalen CSS-Klassen!
       } else {
         robot.style.display = 'none'; // Unsichtbar auf allen anderen Screens
       }
@@ -1833,6 +1832,10 @@ function loadVoices() {
   if (!synth) return;
   const allVoices = synth.getVoices();
   voices = allVoices.filter(v => v.lang.toLowerCase().startsWith('de'));
+  
+  // 🚀 FIX: bestIdx MUSS VOR dem if(sel) deklariert werden!
+  let bestIdx = 0; 
+  
   const sel = document.getElementById('voiceSel');
   if (sel) {
     sel.innerHTML = '';
@@ -1866,7 +1869,6 @@ function loadVoices() {
           'Hedda',
         ];
     
-    let bestIdx = 0;
     voices.forEach((v, i) => {
       const opt = document.createElement('option');
       opt.value = i;
@@ -2315,14 +2317,12 @@ function openSettings() {
   document.getElementById('pinInput').value = '';
   setTimeout(() => document.getElementById('pinInput').focus(), 100);
   
-  // 🚀 Lio während PIN-Eingabe ausblenden
   const robot = document.getElementById('robot');
   if (robot) robot.style.display = 'none';
 }
 function closePinPanel() { 
   document.getElementById('panelPin').classList.remove('show'); 
   
-  // 🚀 Lio wieder einblenden (aber nur, falls wir wieder im main/age screen sind)
   const robot = document.getElementById('robot');
   if (robot) {
     const mainActive = document.getElementById('screen-main').classList.contains('active');
@@ -2347,7 +2347,6 @@ function openSettingsPanel() {
   renderLockToggles();
   document.getElementById('panelSettings').classList.add('show');
   
-  // 🚀 Lio während der Einstellungen ausblenden
   const robot = document.getElementById('robot');
   if (robot) robot.style.display = 'none';
 }
@@ -2355,7 +2354,6 @@ function closeSettings() {
   document.getElementById('panelSettings').classList.remove('show');
   renderLessonCards();
   
-  // 🚀 Lio nach den Einstellungen wieder einblenden
   const robot = document.getElementById('robot');
   if (robot) {
     const mainActive = document.getElementById('screen-main').classList.contains('active');
