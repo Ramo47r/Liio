@@ -434,6 +434,30 @@ body {
   z-index: 1;
 }
 
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px 16px 0;
+  max-width: min(440px, 92vw);
+  z-index: 5;
+}
+.quick-chip {
+  background: rgba(255,255,255,0.92);
+  color: var(--ink);
+  border: none;
+  border-radius: 50px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(46,42,107,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.quick-chip:active { transform: translateY(2px) scale(0.96); box-shadow: 0 3px 8px rgba(46,42,107,0.25); }
+
 .dots span {
   display: inline-block; width: 8px; height: 8px;
   background: #00aadd; border-radius: 50%;
@@ -1177,6 +1201,7 @@ body {
 
   <!-- Speech bubble — between Lio and lesson cards -->
   <div class="speech-bubble" id="bubble">Hi! Tipp das Mikro und sprich mit mir!</div>
+  <div class="quick-replies" id="quickReplies"></div>
 
   <!-- Bottom: Lesson cards + big mic -->
   <div class="bottom-area">
@@ -1672,6 +1697,7 @@ function switchMode(mode) {
     return;
   }
   closeMenu();
+  clearQuickReplies();
 
   if (mode === 'homework') {
     currentMode = mode;
@@ -1710,6 +1736,45 @@ const SUBJECTS = [
 ];
 let currentSubject = null;
 
+// Themen-Vorschläge, damit Lio von sich aus anfängt zu erklären,
+// statt erst zu fragen "Welches Thema?" — weniger Tippen, mehr Antippen.
+const HOMEWORK_TOPICS = {
+  mathe:     [ { label: '🔢 Einmaleins', prompt: 'Erklär mir bitte das Einmaleins, Schritt für Schritt.' },
+               { label: '➗ Textaufgaben', prompt: 'Ich hab eine Textaufgabe und weiß nicht, wo ich anfangen soll.' },
+               { label: '🍰 Brüche', prompt: 'Erklär mir Brüche mit einem einfachen Beispiel.' } ],
+  deutsch:   [ { label: '📝 Rechtschreibung', prompt: 'Kannst du mir eine Rechtschreibregel an einem Beispiel erklären?' },
+               { label: '📖 Text verstehen', prompt: 'Ich soll einen Text lesen und verstehen, hilf mir Schritt für Schritt.' },
+               { label: '✍️ Aufsatz', prompt: 'Ich muss einen Aufsatz schreiben und weiß nicht, wie ich anfange.' } ],
+  englisch:  [ { label: '🔤 Vokabeln', prompt: 'Übe mit mir ein paar einfache englische Vokabeln.' },
+               { label: '🗣️ Sätze bilden', prompt: 'Zeig mir, wie ich einen einfachen englischen Satz bilde.' } ],
+  sachkunde: [ { label: '🌍 Thema erklären', prompt: 'Erklär mir mein Sachkunde-Thema einfach und mit Beispielen.' } ],
+  sonstiges: [ { label: '💡 Zeig mir ein Beispiel', prompt: 'Zeig mir bitte ein einfaches Beispiel zu meiner Aufgabe.' } ],
+};
+
+// Anschluss-Chips nach Lios Antwort im Hausaufgaben-Modus — Kind tippt statt tippt & schreibt
+const HOMEWORK_FOLLOWUPS = [
+  { label: '👍 Verstanden', prompt: 'Ich hab es verstanden, was kommt als Nächstes?' },
+  { label: '🔁 Nochmal, langsamer', prompt: 'Kannst du das nochmal langsamer und einfacher erklären?' },
+  { label: '📝 Anderes Beispiel', prompt: 'Zeig mir noch ein anderes Beispiel dazu.' },
+];
+
+function renderQuickReplies(items) {
+  const row = document.getElementById('quickReplies');
+  if (!row) return;
+  row.innerHTML = '';
+  items.forEach(item => {
+    const chip = document.createElement('button');
+    chip.className = 'quick-chip';
+    chip.textContent = item.label;
+    chip.onclick = () => { clearQuickReplies(); sendMessage(item.prompt); };
+    row.appendChild(chip);
+  });
+}
+function clearQuickReplies() {
+  const row = document.getElementById('quickReplies');
+  if (row) row.innerHTML = '';
+}
+
 function openSubjectPanel() {
   const grid = document.getElementById('subjectGrid');
   grid.innerHTML = '';
@@ -1732,16 +1797,17 @@ function selectSubject(subject) {
   document.getElementById('panelSubject').classList.remove('show');
   messages = [];
   const welcomes = {
-    mathe:     'Mathe! Zeig mir deine Aufgabe — ich erkläre dir Schritt für Schritt, wie du selbst drauf kommst.',
-    deutsch:   'Deutsch! Grammatik, Lesen oder ein Text? Erzähl mir, woran wir arbeiten.',
-    englisch:  'English time! Was übst du gerade — Wörter, Sätze oder Grammatik?',
-    sachkunde: 'Sachkunde! Worum geht es in deiner Aufgabe?',
+    mathe:     'Mathe! Ich hab schon ein paar Ideen für dich — oder erzähl mir direkt, woran du gerade arbeitest.',
+    deutsch:   'Deutsch! Hier sind ein paar Themen — oder sag mir direkt, was du übst.',
+    englisch:  'English time! Wähl ein Thema, oder erzähl mir, was du gerade übst.',
+    sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir direkt, worum es geht.',
     sonstiges: 'Klar, erzähl mir, bei welcher Aufgabe ich dir wie ein:e Lehrer:in helfen soll.',
   };
   const welcome = (welcomes[subject.key] || welcomes.sonstiges).replace('{name}', childName);
   setBubble(welcome);
   lastLioText = welcome;
   speakJorin(welcome);
+  renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges);
 }
 
 function goToKaraoke() {
@@ -2338,6 +2404,7 @@ async function sendMessage(userText) {
 
   if (!userText || !userText.trim()) return;
   userText = userText.trim().slice(0, 500);
+  clearQuickReplies();
 
   // Sicherheitsnetz: Mobbing-/Notlage-Signale unabhängig von der KI-Antwort erkennen
   const bullyingSignal = detectBullyingSignal(userText);
@@ -2412,6 +2479,8 @@ async function sendMessage(userText) {
     // unabhängig davon, wie die KI inhaltlich geantwortet hat
     if (bullyingSignal) {
       setTimeout(() => openHelpPanel(), 900);
+    } else if (currentMode === 'homework') {
+      renderQuickReplies(HOMEWORK_FOLLOWUPS);
     }
 
   } catch (err) {
