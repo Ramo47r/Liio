@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Lio – Dein Freund, der dich wirklich sieht 💜</title>
-<meta name="theme-color" content="#4facfe">
+<meta name="theme-color" content="#4A4FC4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,20 +13,36 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%234ec3ff'/><text y='380' font-size='340' text-anchor='middle' x='256'>🤖</text></svg>">
 <style>
-/* ── NEUE MODERNE SCHRIFTART ── */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap');
+/* ── SCHRIFTARTEN: Baloo 2 (Display, verspielt-modern) + Nunito (Body, gut lesbar) ── */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;800;900&display=swap');
+
+/* ── DESIGN TOKENS: "Lio Aurora" — ein Dämmerungs-Himmel statt generischem Hellblau ── */
+:root {
+  --sky-deep:    #2E2A6B;   /* tiefes Abend-Indigo */
+  --sky-mid:     #4A4FC4;   /* Übergang */
+  --sky-glow:    #6E8CFF;   /* heller Horizont-Blau-Ton */
+  --aurora-1:    #8B7CF6;   /* Violett-Glow (Halo, Akzente) */
+  --aurora-2:    #4FD8E8;   /* Türkis-Glow (zweite Halo-Schicht) */
+  --sun:         #FFB648;   /* warmes Amber — primäre Aktion (Mikro) */
+  --sun-deep:    #FF8A3D;   /* Amber dunkler — Verlauf/Schatten */
+  --coral:       #FF6F91;   /* Warmer Zweitakzent */
+  --ink:         #1A2148;   /* Textfarbe auf hellem Grund */
+  --cloud:       #FFFFFF;
+  --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', sans-serif;
+  --font-body:    'Nunito', ui-rounded, 'SF Pro Rounded', sans-serif;
+}
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 html, body { 
   height:100%; 
   overflow:hidden; 
-  font-family: 'Nunito', ui-rounded, 'SF Pro Rounded', sans-serif; 
+  font-family: var(--font-body); 
 }
 
-/* Neuer, lebendiger Farbverlauf */
+/* Aurora-Dämmerung statt generischem Cyan-Verlauf — Lios eigene Bühne */
 body {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(160deg, var(--sky-deep) 0%, var(--sky-mid) 48%, var(--sky-glow) 100%);
   margin: 0;
   padding: 0;
   display: flex;
@@ -65,7 +81,7 @@ body {
   text-align: center;
   z-index: 9999; /* Zwingt den Bildschirm ÜBER die Menüleiste */
   padding: 20px 16px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(160deg, var(--sky-deep) 0%, var(--sky-mid) 48%, var(--sky-glow) 100%);
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
 }
@@ -73,9 +89,10 @@ body {
 .age-top { width: 100%; flex-shrink: 0; }
 .age-greeting {
   font-size: clamp(22px, 5.5vw, 28px);
-  font-weight: 900;
+  font-weight: 700;
+  font-family: var(--font-display);
   color: white;
-  text-shadow: 0 4px 15px rgba(0, 100, 200, 0.4);
+  text-shadow: 0 4px 20px rgba(46,42,107,0.5);
 }
 .age-subtitle {
   font-size: clamp(14px, 3.6vw, 17px);
@@ -251,16 +268,17 @@ body {
   width: 46px; height: 46px;
   border-radius: 50%;
   background: white;
-  border: 3px solid #ffd84d;
-  color: #1a3050;
+  border: none;
+  color: var(--ink);
   font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.15), 0 6px 14px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 18px rgba(46,42,107,0.35);
   display: flex; align-items: center; justify-content: center;
   font-family: inherit;
   font-weight: bold;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.top-circle-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+.top-circle-btn:active { transform: translateY(2px) scale(0.96); box-shadow: 0 4px 10px rgba(46,42,107,0.3); }
 
 /* ROBOT AREA - dominates the upper part like Buddy.ai */
 .Lio-area {
@@ -291,17 +309,19 @@ body {
   top: 38%; left: 50%;
   width: 100%; height: 80%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at center,
-    rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 70%);
+  background:
+    radial-gradient(ellipse 60% 60% at 40% 45%, rgba(139,124,246,0.55) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 60% at 62% 55%, rgba(79,216,232,0.45) 0%, transparent 65%);
+  filter: blur(2px);
   pointer-events: none; z-index: 1; border-radius: 50%;
   animation: haloPulse 4s ease-in-out infinite;
 }
-.halo.happy   { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.1) 40%, transparent 70%); }
-.halo.sad     { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1) 40%, transparent 70%); }
-.halo.angry   { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1) 40%, transparent 70%); }
-.halo.scared  { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1) 40%, transparent 70%); }
-.halo.tired   { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05) 40%, transparent 70%); }
-.halo.excited { background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.15) 40%, transparent 70%); }
+.halo.happy   { background: radial-gradient(ellipse 60% 60% at 40% 45%, rgba(255,182,72,0.5) 0%, transparent 65%), radial-gradient(ellipse 60% 60% at 62% 55%, rgba(139,124,246,0.4) 0%, transparent 65%); }
+.halo.sad     { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(110,140,255,0.4) 0%, transparent 65%); }
+.halo.angry   { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(255,111,145,0.45) 0%, transparent 65%); }
+.halo.scared  { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(139,124,246,0.4) 0%, transparent 65%); }
+.halo.tired   { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(139,124,246,0.25) 0%, transparent 65%); }
+.halo.excited { background: radial-gradient(ellipse 60% 60% at 40% 45%, rgba(255,182,72,0.55) 0%, transparent 65%), radial-gradient(ellipse 60% 60% at 62% 55%, rgba(79,216,232,0.5) 0%, transparent 65%); }
 
 /* 2. Plattform ist am Boden verankert */
 .platform {
@@ -370,18 +390,18 @@ body {
 /* SPEECH BUBBLE - prominent like in Buddy.ai */
 .speech-bubble {
   background: white;
-  color: #1a3050;
+  color: var(--ink);
   padding: 12px 18px;
   border-radius: 22px;
   font-size: clamp(14px, 3.8vw, 17px);
-  font-weight: 600;
+  font-weight: 700;
   z-index: 5;
   text-align: center;
   max-width: min(440px, 92vw);
   width: calc(100% - 32px);
   margin: 0 16px;
-  border: 4px solid #ffd84d;
-  box-shadow: 0 6px 0 rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.2);
+  border: none;
+  box-shadow: 0 10px 30px rgba(46,42,107,0.35), 0 0 0 3px rgba(139,124,246,0.35);
   line-height: 1.4;
   min-height: 50px;
   display: flex;
@@ -399,7 +419,7 @@ body {
   width: 0; height: 0;
   border-left: 12px solid transparent;
   border-right: 12px solid transparent;
-  border-bottom: 14px solid #ffd84d;
+  border-bottom: 14px solid rgba(139,124,246,0.5);
 }
 .speech-bubble::after {
   content: '';
@@ -458,7 +478,7 @@ body {
 }
 .mood-pill {
   background: white;
-  border: 2px solid rgba(255,216,77,0.5);
+  border: 2px solid rgba(139,124,246,0.4);
   border-radius: 50%;
   width: 36px; height: 36px;
   font-size: 18px;
@@ -466,14 +486,14 @@ body {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
-  box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(46,42,107,0.25);
 }
-.mood-pill:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.1); }
+.mood-pill:active { transform: translateY(2px) scale(0.96); }
 .mood-pill.selected {
-  background: #ffd84d;
+  background: var(--sun);
   border-color: white;
   transform: scale(1.15);
-  box-shadow: 0 0 14px rgba(255,216,77,0.9);
+  box-shadow: 0 0 16px rgba(255,182,72,0.8);
 }
 /* ════════════════════════════════════════
    BOTTOM ACTION AREA — Big mic + scrollable lesson cards
@@ -501,8 +521,8 @@ body {
   flex-shrink: 0;
   scroll-snap-align: center;
   background: linear-gradient(135deg, var(--c1), var(--c2));
-  border: 3px solid white;
-  border-radius: 18px;
+  border: none;
+  border-radius: 20px;
   padding: 10px 6px;
   width: 92px;
   min-height: 76px;
@@ -513,16 +533,16 @@ body {
   justify-content: center;
   gap: 4px;
   color: white;
-  font-weight: bold;
-  font-family: inherit;
+  font-weight: 700;
+  font-family: var(--font-display);
   font-size: 11px;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 6px 14px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.22);
   text-align: center;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.lesson-card:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+.lesson-card:active { transform: translateY(2px) scale(0.97); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 .lesson-card.active {
-  border-color: #ffd84d;
-  box-shadow: 0 0 14px rgba(255,216,77,0.8), 0 4px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 0 0 3px white, 0 0 18px rgba(139,124,246,0.7), 0 8px 20px rgba(0,0,0,0.22);
 }
 .lesson-card .lesson-icon { font-size: 28px; line-height: 1; }
 .lesson-card .lesson-label { line-height: 1.1; }
@@ -553,28 +573,28 @@ body {
   width: clamp(90px, 24vw, 110px);
   height: clamp(90px, 24vw, 110px);
   border-radius: 50%;
-  border: 5px solid white;
-  background: linear-gradient(135deg, #ffd84d, #ff9020);
+  border: none;
+  background: linear-gradient(135deg, var(--sun), var(--sun-deep));
   color: white;
   font-size: clamp(40px, 11vw, 50px);
   cursor: pointer;
-  box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 10px 24px rgba(255, 144, 32, 0.7), 0 0 0 0 rgba(255, 200, 80, 0.7);
+  box-shadow: 0 10px 28px rgba(255,138,61,0.55), 0 0 0 6px rgba(255,255,255,0.15);
   transition: transform 0.15s, box-shadow 0.15s;
   display: flex; align-items: center; justify-content: center;
   font-family: inherit;
   position: relative;
 }
 .big-mic:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 6px 14px rgba(255, 144, 32, 0.6);
+  transform: translateY(3px) scale(0.98);
+  box-shadow: 0 6px 16px rgba(255,138,61,0.5), 0 0 0 6px rgba(255,255,255,0.12);
 }
 .big-mic.listening {
   background: linear-gradient(135deg, #ff5577, #cc2244);
   animation: pulseListen 1.2s ease-out infinite;
 }
 @keyframes pulseListen {
-  0% { box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 10px 24px rgba(255,80,120,0.7), 0 0 0 0 rgba(255,80,120,0.8); }
-  100% { box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 10px 24px rgba(255,80,120,0.5), 0 0 0 28px rgba(255,80,120,0); }
+  0% { box-shadow: 0 10px 28px rgba(255,80,120,0.55), 0 0 0 6px rgba(255,255,255,0.15); }
+  100% { box-shadow: 0 10px 28px rgba(255,80,120,0.35), 0 0 0 28px rgba(255,80,120,0); }
 }
 .big-mic:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -582,19 +602,19 @@ body {
 .side-btn {
   width: 56px; height: 56px;
   border-radius: 50%;
-  border: 3px solid white;
+  border: none;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-family: inherit;
   font-size: 22px;
   color: white;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 6px 14px rgba(0,0,0,0.25);
-  transition: transform 0.15s;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
   flex-shrink: 0;
 }
-.side-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
-.side-btn.keyboard { background: linear-gradient(135deg, #6cf5b9, #1ab87e); }
-.side-btn.repeat { background: linear-gradient(135deg, #c896ff, #8852e8); }
+.side-btn:active { transform: translateY(2px) scale(0.96); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
+.side-btn.keyboard { background: linear-gradient(135deg, var(--aurora-2), #1ab87e); }
+.side-btn.repeat { background: linear-gradient(135deg, var(--aurora-1), #6a4fd8); }
 
 /* Mic label/hint */
 .mic-hint {
@@ -628,7 +648,7 @@ body {
 .text-overlay input {
   flex: 1;
   padding: 14px 18px;
-  border: 3px solid #ffd84d;
+  border: 3px solid var(--aurora-1);
   background: #f5f9ff;
   border-radius: 50px;
   font-size: 15px;
@@ -638,13 +658,13 @@ body {
   min-width: 0;
   color: #1a3050;
 }
-.text-overlay input:focus { border-color: #ff9020; background: white; }
+.text-overlay input:focus { border-color: var(--sun-deep); background: white; }
 
 .text-overlay .send {
   width: 50px; height: 50px;
   border-radius: 50%;
   border: 3px solid white;
-  background: linear-gradient(135deg, #ffd84d, #ff9020);
+  background: linear-gradient(135deg, var(--sun), var(--sun-deep));
   color: white;
   font-size: 22px;
   cursor: pointer;
@@ -683,8 +703,8 @@ body {
   top: 0; left: 0;
   bottom: 0;
   width: min(280px, 80vw);
-  background: linear-gradient(180deg, #4ec3ff 0%, #6b8eff 100%);
-  border-right: 3px solid white;
+  background: linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-mid) 100%);
+  border-right: none;
   z-index: 31;
   transform: translateX(-100%);
   transition: transform 0.3s ease-out;
@@ -693,15 +713,15 @@ body {
   padding: 18px 14px;
   overflow-y: auto;
   color: white;
-  box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+  box-shadow: 4px 0 30px rgba(0,0,0,0.4);
 }
 .menu-drawer.show { transform: translateX(0); }
 
 .menu-title {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 22px;
+  font-family: var(--font-display);
+  font-weight: 700;
   margin-bottom: 4px;
-  text-shadow: 0 3px 0 #2196f3;
 }
 .menu-subtitle {
   font-size: 12px;
@@ -720,7 +740,7 @@ body {
 
 .menu-item {
   background: linear-gradient(135deg, var(--c1), var(--c2));
-  border: 3px solid white;
+  border: none;
   border-radius: 16px;
   padding: 11px 14px;
   margin-bottom: 6px;
@@ -729,18 +749,18 @@ body {
   align-items: center;
   gap: 10px;
   color: white;
-  font-family: inherit;
+  font-family: var(--font-display);
   font-size: 14px;
-  font-weight: bold;
+  font-weight: 600;
   width: 100%;
   text-align: left;
-  box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.menu-item:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+.menu-item:active { transform: translateY(2px) scale(0.98); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
 .menu-item .menu-icon { font-size: 22px; flex-shrink: 0; }
 .menu-item.active {
-  border-color: #ffd84d;
-  box-shadow: 0 0 14px rgba(255,216,77,0.7), 0 3px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 0 0 3px white, 0 0 16px rgba(139,124,246,0.7);
 }
 
 .menu-mode-talk       { --c1: #6cf5b9; --c2: #1ab87e; }
@@ -776,33 +796,36 @@ body {
    PARENT PANEL
 ═══════════════════════════════════════ */
 .panel {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  position: fixed; inset: 0; background: rgba(20,16,50,0.7);
   display: none; align-items: center; justify-content: center;
   z-index: 40; padding: 20px;
 }
 .panel.show { display: flex; }
 .panel-inner {
   background: white; border-radius: 24px; padding: 24px;
-  max-width: 400px; width: 100%; color: #1a3050;
+  max-width: 400px; width: 100%; color: var(--ink);
   max-height: 90vh; overflow-y: auto;
-  border: 4px solid #ffd84d;
+  border: none;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
   font-family: inherit;
 }
-.panel h2 { margin-bottom: 10px; font-size: 20px; color: #ff9020; }
+.panel h2 { margin-bottom: 10px; font-size: 20px; color: var(--sky-mid); font-family: var(--font-display); }
 .panel label { display: block; margin: 12px 0 5px; font-size: 13px; font-weight: bold; }
 .panel select, .panel input[type=range], .panel input[type=password], .panel input[type=text] {
-  width: 100%; padding: 8px; border: 2px solid #99c; border-radius: 10px;
+  width: 100%; padding: 8px; border: 2px solid #d8d5f5; border-radius: 10px;
   font-size: 14px; font-family: inherit;
 }
 .panel button {
   margin-top: 8px; padding: 12px 18px;
-  background: linear-gradient(135deg, #ffd84d, #ff9020);
-  color: white; border: 3px solid white;
+  background: linear-gradient(135deg, var(--sun), var(--sun-deep));
+  color: white; border: none;
   border-radius: 50px; cursor: pointer; font-size: 15px;
-  width: 100%; font-weight: bold; font-family: inherit;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+  width: 100%; font-weight: 700; font-family: var(--font-display);
+  box-shadow: 0 8px 18px rgba(255,138,61,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.panel button.cancel { background: #aab; }
+.panel button:active { transform: translateY(2px) scale(0.98); }
+.panel button.cancel { background: #8b87b8; box-shadow: 0 8px 18px rgba(46,42,107,0.25); }
 
 .pin-hint {
   background: #fff3cd; padding: 10px 14px;
@@ -881,7 +904,7 @@ body {
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   font-family: 'Nunito', sans-serif;
 }
-.parent-card h2 { margin-bottom: 12px; color: #4facfe; font-weight: 900; }
+.parent-card h2 { margin-bottom: 12px; color: var(--sky-mid); font-weight: 900; }
 .parent-card p { font-size: 15px; margin-bottom: 20px; font-weight: 600; color: #555; }
 .privacy-note { 
   font-size: 12px !important; background: #f0f8ff; padding: 12px; 
@@ -891,9 +914,9 @@ body {
   width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 12px; 
   margin-bottom: 12px; font-size: 18px; text-align: center; font-family: inherit; font-weight: bold;
 }
-.parent-card input:focus { outline: none; border-color: #4facfe; }
+.parent-card input:focus { outline: none; border-color: var(--sky-mid); }
 .parent-card button { 
-  background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border: none; 
+  background: linear-gradient(135deg, var(--sun), var(--sun-deep)); color: white; border: none; 
   padding: 14px 20px; border-radius: 12px; font-size: 18px; font-weight: 900; 
   cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 15px rgba(0,200,255,0.3);
   transition: transform 0.2s;
@@ -1118,6 +1141,7 @@ body {
 <div class="screen" id="screen-main">
   <div class="top-bar">
     <button class="top-circle-btn" onclick="openMenu()" aria-label="Menü">☰</button>
+    <button class="top-circle-btn help-btn" onclick="openHelpPanel()" aria-label="Hilfe">💙</button>
     <button class="top-circle-btn" onclick="openSettings()" aria-label="Eltern">🔒</button>
   </div>
 
@@ -1204,8 +1228,8 @@ body {
   <button class="menu-item menu-mode-talk" onclick="switchMode('talk')" id="m-talk">
     <span class="menu-icon">💬</span><span>Frei chatten</span>
   </button>
-  <button class="menu-item menu-mode-homework" onclick="switchMode('homework')" id="m-homework">
-    <span class="menu-icon">📚</span><span>Hausaufgaben-Hilfe</span>
+  <button class="menu-item menu-mode-homework" onclick="switchMode('homework')" id="m-homework" style="box-shadow:0 0 0 2px #FFB648, 0 6px 14px rgba(0,0,0,0.25);">
+    <span class="menu-icon">📚</span><span>Hausaufgaben-Hilfe <span style="font-size:11px; color:#FFE3B0; font-weight:bold;">· wie ein:e Lehrer:in</span></span>
   </button>
   <button class="menu-item menu-mode-stories" onclick="switchMode('stories')" id="m-stories">
     <span class="menu-icon">📖</span><span>Geschichte</span>
@@ -1246,8 +1270,7 @@ body {
   <div class="panel-inner">
     <h2>🔒 Eltern-Bereich</h2>
     <div class="pin-hint">
-      Nur für Eltern. Bitte PIN eingeben.<br><br>
-      <strong>Standard-PIN: 1234</strong>
+      Nur für Eltern. Bitte PIN eingeben.
     </div>
     <label for="pinInput">PIN:</label>
     <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••">
@@ -1273,10 +1296,44 @@ body {
     <div id="lockToggles"></div>
 
     <hr style="margin:14px 0; border:none; border-top:1px solid #ddd;">
+    <h2 style="font-size:16px; margin-top:6px;">💙 Hinweise</h2>
+    <div id="parentNotices" style="font-size:13px; line-height:1.5;"></div>
+
+    <hr style="margin:14px 0; border:none; border-top:1px solid #ddd;">
     <label for="newPinInput">🔑 Neue PIN setzen:</label>
     <input type="text" id="newPinInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="z.B. 4321">
     <button onclick="changePin()">PIN ändern</button>
     <button class="cancel" onclick="closeSettings()">Schließen</button>
+  </div>
+</div>
+
+<!-- Help Panel — immer verfügbar, unabhängig von der KI-Antwort -->
+<div class="panel" id="panelHelp">
+  <div class="panel-inner">
+    <h2>💙 Ich brauche Hilfe</h2>
+    <p style="font-size:14px; line-height:1.5; margin-bottom:10px;">
+      Wenn dich jemand ärgert, mobbt, dir wehtut oder du dich nicht sicher fühlst:
+      Das ist <b>nicht deine Schuld</b>. Sprich mit einem Erwachsenen, dem du vertraust —
+      z. B. Eltern, Lehrer:in, Großeltern.
+    </p>
+    <p style="font-size:14px; line-height:1.6; background:#eef6ff; border-radius:12px; padding:12px;">
+      📞 <b>Kinder- und Jugendtelefon</b><br>
+      <a href="tel:116111" style="color:#1899d6; font-weight:bold; font-size:18px;">116 111</a>
+      — kostenlos, anonym, täglich erreichbar<br><br>
+      📞 <b>Elterntelefon</b> (für Erwachsene)<br>
+      <a href="tel:08001110550" style="color:#1899d6; font-weight:bold;">0800 111 0 550</a>
+    </p>
+    <button class="cancel" onclick="closeHelpPanel()">Zurück</button>
+  </div>
+</div>
+
+<!-- Homework Subject Panel -->
+<div class="panel" id="panelSubject">
+  <div class="panel-inner">
+    <h2>📚 Hausaufgaben-Hilfe</h2>
+    <p style="font-size:14px; margin-bottom:12px;">Lio erklärt wie ein:e Lehrer:in — Schritt für Schritt, mit Fragen statt Vorsagen. Welches Fach?</p>
+    <div id="subjectGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+    <button class="cancel" onclick="closeSubjectPanel()" style="margin-top:14px;">Zurück</button>
   </div>
 </div>
 
@@ -1591,7 +1648,8 @@ function renderLessonCards() {
     const card = document.createElement('button');
     card.className = 'lesson-card mode-' + key;
     if (key === currentMode) card.classList.add('active');
-    card.innerHTML = '<div class="lesson-icon">' + m.icon + '</div><div class="lesson-label">' + m.title + '</div>';
+    const badge = key === 'homework' ? '<div style="font-size:9px; color:#FFE3B0; font-weight:bold;">wie ein:e Lehrer:in</div>' : '';
+    card.innerHTML = '<div class="lesson-icon">' + m.icon + '</div><div class="lesson-label">' + m.title + '</div>' + badge;
     card.onclick = () => switchMode(key);
     row.appendChild(card);
   });
@@ -1614,6 +1672,17 @@ function switchMode(mode) {
     return;
   }
   closeMenu();
+
+  if (mode === 'homework') {
+    currentMode = mode;
+    renderLessonCards();
+    document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+    const activeBtn = document.getElementById('m-homework');
+    if (activeBtn) activeBtn.classList.add('active');
+    openSubjectPanel();
+    return;
+  }
+
   currentMode = mode;
   messages = [];
   const m = MODES[mode];
@@ -1627,6 +1696,52 @@ function switchMode(mode) {
   document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
   const activeBtn = document.getElementById('m-' + mode);
   if (activeBtn) activeBtn.classList.add('active');
+}
+
+// ════════════════════════════════════════
+// HAUSAUFGABEN-HILFE — Fach-Auswahl, Lehrer-Stil
+// ════════════════════════════════════════
+const SUBJECTS = [
+  { key: 'mathe',    icon: '🔢', label: 'Mathe' },
+  { key: 'deutsch',  icon: '📖', label: 'Deutsch' },
+  { key: 'englisch', icon: '🇬🇧', label: 'Englisch' },
+  { key: 'sachkunde',icon: '🌍', label: 'Sachkunde' },
+  { key: 'sonstiges',icon: '✏️', label: 'Etwas anderes' },
+];
+let currentSubject = null;
+
+function openSubjectPanel() {
+  const grid = document.getElementById('subjectGrid');
+  grid.innerHTML = '';
+  SUBJECTS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'lesson-card';
+    btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;';
+    btn.innerHTML = '<div class="lesson-icon">' + s.icon + '</div><div class="lesson-label">' + s.label + '</div>';
+    btn.onclick = () => selectSubject(s);
+    grid.appendChild(btn);
+  });
+  document.getElementById('panelSubject').classList.add('show');
+}
+function closeSubjectPanel() {
+  document.getElementById('panelSubject').classList.remove('show');
+  if (!currentSubject) switchMode('talk');
+}
+function selectSubject(subject) {
+  currentSubject = subject.key;
+  document.getElementById('panelSubject').classList.remove('show');
+  messages = [];
+  const welcomes = {
+    mathe:     'Mathe! Zeig mir deine Aufgabe — ich erkläre dir Schritt für Schritt, wie du selbst drauf kommst.',
+    deutsch:   'Deutsch! Grammatik, Lesen oder ein Text? Erzähl mir, woran wir arbeiten.',
+    englisch:  'English time! Was übst du gerade — Wörter, Sätze oder Grammatik?',
+    sachkunde: 'Sachkunde! Worum geht es in deiner Aufgabe?',
+    sonstiges: 'Klar, erzähl mir, bei welcher Aufgabe ich dir wie ein:e Lehrer:in helfen soll.',
+  };
+  const welcome = (welcomes[subject.key] || welcomes.sonstiges).replace('{name}', childName);
+  setBubble(welcome);
+  lastLioText = welcome;
+  speakJorin(welcome);
 }
 
 function goToKaraoke() {
@@ -2189,9 +2304,44 @@ function setLioEmotion(emotion) {
   }
 }
 
+// ════════════════════════════════════════
+// SICHERHEITSNETZ: MOBBING-ERKENNUNG
+// ════════════════════════════════════════
+const BULLYING_PATTERNS = [
+  /mobb/i, /gemobbt/i, /gehänselt|hänseln/i, /ausgelacht/i, /ausgeschlossen/i,
+  /schlagen mich|schlägt mich|geschlagen/i, /keiner mag mich|niemand mag mich/i,
+  /haben mich fertig ?gemacht/i, /tut mir weh in der schule/i, /angst vor der schule/i,
+  /nennen mich (immer )?(dumm|hässlich|fett|blöd)/i, /wollen nicht mit mir spielen/i,
+];
+
+function detectBullyingSignal(text) {
+  return BULLYING_PATTERNS.some(p => p.test(text));
+}
+
+// Speichert nur Datum + Kategorie, NIE den Wortlaut des Gesprächs (Datenschutz)
+function logParentNotice(category) {
+  try {
+    const notices = JSON.parse(localStorage.getItem('Lio_notices') || '[]');
+    notices.push({ category, date: new Date().toISOString() });
+    localStorage.setItem('Lio_notices', JSON.stringify(notices.slice(-20)));
+  } catch (e) { console.warn('[logParentNotice] fehlgeschlagen', e); }
+}
+
+function openHelpPanel() {
+  document.getElementById('panelHelp').classList.add('show');
+}
+function closeHelpPanel() {
+  document.getElementById('panelHelp').classList.remove('show');
+}
+
 async function sendMessage(userText) {
+
   if (!userText || !userText.trim()) return;
   userText = userText.trim().slice(0, 500);
+
+  // Sicherheitsnetz: Mobbing-/Notlage-Signale unabhängig von der KI-Antwort erkennen
+  const bullyingSignal = detectBullyingSignal(userText);
+  if (bullyingSignal) logParentNotice('mobbing-hinweis');
 
   const userEmotion = detectUserEmotionAdvanced(userText);
   setLioEmotion(userEmotion);
@@ -2218,7 +2368,12 @@ async function sendMessage(userText) {
         age: currentAge, 
         emotion: userEmotion,
         childName: childName, // DSGVO: Name wird an die API übertragen
-        lioMode: true
+        lioMode: true,
+        subject: currentMode === 'homework' ? currentSubject : undefined,
+        teachingStyle: currentMode === 'homework' ? 'socratic-teacher' : undefined
+        // Hinweis fürs Backend: bei teachingStyle 'socratic-teacher' bitte NIE direkt die
+        // Lösung vorsagen — stattdessen Schritt für Schritt anleiten, Verständnisfragen
+        // stellen, Hinweise statt Antworten geben, wie eine gute Lehrkraft es tun würde.
       }),
     });
     
@@ -2252,6 +2407,12 @@ async function sendMessage(userText) {
     
     // Konfetti-Regen auslösen!
     triggerConfetti();
+
+    // Sicherheitsnetz: Hilfe-Panel mit echten Ansprechpartnern anzeigen,
+    // unabhängig davon, wie die KI inhaltlich geantwortet hat
+    if (bullyingSignal) {
+      setTimeout(() => openHelpPanel(), 900);
+    }
 
   } catch (err) {
     console.error('[sendMessage] Fehler abgefangen:', err.message);
@@ -2363,11 +2524,35 @@ if(document.getElementById('pinInput')) {
 
 function openSettingsPanel() {
   renderLockToggles();
+  renderParentNotices();
   document.getElementById('panelSettings').classList.add('show');
   
   const robot = document.getElementById('robot');
   if (robot) robot.style.display = 'none';
 }
+
+function renderParentNotices() {
+  const container = document.getElementById('parentNotices');
+  if (!container) return;
+  let notices = [];
+  try { notices = JSON.parse(localStorage.getItem('Lio_notices') || '[]'); } catch (e) {}
+  if (notices.length === 0) {
+    container.innerHTML = '<span style="color:#888;">Keine besonderen Hinweise.</span>';
+    return;
+  }
+  const labels = { 'mobbing-hinweis': '⚠️ Ein Gespräch deutete auf Mobbing/Ausgrenzung hin' };
+  container.innerHTML = notices.slice().reverse().map(n => {
+    const d = new Date(n.date);
+    const dateStr = d.toLocaleDateString('de-DE') + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    return '<div style="padding:6px 0; border-bottom:1px solid #eee;">' + (labels[n.category] || n.category) + '<br><span style="color:#888;">' + dateStr + '</span></div>';
+  }).join('') + '<button class="cancel" style="margin-top:8px;" onclick="clearParentNotices()">Hinweise löschen</button>';
+}
+
+function clearParentNotices() {
+  localStorage.removeItem('Lio_notices');
+  renderParentNotices();
+}
+
 function closeSettings() {
   document.getElementById('panelSettings').classList.remove('show');
   renderLessonCards();
