@@ -8,8 +8,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Liam">
-<meta name="description" content="Liam ist dein empathischer Freund. Tiefgründig. Genderneutral. Immer da zum Zuhören.">
+<meta name="apple-mobile-web-app-title" content="Lio">
+<meta name="description" content="Lio ist dein empathischer Freund. Tiefgründig. Genderneutral. Immer da zum Zuhören.">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%234ec3ff'/><text y='380' font-size='340' text-anchor='middle' x='256'>🤖</text></svg>">
 <style>
@@ -1055,6 +1055,8 @@ body {
     <div id="setupForm" style="display:none;">
       <p class="privacy-note">Wir speichern den Namen <b>nur lokal auf diesem Gerät</b>. Alle Chats sind privat und werden <b>nicht</b> für KI-Training verwendet (OpenAI API-Standard). Keine Datenkrake!</p>
       <input type="text" id="childNameInput" placeholder="Spitzname (z.B. Leo)">
+      <p class="privacy-note" style="margin-top:14px;">Vergib eine Eltern-PIN (4–6 Ziffern) für den Eltern-Bereich:</p>
+      <input type="password" id="setupPinInput" inputmode="numeric" pattern="[0-9]*" placeholder="Eltern-PIN wählen" maxlength="6">
       <button onclick="saveSetup()">Speichern & Loslegen</button>
     </div>
   </div>
@@ -1446,7 +1448,7 @@ const ALL_SONGS = [
 ];
 
 let parentLocks = JSON.parse(localStorage.getItem('Lio_locks') || '{}');
-let parentPin = localStorage.getItem('Lio_pin') || '1234';
+let parentPin = localStorage.getItem('Lio_pin') || '';
 
 // ════════════════════════════════════════
 // DSGVO PARENT GATE LOGIK (NEU)
@@ -1464,6 +1466,13 @@ function checkParentMath() {
 function saveSetup() {
   const name = document.getElementById('childNameInput').value.trim();
   if (!name) { alert('Bitte gib einen Namen oder Spitznamen ein.'); return; }
+
+  const pinField = document.getElementById('setupPinInput');
+  const pin = pinField ? pinField.value.trim() : '';
+  if (!/^\d{4,6}$/.test(pin)) { alert('Bitte vergib eine Eltern-PIN mit 4-6 Ziffern.'); return; }
+  parentPin = pin;
+  localStorage.setItem('Lio_pin', parentPin);
+
   childName = name;
   localStorage.setItem('Lio_name', childName);
   showScreen('age');
@@ -2150,18 +2159,18 @@ function detectUserEmotionAdvanced(userText) {
   return detectedEmotion;
 }
 
-// RESTAURIERT: Die Liam-Gefühls-Antworten
-const liamEmotionalResponses = {
+// Lio-Gefühls-Antworten
+const lioEmotionalResponses = {
   happy: { greeting: 'Das freut mich zu hören. Deine Energie kommt an.', follow: 'Das ist wunderbar. Erzähl mir mehr davon.' },
   sad: { greeting: 'Ich sehe, dass es dir gerade nicht so gut geht.', follow: 'Das ist okay. Deine Gefühle sind wichtig. Ich bin für dich da.' },
   anxious: { greeting: 'Ich merke, dass dich etwas beunruhigt.', follow: 'Das ist völlig normal. Lass uns das zusammen angehen.' },
   frustrated: { greeting: 'Ich spüre, dass dich etwas frustriert.', follow: 'Das ist berechtigt. Lass mich dir helfen, das zu sortieren.' },
   tired: { greeting: 'Du klingst erschöpft. Das ist verständlich.', follow: 'Dein Körper sagt dir, dass du Ruhe brauchst. Das ist wichtig.' },
-  normal: { greeting: 'Hallo. Ich bin Liam. Wie kann ich dir heute helfen?', follow: 'Ich höre dir zu.' }
+  normal: { greeting: 'Hallo. Ich bin Lio. Wie kann ich dir heute helfen?', follow: 'Ich höre dir zu.' }
 };
 
-function generateLiamGreeting(emotion) {
-  const response = liamEmotionalResponses[emotion] || liamEmotionalResponses.normal;
+function generateLioGreeting(emotion) {
+  const response = lioEmotionalResponses[emotion] || lioEmotionalResponses.normal;
   return response.greeting + ' ' + response.follow;
 }
 
@@ -2209,7 +2218,7 @@ async function sendMessage(userText) {
         age: currentAge, 
         emotion: userEmotion,
         childName: childName, // DSGVO: Name wird an die API übertragen
-        liamMode: true  
+        lioMode: true
       }),
     });
     
@@ -2333,6 +2342,15 @@ function closePinPanel() {
   }
 }
 function checkPin() {
+  if (!parentPin) {
+    const newPin = prompt('Für diesen Eltern-Bereich ist noch keine PIN vergeben. Bitte lege jetzt eine PIN (4-6 Ziffern) fest:');
+    if (newPin && /^\d{4,6}$/.test(newPin.trim())) {
+      parentPin = newPin.trim();
+      localStorage.setItem('Lio_pin', parentPin);
+      alert('✓ PIN gespeichert. Bitte gib sie jetzt zur Bestätigung ein.');
+    }
+    return;
+  }
   const entered = document.getElementById('pinInput').value;
   if (entered === parentPin) { closePinPanel(); openSettingsPanel(); }
   else { alert('❌ Falsche PIN.'); document.getElementById('pinInput').value = ''; }
