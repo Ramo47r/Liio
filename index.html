@@ -367,68 +367,25 @@ body {
   50% { transform: translateX(-50%) translateY(-15px); }
 }
 @keyframes LioTalk {
-  0%, 100% { transform: translateX(-50%) translateY(-5px) rotate(0deg); }
-  30%      { transform: translateX(-50%) translateY(-15px) rotate(0.6deg); }
-  70%      { transform: translateX(-50%) translateY(-8px) rotate(-0.5deg); }
+  0%, 100% { transform: translateX(-50%) translateY(-5px); }
+  50% { transform: translateX(-50%) translateY(-15px); }
 }
 @keyframes LioListen {
   0%, 100% { transform: translateX(-50%) translateY(0px) scale(1); }
-  50%      { transform: translateX(-50%) translateY(-5px) scale(1.02); }
+  50% { transform: translateX(-50%) translateY(-5px) scale(1.02); }
 }
 @keyframes LioJoy {
-  0%, 100% { transform: translateX(-50%) translateY(0px) rotate(0deg); }
-  30%      { transform: translateX(-50%) translateY(-25px) rotate(1.5deg); }
-  60%      { transform: translateX(-50%) translateY(-10px) rotate(-1deg); }
-  80%      { transform: translateX(-50%) translateY(-18px) rotate(0.8deg); }
+  0%, 100% { transform: translateX(-50%) translateY(0px); }
+  50% { transform: translateX(-50%) translateY(-25px); }
 }
 @keyframes LioSad {
-  0%, 100% { transform: translateX(-50%) translateY(10px) rotate(-1.5deg); }
-  50%      { transform: translateX(-50%) translateY(14px) rotate(1deg); }
+  0%, 100% { transform: translateX(-50%) translateY(10px); }
+  50% { transform: translateX(-50%) translateY(15px); }
 }
 @keyframes LioTired {
-  0%, 100% { transform: translateX(-50%) translateY(5px) rotate(-1.5deg); }
-  50%      { transform: translateX(-50%) translateY(9px) rotate(1.5deg); }
+  0%, 100% { transform: translateX(-50%) translateY(5px); }
+  50% { transform: translateX(-50%) translateY(10px); }
 }
-/* Blinzeln: kurzer Squash-Effekt (keine echten Augenlider im Bild, daher als
-   sanftes Zwinkern des ganzen Bildes simuliert) */
-@keyframes LioBlink {
-  0%, 100% { transform: scaleY(1); }
-  50%      { transform: scaleY(0.92); }
-}
-.robot-wrap.blinking img { animation: LioBlink 0.22s ease-in-out; }
-/* Begrüßungs-Winken: sanftes Kippen zur Seite, während die Hand-Überlagerung winkt */
-@keyframes LioWave {
-  0%, 100% { transform: translateX(-50%) rotate(0deg); }
-  25%      { transform: translateX(-50%) rotate(-3deg); }
-  75%      { transform: translateX(-50%) rotate(3deg); }
-}
-.robot-wrap.waving { animation: LioWave 0.5s ease-in-out 3; }
-.wave-hand {
-  position: absolute;
-  top: 18%; right: 4%;
-  font-size: clamp(28px, 8vw, 40px);
-  z-index: 4;
-  opacity: 0;
-  transform-origin: 70% 70%;
-  pointer-events: none;
-}
-.wave-hand.show {
-  animation: waveHand 1.5s ease-in-out;
-}
-@keyframes waveHand {
-  0%   { opacity: 0; transform: rotate(0deg); }
-  10%  { opacity: 1; }
-  20%  { transform: rotate(20deg); }
-  35%  { transform: rotate(-10deg); }
-  50%  { transform: rotate(20deg); }
-  65%  { transform: rotate(-10deg); }
-  80%  { transform: rotate(10deg); }
-  90%  { opacity: 1; }
-  100% { opacity: 0; transform: rotate(0deg); }
-}
-/* Traurig: Farben etwas gedämpft, da wir keinen eigenen traurigen Gesichtsausdruck
-   im Bild austauschen können */
-.robot-wrap.sad img { filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3)) saturate(0.7) brightness(0.95); }
 
 /* SPEECH BUBBLE - prominent like in Buddy.ai */
 .speech-bubble {
@@ -922,9 +879,41 @@ body {
 .song-btn .song-icon { font-size: 26px; }
 
 
-/* (Alte doppelte Lio-Keyframes hier entfernt — sie nutzten eine falsche
-   Transform-Basis und verursachten Sprünge, wenn Sprech-/Stimmungs-Animationen
-   griffen. Die korrekten Definitionen stehen jetzt weiter oben bei .robot-wrap.) */
+/* ── Lio keyframe animations ── */
+/* Idle: very gentle float — calm and friendly */
+@keyframes LioIdle {
+  0%   { transform: translate(-50%, -50%) translateY(0px); }
+  50%  { transform: translate(-50%, -50%) translateY(-14px); }
+  100% { transform: translate(-50%, -50%) translateY(0px); }
+}
+/* Talking: subtle head bob — not hectic */
+@keyframes LioTalk {
+  0%,100% { transform: translate(-50%, -50%) translateY(-4px) rotate(0deg); }
+  30%     { transform: translate(-50%, -50%) translateY(-10px) rotate(0.5deg); }
+  70%     { transform: translate(-50%, -50%) translateY(-2px)  rotate(-0.4deg); }
+}
+/* Listening: lean in gently */
+@keyframes LioListen {
+  0%,100% { transform: translate(-50%, -50%) translateY(-2px) scale(1); }
+  50%     { transform: translate(-50%, -50%) translateY(-8px)  scale(1.02); }
+}
+/* Joy: happy bounce — smooth arcs */
+@keyframes LioJoy {
+  0%,100% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
+  30%     { transform: translate(-50%, -50%) translateY(-18px) rotate(1.5deg); }
+  60%     { transform: translate(-50%, -50%) translateY(-8px)  rotate(-1deg); }
+  80%     { transform: translate(-50%, -50%) translateY(-14px) rotate(0.8deg); }
+}
+/* Sad: slow gentle drop */
+@keyframes LioSad {
+  0%,100% { transform: translate(-50%, -50%) translateY(0px) rotate(-1deg); }
+  50%     { transform: translate(-50%, -50%) translateY(-4px) rotate(1deg); }
+}
+/* Tired: very slow nod */
+@keyframes LioTired {
+  0%,100% { transform: translate(-50%, -50%) translateY(0px) rotate(-1.5deg); }
+  50%     { transform: translate(-50%, -50%) translateY(-3px) rotate(1.5deg); }
+}
   /* ════════════════════════════════════════
    PARENT GATE / DSGVO SCREEN
 ═══════════════════════════════════════ */
@@ -1194,7 +1183,6 @@ body {
     
     <div class="robot-wrap" id="robot">
       <img src="assets/lio.png" alt="Lio">
-      <div class="wave-hand" id="waveHand">👋</div>
     </div>
     
   </div>
@@ -1590,7 +1578,6 @@ function selectAge(age) {
   // SOFORTIGER WECHSEL ZU MAIN!
   showScreen('main');
   initMain(greeting);
-  setTimeout(waveGreeting, 400);
 }
 
 function goToAgeSelect() {
@@ -2413,35 +2400,6 @@ function closeHelpPanel() {
   document.getElementById('panelHelp').classList.remove('show');
 }
 
-// ════════════════════════════════════════
-// LIO LEBENDIGKEIT: Begrüßungs-Winken + Blinzeln
-// ════════════════════════════════════════
-function waveGreeting() {
-  const robot = document.getElementById('robot');
-  const hand = document.getElementById('waveHand');
-  if (!robot || !hand) return;
-  robot.classList.add('waving');
-  hand.classList.remove('show');
-  void hand.offsetWidth; // Reflow erzwingen, damit die Animation neu startet
-  hand.classList.add('show');
-  setTimeout(() => { robot.classList.remove('waving'); hand.classList.remove('show'); }, 1600);
-}
-
-function scheduleBlink() {
-  const delay = 2800 + Math.random() * 4000; // unregelmäßig, wirkt natürlicher
-  setTimeout(() => {
-    const robot = document.getElementById('robot');
-    // Nicht blinzeln, während Lio spricht/zuhört/eine Stimmung zeigt — sieht sonst hektisch aus
-    if (robot && !robot.classList.contains('talking') && !robot.classList.contains('listening')
-        && !robot.classList.contains('waving')) {
-      robot.classList.add('blinking');
-      setTimeout(() => robot.classList.remove('blinking'), 240);
-    }
-    scheduleBlink();
-  }, delay);
-}
-scheduleBlink();
-
 async function sendMessage(userText) {
 
   if (!userText || !userText.trim()) return;
@@ -2723,7 +2681,6 @@ if (!savedName) {
   speechPitch = AGE_GROUPS[savedAge].pitch;
   showScreen('main');
   initMain();
-  setTimeout(waveGreeting, 400);
 } else {
   showScreen('age');
 }
