@@ -1983,9 +1983,9 @@ function selectMood(btn, mood) {
 function reactToMood(mood) {
   const reactions = {
     happy:   'Oh wie toll, du bist glücklich! Was ist denn Schönes passiert?',
-    sad:     'Oh, du bist traurig... Magst du mir erzählen, was los ist?',
-    angry:   'Du bist wütend? Das ist okay. Was ist passiert?',
-    scared:  'Hab keine Angst, ich bin bei dir. Was hat dich erschreckt?',
+    sad:     'Oh, du bist traurig... Magst du mir erzählen, was los ist? Danach schauen wir zusammen, wie ich dir wieder ein Lächeln zaubern kann!',
+    angry:   'Du bist wütend? Das ist total okay, jeder ist mal wütend. Erzähl mir, was passiert ist, und dann finden wir zusammen was, das dich wieder aufmuntert.',
+    scared:  'Hab keine Angst, ich bin bei dir und du bist sicher. Was hat dich erschreckt? Wollen wir danach zusammen was Lustiges machen, damit du dich wieder wohlfühlst?',
     tired:   'Du bist müde? Soll ich dir eine ruhige Geschichte erzählen?',
     excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
   };
@@ -2017,6 +2017,23 @@ let voices = [];
 let selectedVoice = null;
 let speechRate = 0.95;    
 let speechPitch = 1.0;    
+
+// ════════════════════════════════════════
+// MOOD-STIMMPROFILE — Lios Stimmlage & Sprechweise
+// passen sich an, welches Gefühl-Emoji der User gewählt hat
+// ════════════════════════════════════════
+const MOOD_VOICE_PROFILES = {
+  happy:   { rate: 1.12, pitch: 1.28, style: 'fröhlich, warm, mit einem Lächeln in der Stimme' },
+  excited: { rate: 1.18, pitch: 1.34, style: 'aufgeregt, lebendig, schnell und begeistert' },
+  sad:     { rate: 0.85, pitch: 1.05, style: 'sanft, ruhig, tröstend und langsam' },
+  angry:   { rate: 0.88, pitch: 1.08, style: 'ruhig, geduldig, beruhigend, ohne Eile' },
+  scared:  { rate: 0.88, pitch: 1.10, style: 'ruhig, sicher, beschützend' },
+  tired:   { rate: 0.82, pitch: 1.00, style: 'leise, sanft, langsam' },
+};
+
+function getMoodVoiceProfile() {
+  return (currentMood && MOOD_VOICE_PROFILES[currentMood]) ? MOOD_VOICE_PROFILES[currentMood] : null;
+}
 
 function loadVoices() {
   if (!synth) return;
@@ -2244,11 +2261,20 @@ async function speakJorin(text) {
     const micBtn = document.getElementById('micBtn');
     if (micBtn) micBtn.style.opacity = '0.5';
 
+    // Stimmlage & Sprechweise an das aktuell gewählte Gefühl anpassen
+    const moodProfile = getMoodVoiceProfile();
+
     // Fragt deinen Server nach der Audiodatei
     const response = await fetch('/api/speak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text })
+      body: JSON.stringify({
+        text: text,
+        mood: currentMood,
+        rate: moodProfile ? moodProfile.rate : speechRate,
+        pitch: moodProfile ? moodProfile.pitch : speechPitch,
+        voiceStyle: moodProfile ? moodProfile.style : null
+      })
     });
 
     if (!response.ok) throw new Error('Fehler beim Laden der Stimme');
@@ -2257,7 +2283,8 @@ async function speakJorin(text) {
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
-    
+    audio.playbackRate = moodProfile ? moodProfile.rate : (speechRate || 1.0);
+
     currentAudio = audio; // Speichern fürs Abbrechen
 
     // Klicksperre aufheben, wenn Lio fertig gesprochen hat
@@ -2295,9 +2322,10 @@ function fallbackSpeak(text) {
   window.speechSynthesis.cancel();
   const cleanText = String(text).replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
   const utterance = new SpeechSynthesisUtterance(cleanText);
+  const moodProfile = getMoodVoiceProfile();
   utterance.lang = 'de-DE';
-  utterance.pitch = 1.15;
-  utterance.rate = 1.05;
+  utterance.pitch = moodProfile ? moodProfile.pitch : 1.15;
+  utterance.rate = moodProfile ? moodProfile.rate : 1.05;
   
   const robot = document.getElementById('robot');
   const ageRobot = document.querySelector('.age-robot-wrap');
@@ -2437,10 +2465,17 @@ async function sendMessage(userText) {
         childName: childName, // DSGVO: Name wird an die API übertragen
         lioMode: true,
         subject: currentMode === 'homework' ? currentSubject : undefined,
-        teachingStyle: currentMode === 'homework' ? 'socratic-teacher' : undefined
+        teachingStyle: currentMode === 'homework' ? 'socratic-teacher' : undefined,
         // Hinweis fürs Backend: bei teachingStyle 'socratic-teacher' bitte NIE direkt die
         // Lösung vorsagen — stattdessen Schritt für Schritt anleiten, Verständnisfragen
         // stellen, Hinweise statt Antworten geben, wie eine gute Lehrkraft es tun würde.
+        voiceStyle: (currentMood && MOOD_VOICE_PROFILES[currentMood]) ? MOOD_VOICE_PROFILES[currentMood].style : null,
+        moodInstruction: (currentMood === 'sad' || currentMood === 'angry' || currentMood === 'scared')
+          ? 'Das Kind fühlt sich gerade ' + currentMood + '. Nimm das Gefühl zuerst ernst und tröste einfühlsam. Versuche danach behutsam, das Kind aufzumuntern, aufzubauen und zu etwas Schönem oder Spaßigem zu animieren (z.B. ein Spiel, ein Lied oder eine lustige Geschichte vorschlagen). Bleib dabei geduldig, warm und nie belehrend.'
+          : undefined
+        // Hinweis fürs Backend: "voiceStyle" beschreibt, wie sich Lios Stimme gerade anhören soll
+        // (Tonhöhe/Tempo passend zum Emoji, das das Kind gewählt hat) — falls die TTS-Engine
+        // das unterstützt (z.B. SSML/Style-Parameter), bitte entsprechend anwenden.
       }),
     });
     
