@@ -95,9 +95,8 @@ app.post('/api/speak', async (req, res) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
 
-    // Wenn du in Render unter Environment "ELEVENLABS_VOICE_ID" anlegst, nimmt er diese, 
-    // ansonsten nutzt er als Standard die Test-Stimme Adam (pNInz6obpgDQGcFmaJgB)
-    const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'pNInz6obpgDQGcFmaJgB';
+    // HIER IST DEINE NEUE VOICE ID EINGEBAUT! 🚀
+    const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'KP4GbmyDmwaoy5dUlvZY';
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
       method: 'POST',
