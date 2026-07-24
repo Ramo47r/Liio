@@ -2502,9 +2502,9 @@ async function sendMessage(userText) {
         lioMode: true,
         subject: currentMode === 'homework' ? currentSubject : undefined,
         teachingStyle: currentMode === 'homework' ? 'socratic-teacher' : undefined,
-        // Hinweis fürs Backend: bei teachingStyle 'socratic-teacher' bitte NIE direkt die
-        // Lösung vorsagen — stattdessen Schritt für Schritt anleiten, Verständnisfragen
-        // stellen, Hinweise statt Antworten geben, wie eine gute Lehrkraft es tun würde.
+        teachingInstruction: currentMode === 'homework'
+          ? 'Du bist nur eine Hilfe, nicht die Lösung. Sag dem Kind NIEMALS direkt das fertige Endergebnis oder die komplette Lösung vor, auch wenn danach gefragt wird. Führe stattdessen Schritt für Schritt: stelle gezielte Verständnisfragen, gib kleine Hinweise und Denkanstöße, und lass das Kind selbst auf die Lösung kommen. Bestätige richtige Zwischenschritte, korrigiere Fehler behutsam ohne die Lösung vorwegzunehmen. Nutze anschauliche Beispiele, Eselsbrücken und Wiederholungen, damit sich das Kind den Stoff wirklich einprägen kann statt ihn nur abzuschreiben.'
+          : undefined,
         activeTopic: activeTopic,
         topicResolved: topicResolved,
         conversationInstruction: conversationInstruction,
