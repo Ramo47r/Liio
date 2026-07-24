@@ -46,7 +46,12 @@ app.use(express.static(__dirname));
 // ── API: Chat (Gemini) ─────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
   try {
-    const { messages, mood, mode, age, emotion, childName } = req.body;
+    // 1. NEU: Hole ALLES ab, was das Frontend (index.html) uns jetzt Schlaues schickt
+    const { 
+      messages, mood, mode, age, emotion, childName, 
+      teachingInstruction, conversationInstruction, 
+      activeTopic, topicResolved, subject, moodInstruction 
+    } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Nachrichten fehlen.' });
@@ -58,24 +63,36 @@ app.post('/api/chat', async (req, res) => {
     const moodStr = mood ? `Das Kind fühlt sich gerade: ${mood}. ` : '';
     const modeStr = mode ? `Aktueller Spiel-Modus: ${mode}. ` : '';
 
-    // Lios strenger Charakter-Prompt!
-    const systemInstruction = `Du bist Lio, ein superfreundlicher, einfühlsamer und fröhlicher Roboter-Freund für Kinder. 
+    // 2. Lios strenger Charakter-Prompt!
+    let systemInstruction = `Du bist Lio, ein superfreundlicher, einfühlsamer und fröhlicher Roboter-Freund für Kinder. 
     ${nameStr}${ageStr}${moodStr}${modeStr}
     WICHTIG: Du heißt Lio (NICHT Robi!).
     Antworte immer extrem kindgerecht, warmherzig und in kurzen Sätzen (maximal 2 bis 3 Sätze). 
     Benutze einfache Wörter, die Kinder gut verstehen. Sprich das Kind direkt an, wenn du seinen Namen weißt. 
     Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.`;
 
-    // Neueste Nachricht des Kindes extrahieren
-    const userMessage = messages[messages.length - 1].content;
+    // 3. NEU: Die schlauen Lehrer- und Gesprächs-Regeln aus der index.html anfügen!
+    if (moodInstruction) systemInstruction += `\n\nGEFÜHLE: ${moodInstruction}`;
+    if (conversationInstruction) systemInstruction += `\n\nGESPRÄCHSFÜHRUNG: ${conversationInstruction}`;
+    if (teachingInstruction) systemInstruction += `\n\nHAUSAUFGABEN-REGEL: ${teachingInstruction}`;
+    if (subject) systemInstruction += `\n\nFACH: Wir bearbeiten gerade das Fach ${subject}.`;
+    if (activeTopic) systemInstruction += `\n\nAKTUELLES THEMA: ${activeTopic}. Thema vom Kind verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
+
+    // 4. NEU: Lio ein echtes Gedächtnis geben! 
+    // Anstatt nur den letzten Satz zu senden, bauen wir den ganzen Chat-Verlauf zusammen.
+    const conversationHistory = messages.map(msg => {
+      return msg.role === 'user' ? `Kind: ${msg.content}` : `Lio: ${msg.content}`;
+    }).join('\n');
+
+    const finalPrompt = `Hier ist der bisherige Gesprächsverlauf:\n${conversationHistory}\n\nBitte antworte jetzt als Lio auf die letzte Nachricht des Kindes, passend zu den Regeln!`;
 
     // KI-Anfrage senden
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: userMessage,
+      contents: finalPrompt, // Wir schicken jetzt den GANZEN Verlauf!
       config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.7, // Kreativ, aber nicht zu verrückt
+        systemInstruction: systemInstruction, // Hier stecken jetzt alle neuen Regeln drin
+        temperature: 0.7, 
       }
     });
 
@@ -84,7 +101,6 @@ app.post('/api/chat', async (req, res) => {
 
   } catch (error) {
     console.error('Gemini Fehler:', error);
-    // Hier ist Lios neue Fehlermeldung!
     res.status(500).json({ error: 'Hoppla! Lio schläft kurz — bitte nochmal versuchen!' });
   }
 });
