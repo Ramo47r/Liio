@@ -89,7 +89,7 @@ app.post('/api/chat', async (req, res) => {
 
     // KI-Anfrage senden
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash', // Hier steckt das korrekte Modell!
+      model: 'gemini-2.5-flash', // 🚀 Zurück zum RICHTIGEN und superschnellen Modell!
       contents: finalPrompt,
       config: {
         systemInstruction: systemInstruction,
