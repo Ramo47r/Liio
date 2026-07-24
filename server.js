@@ -65,11 +65,16 @@ app.post('/api/chat', async (req, res) => {
     const moodStr = mood ? `Das Kind fühlt sich gerade: ${mood}. ` : '';
     const modeStr = mode ? `Aktueller Spiel-Modus: ${mode}. ` : '';
 
+    // NEU: Dynamische Satzlänge! Im Geschichten-Modus darf Lio viel reden.
+    const lengthRule = (mode === 'stories') 
+      ? 'Da wir im Geschichten-Modus sind, erzähle jetzt eine fantasievolle und ausführliche Geschichte (ca. 5 bis 8 Sätze). Beende die Geschichte fließend.' 
+      : 'Antworte immer extrem kindgerecht, warmherzig und in kurzen Sätzen (maximal 2 bis 3 Sätze).';
+
     // Lios strenger Charakter-Prompt!
     let systemInstruction = `Du bist Lio, ein superfreundlicher, einfühlsamer und fröhlicher Roboter-Freund für Kinder. 
     ${nameStr}${ageStr}${moodStr}${modeStr}
     WICHTIG: Du heißt Lio (NICHT Robi!).
-    Antworte immer extrem kindgerecht, warmherzig und in kurzen Sätzen (maximal 2 bis 3 Sätze). 
+    ${lengthRule}
     Benutze einfache Wörter, die Kinder gut verstehen. Sprich das Kind direkt an, wenn du seinen Namen weißt. 
     Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.`;
 
@@ -89,7 +94,7 @@ app.post('/api/chat', async (req, res) => {
 
     // KI-Anfrage senden
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', // 🚀 Zurück zum RICHTIGEN und superschnellen Modell!
+      model: 'gemini-2.5-flash', 
       contents: finalPrompt,
       config: {
         systemInstruction: systemInstruction,
@@ -103,7 +108,18 @@ app.post('/api/chat', async (req, res) => {
 
   } catch (error) {
     console.error('Gemini Fehler:', error);
-    res.status(500).json({ error: 'Hoppla! Lio schläft kurz — bitte nochmal versuchen!' });
+    
+    // NEU: Der Fehler-Melder! Schickt den wahren Grund direkt auf dein Display.
+    let userMessage = 'Hoppla! Lio schläft kurz — bitte nochmal versuchen!';
+    
+    if (error.status === 429) {
+      userMessage = 'Hoppla! Der Google-Blitzer hat uns erwischt. Wir haben zu schnell gechattet. Bitte warte eine Minute!';
+    } else if (error.message) {
+      // Zeigt die ersten 80 Zeichen des echten Fehlers an, damit wir wissen, was los ist
+      userMessage = `System-Info: ${error.message.substring(0, 80)}...`;
+    }
+
+    res.status(500).json({ error: userMessage });
   }
 });
 
