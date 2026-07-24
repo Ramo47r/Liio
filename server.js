@@ -88,11 +88,12 @@ app.post('/api/chat', async (req, res) => {
 
     // KI-Anfrage senden
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash', // Hier haben wir das Modell korrigiert!
       contents: finalPrompt, // Wir schicken jetzt den GANZEN Verlauf!
       config: {
         systemInstruction: systemInstruction, // Hier stecken jetzt alle neuen Regeln drin
         temperature: 0.7, 
+        maxOutputTokens: 1000 // Erlaubt Lio, längere Geschichten zu schreiben
       }
     });
 
