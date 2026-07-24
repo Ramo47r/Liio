@@ -14,6 +14,9 @@ const __dirname  = path.dirname(__filename);
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ── Render Proxy-Fix (Behebt die X-Forwarded-For Warnung) ──
+app.set('trust proxy', 1);
+
 // ── API Key check ──────────────────────────────────────────
 if (!process.env.GEMINI_API_KEY) {
   console.error('\n❌  GEMINI_API_KEY fehlt!');
@@ -46,7 +49,6 @@ app.use(express.static(__dirname));
 // ── API: Chat (Gemini) ─────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
   try {
-    // 1. NEU: Hole ALLES ab, was das Frontend (index.html) uns jetzt Schlaues schickt
     const { 
       messages, mood, mode, age, emotion, childName, 
       teachingInstruction, conversationInstruction, 
@@ -63,7 +65,7 @@ app.post('/api/chat', async (req, res) => {
     const moodStr = mood ? `Das Kind fühlt sich gerade: ${mood}. ` : '';
     const modeStr = mode ? `Aktueller Spiel-Modus: ${mode}. ` : '';
 
-    // 2. Lios strenger Charakter-Prompt!
+    // Lios strenger Charakter-Prompt!
     let systemInstruction = `Du bist Lio, ein superfreundlicher, einfühlsamer und fröhlicher Roboter-Freund für Kinder. 
     ${nameStr}${ageStr}${moodStr}${modeStr}
     WICHTIG: Du heißt Lio (NICHT Robi!).
@@ -71,15 +73,14 @@ app.post('/api/chat', async (req, res) => {
     Benutze einfache Wörter, die Kinder gut verstehen. Sprich das Kind direkt an, wenn du seinen Namen weißt. 
     Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.`;
 
-    // 3. NEU: Die schlauen Lehrer- und Gesprächs-Regeln aus der index.html anfügen!
+    // Die schlauen Lehrer- und Gesprächs-Regeln aus der index.html anfügen!
     if (moodInstruction) systemInstruction += `\n\nGEFÜHLE: ${moodInstruction}`;
     if (conversationInstruction) systemInstruction += `\n\nGESPRÄCHSFÜHRUNG: ${conversationInstruction}`;
     if (teachingInstruction) systemInstruction += `\n\nHAUSAUFGABEN-REGEL: ${teachingInstruction}`;
     if (subject) systemInstruction += `\n\nFACH: Wir bearbeiten gerade das Fach ${subject}.`;
     if (activeTopic) systemInstruction += `\n\nAKTUELLES THEMA: ${activeTopic}. Thema vom Kind verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
 
-    // 4. NEU: Lio ein echtes Gedächtnis geben! 
-    // Anstatt nur den letzten Satz zu senden, bauen wir den ganzen Chat-Verlauf zusammen.
+    // Lio ein echtes Gedächtnis geben! 
     const conversationHistory = messages.map(msg => {
       return msg.role === 'user' ? `Kind: ${msg.content}` : `Lio: ${msg.content}`;
     }).join('\n');
@@ -88,12 +89,12 @@ app.post('/api/chat', async (req, res) => {
 
     // KI-Anfrage senden
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash', // Hier haben wir das Modell korrigiert!
-      contents: finalPrompt, // Wir schicken jetzt den GANZEN Verlauf!
+      model: 'gemini-1.5-flash', // Hier steckt das korrekte Modell!
+      contents: finalPrompt,
       config: {
-        systemInstruction: systemInstruction, // Hier stecken jetzt alle neuen Regeln drin
+        systemInstruction: systemInstruction,
         temperature: 0.7, 
-        maxOutputTokens: 1000 // Erlaubt Lio, längere Geschichten zu schreiben
+        maxOutputTokens: 1000
       }
     });
 
@@ -112,7 +113,6 @@ app.post('/api/speak', async (req, res) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
 
-    // HIER IST DEINE NEUE VOICE ID EINGEBAUT! 🚀
     const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'KP4GbmyDmwaoy5dUlvZY';
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
@@ -126,7 +126,7 @@ app.post('/api/speak', async (req, res) => {
         text: text,
         model_id: 'eleven_multilingual_v2',
         voice_settings: {
-          stability: 0.35, // Macht Lio emotionaler und ausdrucksstärker!
+          stability: 0.35,
           similarity_boost: 0.75
         }
       })
