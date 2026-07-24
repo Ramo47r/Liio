@@ -49,11 +49,7 @@ app.use(express.static(__dirname));
 // ── API: Chat (Gemini) ─────────────────────────────────────
 app.post('/api/chat', async (req, res) => {
   try {
-    const { 
-      messages, mood, mode, age, emotion, childName, 
-      teachingInstruction, conversationInstruction, 
-      activeTopic, topicResolved, subject, moodInstruction 
-    } = req.body;
+    const { messages, mood, mode, age, emotion, childName } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Nachrichten fehlen.' });
@@ -65,41 +61,24 @@ app.post('/api/chat', async (req, res) => {
     const moodStr = mood ? `Das Kind fühlt sich gerade: ${mood}. ` : '';
     const modeStr = mode ? `Aktueller Spiel-Modus: ${mode}. ` : '';
 
-    // NEU: Dynamische Satzlänge! Im Geschichten-Modus darf Lio viel reden.
-    const lengthRule = (mode === 'stories') 
-      ? 'Da wir im Geschichten-Modus sind, erzähle jetzt eine fantasievolle und ausführliche Geschichte (ca. 5 bis 8 Sätze). Beende die Geschichte fließend.' 
-      : 'Antworte immer extrem kindgerecht, warmherzig und in kurzen Sätzen (maximal 2 bis 3 Sätze).';
-
     // Lios strenger Charakter-Prompt!
-    let systemInstruction = `Du bist Lio, ein superfreundlicher, einfühlsamer und fröhlicher Roboter-Freund für Kinder. 
+    const systemInstruction = `Du bist Lio, ein superfreundlicher, einfühlsamer und fröhlicher Roboter-Freund für Kinder. 
     ${nameStr}${ageStr}${moodStr}${modeStr}
     WICHTIG: Du heißt Lio (NICHT Robi!).
-    ${lengthRule}
+    Antworte immer extrem kindgerecht, warmherzig und in kurzen Sätzen (maximal 2 bis 3 Sätze). 
     Benutze einfache Wörter, die Kinder gut verstehen. Sprich das Kind direkt an, wenn du seinen Namen weißt. 
     Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.`;
 
-    // Die schlauen Lehrer- und Gesprächs-Regeln aus der index.html anfügen!
-    if (moodInstruction) systemInstruction += `\n\nGEFÜHLE: ${moodInstruction}`;
-    if (conversationInstruction) systemInstruction += `\n\nGESPRÄCHSFÜHRUNG: ${conversationInstruction}`;
-    if (teachingInstruction) systemInstruction += `\n\nHAUSAUFGABEN-REGEL: ${teachingInstruction}`;
-    if (subject) systemInstruction += `\n\nFACH: Wir bearbeiten gerade das Fach ${subject}.`;
-    if (activeTopic) systemInstruction += `\n\nAKTUELLES THEMA: ${activeTopic}. Thema vom Kind verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
-
-    // Lio ein echtes Gedächtnis geben! 
-    const conversationHistory = messages.map(msg => {
-      return msg.role === 'user' ? `Kind: ${msg.content}` : `Lio: ${msg.content}`;
-    }).join('\n');
-
-    const finalPrompt = `Hier ist der bisherige Gesprächsverlauf:\n${conversationHistory}\n\nBitte antworte jetzt als Lio auf die letzte Nachricht des Kindes, passend zu den Regeln!`;
+    // ZURÜCK ZUR ALTEN LOGIK: Wir schicken nur die letzte Nachricht!
+    const userMessage = messages[messages.length - 1].content;
 
     // KI-Anfrage senden
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', 
-      contents: finalPrompt,
+      model: 'gemini-2.5-flash',
+      contents: userMessage,
       config: {
         systemInstruction: systemInstruction,
-        temperature: 0.7, 
-        maxOutputTokens: 1000
+        temperature: 0.7, // Kreativ, aber nicht zu verrückt
       }
     });
 
@@ -108,18 +87,8 @@ app.post('/api/chat', async (req, res) => {
 
   } catch (error) {
     console.error('Gemini Fehler:', error);
-    
-    // NEU: Der Fehler-Melder! Schickt den wahren Grund direkt auf dein Display.
-    let userMessage = 'Hoppla! Lio schläft kurz — bitte nochmal versuchen!';
-    
-    if (error.status === 429) {
-      userMessage = 'Hoppla! Der Google-Blitzer hat uns erwischt. Wir haben zu schnell gechattet. Bitte warte eine Minute!';
-    } else if (error.message) {
-      // Zeigt die ersten 80 Zeichen des echten Fehlers an, damit wir wissen, was los ist
-      userMessage = `System-Info: ${error.message.substring(0, 80)}...`;
-    }
-
-    res.status(500).json({ error: userMessage });
+    // Hier ist Lios alte Fehlermeldung!
+    res.status(500).json({ error: 'Hoppla! Lio schläft kurz — bitte nochmal versuchen!' });
   }
 });
 
@@ -129,6 +98,7 @@ app.post('/api/speak', async (req, res) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
 
+    // HIER IST DEINE NEUE VOICE ID EINGEBAUT! 🚀
     const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'KP4GbmyDmwaoy5dUlvZY';
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
@@ -142,7 +112,7 @@ app.post('/api/speak', async (req, res) => {
         text: text,
         model_id: 'eleven_multilingual_v2',
         voice_settings: {
-          stability: 0.35,
+          stability: 0.35, // Macht Lio emotionaler und ausdrucksstärker!
           similarity_boost: 0.75
         }
       })
