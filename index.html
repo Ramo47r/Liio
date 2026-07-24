@@ -1711,6 +1711,8 @@ function switchMode(mode) {
 
   currentMode = mode;
   messages = [];
+  activeTopic = null;
+  topicResolved = true;
   const m = MODES[mode];
   const welcome = (m.welcome[currentAge] || m.welcome['7-9']).replace('{name}', childName);
 
@@ -1736,6 +1738,13 @@ const SUBJECTS = [
 ];
 let currentSubject = null;
 
+// ════════════════════════════════════════
+// THEMEN-TRACKING — Lio soll beim Thema/bei der Aufgabe bleiben,
+// bis das Kind sie verstanden hat, statt einfach zu springen
+// ════════════════════════════════════════
+let activeTopic = null;      // Kurzbeschreibung der aktuellen Aufgabe/des Themas
+let topicResolved = true;    // true = frei für neues Thema, false = noch mitten in der Erklärung
+
 // Themen-Vorschläge, damit Lio von sich aus anfängt zu erklären,
 // statt erst zu fragen "Welches Thema?" — weniger Tippen, mehr Antippen.
 const HOMEWORK_TOPICS = {
@@ -1753,12 +1762,12 @@ const HOMEWORK_TOPICS = {
 
 // Anschluss-Chips nach Lios Antwort im Hausaufgaben-Modus — Kind tippt statt tippt & schreibt
 const HOMEWORK_FOLLOWUPS = [
-  { label: '👍 Verstanden', prompt: 'Ich hab es verstanden, was kommt als Nächstes?' },
+  { label: '👍 Verstanden', prompt: 'Ich hab es verstanden, was kommt als Nächstes?', resolvesTopic: true },
   { label: '🔁 Nochmal, langsamer', prompt: 'Kannst du das nochmal langsamer und einfacher erklären?' },
   { label: '📝 Anderes Beispiel', prompt: 'Zeig mir noch ein anderes Beispiel dazu.' },
 ];
 
-function renderQuickReplies(items) {
+function renderQuickReplies(items, kind) {
   const row = document.getElementById('quickReplies');
   if (!row) return;
   row.innerHTML = '';
@@ -1766,7 +1775,16 @@ function renderQuickReplies(items) {
     const chip = document.createElement('button');
     chip.className = 'quick-chip';
     chip.textContent = item.label;
-    chip.onclick = () => { clearQuickReplies(); sendMessage(item.prompt); };
+    chip.onclick = () => {
+      clearQuickReplies();
+      if (kind === 'topic-start') {
+        activeTopic = item.prompt;
+        topicResolved = false;
+      } else if (item.resolvesTopic) {
+        topicResolved = true;
+      }
+      sendMessage(item.prompt);
+    };
     row.appendChild(chip);
   });
 }
@@ -1794,6 +1812,8 @@ function closeSubjectPanel() {
 }
 function selectSubject(subject) {
   currentSubject = subject.key;
+  activeTopic = null;
+  topicResolved = true;
   document.getElementById('panelSubject').classList.remove('show');
   messages = [];
   const welcomes = {
@@ -1807,7 +1827,7 @@ function selectSubject(subject) {
   setBubble(welcome);
   lastLioText = welcome;
   speakJorin(welcome);
-  renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges);
+  renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
 }
 
 function goToKaraoke() {
@@ -2441,6 +2461,16 @@ async function sendMessage(userText) {
   const userEmotion = detectUserEmotionAdvanced(userText);
   setLioEmotion(userEmotion);
 
+  // Themen-Tracking: falls das Kind frei tippt (statt einen Chip zu nutzen)
+  if (currentMode === 'homework' && !activeTopic) {
+    activeTopic = userText;
+    topicResolved = false;
+  }
+  // falls das Kind selbst schreibt, dass es verstanden hat -> Thema gilt als erledigt
+  if (/verstanden|kapiert|check(e|t)? das|alles klar/i.test(userText)) {
+    topicResolved = true;
+  }
+
   setBubble('Du: "' + userText + '"');
   setHint('Lio denkt nach... 🤔');
   setTimeout(setBubbleLoading, 800);
@@ -2449,6 +2479,12 @@ async function sendMessage(userText) {
   if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
 
   document.getElementById('micBtn').disabled = true;
+
+  // Anweisung fürs Backend: beim Thema/bei der Aufgabe bleiben, statt zu springen,
+  // und wirklich auf das eingehen, was das Kind erzählt hat — echtes Gespräch statt Antwort-Automat
+  const conversationInstruction = (currentMode === 'homework' && !topicResolved && activeTopic)
+    ? 'Bleib bei dieser Aufgabe/diesem Thema: "' + activeTopic + '". Erkläre weiter dazu bzw. stelle Verständnisfragen, bis das Kind zeigt, dass es verstanden hat. Wechsle das Thema nicht von selbst. Geh dabei genau auf das ein, was das Kind zuletzt gesagt/gefragt hat.'
+    : 'Führe eine echte, zusammenhängende Unterhaltung: Geh konkret auf das ein, was das Kind gerade erzählt hat, bevor du selbst ein neues Thema ansprichst. Nutze den bisherigen Gesprächsverlauf und stelle bei Bedarf Rückfragen, statt nur generisch zu antworten.';
 
   try {
     console.log('[sendMessage] Sende Nachricht an /api/chat:', userText);
@@ -2469,6 +2505,9 @@ async function sendMessage(userText) {
         // Hinweis fürs Backend: bei teachingStyle 'socratic-teacher' bitte NIE direkt die
         // Lösung vorsagen — stattdessen Schritt für Schritt anleiten, Verständnisfragen
         // stellen, Hinweise statt Antworten geben, wie eine gute Lehrkraft es tun würde.
+        activeTopic: activeTopic,
+        topicResolved: topicResolved,
+        conversationInstruction: conversationInstruction,
         voiceStyle: (currentMood && MOOD_VOICE_PROFILES[currentMood]) ? MOOD_VOICE_PROFILES[currentMood].style : null,
         moodInstruction: (currentMood === 'sad' || currentMood === 'angry' || currentMood === 'scared')
           ? 'Das Kind fühlt sich gerade ' + currentMood + '. Nimm das Gefühl zuerst ernst und tröste einfühlsam. Versuche danach behutsam, das Kind aufzumuntern, aufzubauen und zu etwas Schönem oder Spaßigem zu animieren (z.B. ein Spiel, ein Lied oder eine lustige Geschichte vorschlagen). Bleib dabei geduldig, warm und nie belehrend.'
