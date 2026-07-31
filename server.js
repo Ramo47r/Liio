@@ -1,10 +1,9 @@
 // ============================================================
-// Lio Backend — Gemini als Gehirn & ElevenLabs als Stimme
+// Lio Backend — Groq (Llama 3) als Gehirn & ElevenLabs als Stimme
 // ============================================================
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { GoogleGenAI } from '@google/genai';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
@@ -18,8 +17,8 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // ── API Key check ──────────────────────────────────────────
-if (!process.env.GEMINI_API_KEY) {
-  console.error('\n❌  GEMINI_API_KEY fehlt!');
+if (!process.env.GROQ_API_KEY) {
+  console.error('\n❌  GROQ_API_KEY fehlt! Bitte in Render unter Environment eintragen.');
   process.exit(1);
 }
 
@@ -27,9 +26,6 @@ if (!process.env.ELEVENLABS_API_KEY) {
   console.error('\n❌  ELEVENLABS_API_KEY fehlt! (für Sprachausgabe)\n');
   process.exit(1);
 }
-
-// Initialisiere die neue Gemini API
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ── Middleware ─────────────────────────────────────────────
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
@@ -46,7 +42,7 @@ app.use('/api/', limiter);
 // ── Statische Dateien (Frontend) ───────────────────────────
 app.use(express.static(__dirname));
 
-// ── API: Chat (Gemini) ─────────────────────────────────────
+// ── API: Chat (Groq / Llama 3.3) ───────────────────────────
 app.post('/api/chat', async (req, res) => {
   try {
     const { 
@@ -78,41 +74,52 @@ app.post('/api/chat', async (req, res) => {
     Benutze einfache Wörter, die Kinder gut verstehen. Sprich das Kind direkt an, wenn du seinen Namen weißt. 
     Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.`;
 
-    // Die schlauen Lehrer- und Gesprächs-Regeln anfügen!
+    // Die schlauen Lehrer- und Gesprächs-Regeln aus der index.html anfügen!
     if (moodInstruction) systemInstruction += `\n\nGEFÜHLE: ${moodInstruction}`;
     if (conversationInstruction) systemInstruction += `\n\nGESPRÄCHSFÜHRUNG: ${conversationInstruction}`;
     if (teachingInstruction) systemInstruction += `\n\nHAUSAUFGABEN-REGEL: ${teachingInstruction}`;
     if (subject) systemInstruction += `\n\nFACH: Wir bearbeiten gerade das Fach ${subject}.`;
     if (activeTopic) systemInstruction += `\n\nAKTUELLES THEMA: ${activeTopic}. Thema vom Kind verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
 
-    // Lios echtes Gedächtnis
-    const conversationHistory = messages.map(msg => {
-      return msg.role === 'user' ? `Kind: ${msg.content}` : `Lio: ${msg.content}`;
-    }).join('\n');
+    // Nachrichten für Groq (OpenAI-Standardformat) aufbereiten
+    const formattedMessages = [
+      { role: 'system', content: systemInstruction },
+      ...messages.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }))
+    ];
 
-    const finalPrompt = `Hier ist der bisherige Gesprächsverlauf:\n${conversationHistory}\n\nBitte antworte jetzt als Lio auf die letzte Nachricht des Kindes, passend zu den Regeln!`;
-
-    // KI-Anfrage senden (MIT DEM RICHTIGEN, UNLIMITIERTEN MODELL!)
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash', // 🚀 Das 1.500-Nachrichten-Gehirn!
-      contents: finalPrompt,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.7, 
-        maxOutputTokens: 1000
-      }
+    // KI-Anfrage an Groq senden (Llama 3.3 70B Versatile — extrem schlau & schnell)
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: formattedMessages,
+        temperature: 0.7,
+        max_tokens: 1000
+      })
     });
 
-    const reply = response.text || 'Hmm, mir fällt gerade nichts ein!';
+    if (!groqResponse.ok) {
+      const errData = await groqResponse.text();
+      throw new Error(`Groq API Fehler (${groqResponse.status}): ${errData}`);
+    }
+
+    const data = await groqResponse.json();
+    const reply = data.choices?.[0]?.message?.content || 'Hmm, mir fällt gerade nichts ein!';
+    
     res.json({ reply: reply });
 
   } catch (error) {
-    console.error('Gemini Fehler:', error);
-    
-    // Unser eingebauter Fehler-Melder
+    console.error('Groq Fehler:', error);
     let userMessage = 'Hoppla! Lio schläft kurz — bitte nochmal versuchen!';
-    if (error.status === 429) {
-      userMessage = 'Hoppla! Das Google-Tageslimit ist erreicht oder wir waren zu schnell!';
+    if (error.message && error.message.includes('429')) {
+      userMessage = 'Hoppla! Wir haben ein wenig zu schnell gechattet. Bitte warte einen Moment!';
     } else if (error.message) {
       userMessage = `System-Info: ${error.message.substring(0, 80)}...`;
     }
