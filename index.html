@@ -2,2429 +2,1589 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Lio – Dein Freund, der dich wirklich sieht 💜</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lio – Dein Roboter-Freund</title>
 <meta name="theme-color" content="#4A4FC4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lio">
-<meta name="description" content="Lio ist dein empathischer Freund. Tiefgründig. Genderneutral. Immer da zum Zuhören.">
+<meta name="description" content="Lio ist ein freundlicher Roboter-Freund zum Reden, Lernen und Geschichten hören.">
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%234ec3ff'/><text y='380' font-size='340' text-anchor='middle' x='256'>🤖</text></svg>">
+<link rel="apple-touch-icon" href="/assets/icon-180.png">
 <style>
-/* ── SCHRIFTARTEN: Baloo 2 (Display, verspielt-modern) + Nunito (Body, gut lesbar) ── */
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;800;900&display=swap');
+/* ══════════════════════════════════════════════════════════
+   SCHRIFTEN
+   Kein @import von fonts.googleapis.com — das lädt bei jedem
+   Start Daten von Google-Servern und ist in Deutschland
+   abgemahnt worden (LG München I, 3 O 17493/20).
+   → Dateien nach /assets/fonts/ legen und aktivieren.
+══════════════════════════════════════════════════════════ */
+/*
+@font-face { font-family:'Baloo 2'; src:url('/assets/fonts/baloo2.woff2') format('woff2');
+             font-weight:600 800; font-display:swap; }
+@font-face { font-family:'Nunito'; src:url('/assets/fonts/nunito.woff2') format('woff2');
+             font-weight:600 900; font-display:swap; }
+*/
 
-/* ── DESIGN TOKENS: "Lio Aurora" — ein Dämmerungs-Himmel statt generischem Hellblau ── */
+/* ══════════════════════════════════════════════════════════
+   DESIGN TOKENS — "Lio Nightglow"
+   Tiefes Nachtblau-Schwarz, Mint→Lime als Signaturverlauf,
+   Glasflächen statt Vollfarben.
+══════════════════════════════════════════════════════════ */
 :root {
-  --sky-deep:    #2E2A6B;   /* tiefes Abend-Indigo */
-  --sky-mid:     #4A4FC4;   /* Übergang */
-  --sky-glow:    #6E8CFF;   /* heller Horizont-Blau-Ton */
-  --aurora-1:    #8B7CF6;   /* Violett-Glow (Halo, Akzente) */
-  --aurora-2:    #4FD8E8;   /* Türkis-Glow (zweite Halo-Schicht) */
-  --sun:         #FFB648;   /* warmes Amber — primäre Aktion (Mikro) */
-  --sun-deep:    #FF8A3D;   /* Amber dunkler — Verlauf/Schatten */
-  --coral:       #FF6F91;   /* Warmer Zweitakzent */
-  --ink:         #1A2148;   /* Textfarbe auf hellem Grund */
-  --cloud:       #FFFFFF;
-  --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', sans-serif;
-  --font-body:    'Nunito', ui-rounded, 'SF Pro Rounded', sans-serif;
+  /* Untergrund */
+  --bg-0:      #04070B;
+  --bg-1:      #0A1017;
+  --bg-2:      #0E1620;
+
+  /* Glas */
+  --glass:     rgba(255,255,255,0.055);
+  --glass-2:   rgba(255,255,255,0.09);
+  --glass-3:   rgba(255,255,255,0.14);
+  --stroke:    rgba(255,255,255,0.10);
+  --stroke-2:  rgba(255,255,255,0.18);
+
+  /* Akzente */
+  --mint:      #4FE3C1;
+  --mint-deep: #16B48C;
+  --lime:      #B8F24A;
+  --lime-deep: #86D420;
+  --cyan:      #38D9F0;
+  --violet:    #9D8BFF;
+  --coral:     #FF7A8A;
+
+  /* Signaturverlauf */
+  --grad:      linear-gradient(135deg, var(--mint) 0%, var(--lime) 100%);
+  --grad-soft: linear-gradient(135deg, rgba(79,227,193,.22) 0%, rgba(184,242,74,.18) 100%);
+
+  /* Text */
+  --text:      #EAFBF5;
+  --text-dim:  rgba(234,251,245,0.60);
+  --text-mute: rgba(234,251,245,0.38);
+  --on-accent: #04241C;
+
+  /* Glow */
+  --glow-mint: rgba(79,227,193,0.45);
+  --glow-lime: rgba(184,242,74,0.35);
+
+  --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  --font-body:    'Nunito', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; font-family:var(--font-body); }
 
-html, body { 
-  height:100%; 
-  overflow:hidden; 
-  font-family: var(--font-body); 
-}
-
-/* Aurora-Dämmerung statt generischem Cyan-Verlauf — Lios eigene Bühne */
 body {
-  background: linear-gradient(160deg, var(--sky-deep) 0%, var(--sky-mid) 48%, var(--sky-glow) 100%);
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-  color: white;
+  background:
+    radial-gradient(120% 80% at 12% -5%,  rgba(79,227,193,0.16) 0%, transparent 55%),
+    radial-gradient(110% 75% at 95% 8%,   rgba(184,242,74,0.10) 0%, transparent 50%),
+    radial-gradient(130% 90% at 50% 108%, rgba(56,217,240,0.12) 0%, transparent 60%),
+    linear-gradient(175deg, var(--bg-1) 0%, var(--bg-0) 55%, #020407 100%);
+  display:flex; flex-direction:column;
+  height:100vh; height:100dvh;
+  position:relative; overflow:hidden;
+  color: var(--text);
 }
 
-/* ── Animated background clouds ── */
+/* Feine Rasterlinien im Hintergrund — nimmt das Technik-Motiv der Vorlage auf */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    linear-gradient(rgba(79,227,193,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,227,193,0.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 0%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 0%, transparent 78%);
+}
+
+/* Die "Wolken" aus dem alten Design sind jetzt schwebende Lichtpunkte.
+   buildClouds() im JS bleibt unverändert. */
 #clouds { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
 .cloud {
-  position:absolute;
-  background: radial-gradient(ellipse, rgba(255,255,255,0.4), transparent);
-  border-radius: 50%;
-  filter: blur(20px);
+  position:absolute; border-radius:50%;
+  background: radial-gradient(circle, rgba(79,227,193,0.30), rgba(184,242,74,0.10) 45%, transparent 70%);
+  filter: blur(28px); opacity:.55;
   animation: cloudDrift linear infinite;
 }
 @keyframes cloudDrift {
-  from { transform: translateX(-150px); }
-  to   { transform: translateX(calc(100vw + 150px)); }
+  from { transform: translateX(-180px); }
+  to   { transform: translateX(calc(100vw + 180px)); }
 }
 
-.screen { display:none; flex-direction:column; align-items:center; width:100%; height:100%; padding:0; }
+.screen { display:none; flex-direction:column; align-items:center; position:absolute; inset:0; z-index:1; }
 .screen.active { display:flex; }
 
 /* ════════════════════════════════════════
-   AGE SELECT SCREEN (Hier sind die Fixes!)
+   ALTERSAUSWAHL
 ═══════════════════════════════════════ */
 #screen-age {
-  justify-content: space-between;
-  text-align: center;
-  z-index: 9999; /* Zwingt den Bildschirm ÜBER die Menüleiste */
-  padding: 20px 16px;
-  background: linear-gradient(160deg, var(--sky-deep) 0%, var(--sky-mid) 48%, var(--sky-glow) 100%);
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  justify-content: space-between; text-align:center;
+  padding: env(safe-area-inset-top, 20px) 18px 20px;
 }
-
-.age-top { width: 100%; flex-shrink: 0; }
+.age-top { width:100%; flex-shrink:0; padding-top:26px; }
 .age-greeting {
-  font-size: clamp(22px, 5.5vw, 28px);
-  font-weight: 700;
-  font-family: var(--font-display);
-  color: white;
-  text-shadow: 0 4px 20px rgba(46,42,107,0.5);
+  font-size: clamp(26px, 7vw, 34px);
+  font-weight:700; font-family:var(--font-display);
+  letter-spacing:-0.5px; line-height:1.15; color:#fff;
+}
+/* Akzentwort im Verlauf — die Signatur der Vorlage */
+.age-greeting .accent {
+  background: var(--grad);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
 }
 .age-subtitle {
-  font-size: clamp(14px, 3.6vw, 17px);
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  margin-top: 8px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  font-size: clamp(14px, 3.8vw, 17px); font-weight:600;
+  color: var(--text-dim); margin-top:10px; letter-spacing:.2px;
 }
 
-.age-middle {
-  flex: 1; width: 100%;
-  display: flex; align-items: center; justify-content: center;
-  position: relative; min-height: 0;
-}
-
+.age-middle { flex:1; width:100%; display:flex; align-items:center; justify-content:center; min-height:0; }
 .age-scene {
-  position: relative;
-  width: min(300px, 75vw);
-  aspect-ratio: 1.2 / 1; /* HIER DER TRICK: Die Box schrumpft jetzt auf dem Handy proportional mit! */
-  display: flex; align-items: center; justify-content: center;
-  margin-top: 20px;
+  position:relative; width:min(300px,75vw); aspect-ratio:1.2/1;
+  display:flex; align-items:center; justify-content:center; margin-top:20px;
 }
-
+/* Glow hinter Lio auf dem Startbildschirm */
+.age-scene::after {
+  content:''; position:absolute; left:50%; top:42%;
+  width:78%; height:78%; transform:translate(-50%,-50%);
+  background: radial-gradient(circle, var(--glow-mint) 0%, rgba(56,217,240,.18) 42%, transparent 68%);
+  filter: blur(26px); z-index:1; pointer-events:none;
+  animation: haloPulse 4.5s ease-in-out infinite;
+}
 .age-platform {
-  position: absolute; 
-  bottom: -10%; /* % statt px */
-  left: 50%;
-  transform: translateX(-50%); 
-  width: 120%;
-  pointer-events: none; 
-  z-index: 2;
-  filter: drop-shadow(0 0 30px rgba(0, 200, 255, 0.7));
+  position:absolute; bottom:-10%; left:50%;
+  transform:translateX(-50%); width:120%;
+  pointer-events:none; z-index:2;
+  filter: drop-shadow(0 0 34px rgba(79,227,193,0.55));
+  margin-top:-90px;
 }
-.age-platform img { display: block; width: 100%; height: auto; }
+.age-platform img { display:block; width:100%; height:auto; }
 
 .age-robot-wrap {
-  position: absolute; 
-  bottom: 35%; 
-  left: -50%; /* Optische Korrektur für das Bild */
-  width: 80%; 
-  z-index: 3;
+  position:absolute; bottom:35%; left:-50%; width:80%; z-index:3;
   transform: translateX(-50%);
   animation: robotFloat 3.6s ease-in-out infinite;
-  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(79,227,193,.35));
+  margin-bottom:-40px;
 }
-.age-robot-wrap img { 
-  display: block; 
-  width: 100%; 
-  height: auto; 
-  transform: translateX( 35px); /* HIER STEUERST DU LIO! */
-}
-.age-robot-wrap.talking {
-  animation: robotFloat 3.6s ease-in-out infinite, robotTalk 0.4s ease-in-out infinite;
-}
+/* 🕹️ LINKS / RECHTS: höherer Wert = weiter rechts */
+.age-robot-wrap img { display:block; width:100%; height:auto; transform: translateX(35px); }
+.age-robot-wrap.talking { animation: robotFloat 3.6s ease-in-out infinite, robotTalk .4s ease-in-out infinite; }
 
-/* ── MODERNE SPRECHBLASE (Milchglas-Effekt) ── */
 .age-bubble {
-  position: absolute; top: -40px; left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  color: #1a3050;
-  padding: 10px 16px; 
-  border-radius: 20px;
-  font-size: clamp(13px, 3.4vw, 15px);
-  font-weight: 800; z-index: 5;
-  white-space: nowrap; max-width: 95%;
-  overflow: hidden; text-overflow: ellipsis;
-  border: 2px solid rgba(255,255,255,0.8);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-  opacity: 0; transition: opacity 0.3s;
-  pointer-events: none;
+  position:absolute; top:-40px; left:50%; transform:translateX(-50%);
+  background: rgba(14,22,32,0.82);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  color: var(--text); padding:11px 18px; border-radius:var(--r-md);
+  font-size: clamp(13px,3.4vw,15px); font-weight:700; z-index:5;
+  white-space:nowrap; max-width:95%; overflow:hidden; text-overflow:ellipsis;
+  border:1px solid rgba(79,227,193,0.32);
+  box-shadow: 0 10px 34px rgba(0,0,0,.55), 0 0 22px rgba(79,227,193,.16);
+  opacity:0; transition:opacity .3s; pointer-events:none;
 }
-.age-bubble.show { opacity: 1; }
+.age-bubble.show { opacity:1; }
 
-.age-bottom { 
-  width: 100%; 
-  flex-shrink: 0; 
-  padding-top: 12px; 
-  padding-bottom: 80px; /* HIER WIRD GESCHOBEN: Drückt die Kästen nach oben */
-}
+.age-bottom { width:100%; flex-shrink:0; padding: 12px 0 calc(24px + env(safe-area-inset-bottom, 0px)); }
+.age-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; width:100%; max-width:340px; margin:0 auto; }
 
-.age-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  width: 100%; 
-  max-width: 320px; /* HIER WIEDER ZURÜCKGESETZT: Breite ist wieder wie vorher */
-  margin: 0 auto;
-}
-
-/* ── MODERNE 3D-KARTEN (FLACHER GEMACHT) ── */
-/* ── MODERNE 3D-KARTEN (WIRKLICH FLACHER) ── */
+/* Glaskarten mit farbigem Rand statt Vollfarbe.
+   Große Trefferfläche bleibt — Kinderhände brauchen sie. */
 .age-card {
-  background: linear-gradient(135deg, var(--c1), var(--c2));
-  border-radius: 18px; 
-  padding: 6px 4px; 
-  cursor: pointer;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; 
-  gap: 0px; 
-  transition: transform 0.2s;
-  color: white; font-weight: 800; font-family: inherit;
-  box-shadow: 0 5px 0 rgba(0,0,0,0.15), 0 10px 15px rgba(0,0,0,0.1); 
-  border: 2px solid rgba(255,255,255,0.3);
-  height: 70px; 
+  position:relative; border-radius:var(--r-md);
+  padding:14px 8px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color:#fff; font-weight:800; font-family:var(--font-body);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border:1px solid var(--stroke-2);
+  box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  min-height:96px; overflow:hidden;
+}
+.age-card::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(circle at 50% 0%, var(--c-glow) 0%, transparent 68%);
+  opacity:.5; pointer-events:none;
+}
+.age-card:active {
+  transform: translateY(3px) scale(.985);
+  border-color: var(--c-line);
+  box-shadow: 0 4px 14px rgba(0,0,0,.4), 0 0 24px var(--c-glow);
+}
+.age-card .age-icon {
+  font-size: clamp(21px,5.4vw,25px); line-height:1; margin-bottom:7px;
+  position:relative; filter: drop-shadow(0 0 10px var(--c-glow));
+}
+.age-card .age-range {
+  font-size: clamp(13px,3.6vw,15px); font-weight:900; line-height:1.1;
+  position:relative; color: var(--c-line);
+}
+.age-card .age-desc {
+  font-size: clamp(9.5px,2.6vw,11px); font-weight:600; line-height:1.25;
+  margin-top:3px; position:relative; color: var(--text-dim);
 }
 
-.age-card:active { 
-  transform: translateY(4px); 
-  box-shadow: 0 1px 0 rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1); 
-}
+.age-1 { --c-line: var(--mint);   --c-glow: rgba(79,227,193,0.26); }
+.age-2 { --c-line: var(--cyan);   --c-glow: rgba(56,217,240,0.24); }
+.age-3 { --c-line: var(--lime);   --c-glow: rgba(184,242,74,0.24); }
+.age-4 { --c-line: var(--violet); --c-glow: rgba(157,139,255,0.26); }
 
-.age-card .age-icon { 
-  font-size: clamp(20px, 5vw, 24px); 
-  line-height: 1; 
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); 
-  margin-bottom: 2px;
-}
-.age-card .age-range { 
-  font-size: clamp(12px, 3.5vw, 15px); 
-  font-weight: 900; 
-  letter-spacing: 0.5px; 
-  line-height: 1.1; 
-}
-.age-card .age-desc { 
-  font-size: clamp(9px, 2.5vw, 11px); 
-  font-weight: 600; 
-  opacity: 0.95; 
-  line-height: 1; 
-}
-
-/* Frische Farben für die Karten */
-.age-1 { --c1: #ff7eb3; --c2: #ff477e; }
-.age-2 { --c1: #4facfe; --c2: #0082fa; }
-.age-3 { --c1: #43e97b; --c2: #18ab4e; }
-.age-4 { --c1: #fddb69; --c2: #f89d13; }
-
-@keyframes haloPulse {
-  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-  50%       { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-}
 @keyframes robotFloat {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50%       { transform: translateX(-50%) translateY(-12px); }
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%     { transform: translateX(-50%) translateY(-12px); }
 }
 @keyframes robotTalk {
-  0%, 100% { filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3)); }
-  50%       { filter: drop-shadow(0 12px 40px rgba(0,220,255,.85)); }
+  0%,100% { filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(79,227,193,.35)); }
+  50%     { filter: drop-shadow(0 14px 40px rgba(0,0,0,.55)) drop-shadow(0 0 46px rgba(79,227,193,.85)); }
+}
+@keyframes haloPulse {
+  0%,100% { opacity:.55; transform: translate(-50%,-50%) scale(1); }
+  50%     { opacity:1;   transform: translate(-50%,-50%) scale(1.09); }
 }
 
 /* ════════════════════════════════════════
-   MAIN SCREEN — Buddy.ai style
+   HAUPTBILDSCHIRM
 ═══════════════════════════════════════ */
-#screen-main {
-  position: relative;
-  padding: 0;
-  justify-content: space-between;
-}
+#screen-main { justify-content: space-between; padding-top: env(safe-area-inset-top, 0px); }
 
-/* TOP BAR */
-.top-bar {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  z-index: 6;
-  flex-shrink: 0;
-}
-
+.top-bar { width:100%; display:flex; justify-content:space-between; align-items:center; padding:14px 16px; flex-shrink:0; z-index:6; }
 .top-circle-btn {
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  background: white;
-  border: none;
-  color: var(--ink);
-  font-size: 20px;
-  cursor: pointer;
-  box-shadow: 0 8px 18px rgba(46,42,107,0.35);
-  display: flex; align-items: center; justify-content: center;
-  font-family: inherit;
-  font-weight: bold;
-  transition: transform 0.15s, box-shadow 0.15s;
+  width:46px; height:46px; border-radius:50%;
+  background: var(--glass-2);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border:1px solid var(--stroke-2); color: var(--text);
+  font-size:19px; cursor:pointer;
+  box-shadow: 0 8px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  display:flex; align-items:center; justify-content:center;
+  font-family:inherit; font-weight:bold;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
 }
-.top-circle-btn:active { transform: translateY(2px) scale(0.96); box-shadow: 0 4px 10px rgba(46,42,107,0.3); }
-
-/* ROBOT AREA - dominates the upper part like Buddy.ai */
-.Lio-area {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  min-height: 0;
-  padding: 0 16px;
+.top-circle-btn:active {
+  transform: translateY(2px) scale(.95);
+  border-color: rgba(79,227,193,.5);
+  box-shadow: 0 3px 10px rgba(0,0,0,.4), 0 0 18px var(--glow-mint);
 }
 
-/* 1. Szene bekommt die perfekten Gummiband-Maße vom Startbildschirm */
-.scene {
-  position: relative;
-  width: min(350px, 85vw);
-  aspect-ratio: 1.1 / 1; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-}
+.lio-area { position:relative; width:100%; flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:0 16px; z-index:1; }
+.scene { position:relative; width:min(350px,85vw); aspect-ratio:1.1/1; display:flex; align-items:center; justify-content:center; margin:0 auto; }
 
+/* Der Halo ist jetzt das Herzstück der Optik */
 .halo {
-  position: absolute;
-  top: 38%; left: 50%;
-  width: 100%; height: 80%;
-  transform: translate(-50%, -50%);
+  position:absolute; top:38%; left:50%;
+  width:104%; height:86%;
+  transform: translate(-50%,-50%);
   background:
-    radial-gradient(ellipse 60% 60% at 40% 45%, rgba(139,124,246,0.55) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 60% at 62% 55%, rgba(79,216,232,0.45) 0%, transparent 65%);
-  filter: blur(2px);
-  pointer-events: none; z-index: 1; border-radius: 50%;
+    radial-gradient(ellipse 58% 58% at 44% 46%, rgba(79,227,193,.50) 0%, transparent 66%),
+    radial-gradient(ellipse 58% 58% at 60% 56%, rgba(56,217,240,.34) 0%, transparent 66%);
+  filter: blur(20px); pointer-events:none; z-index:1; border-radius:50%;
   animation: haloPulse 4s ease-in-out infinite;
 }
-.halo.happy   { background: radial-gradient(ellipse 60% 60% at 40% 45%, rgba(255,182,72,0.5) 0%, transparent 65%), radial-gradient(ellipse 60% 60% at 62% 55%, rgba(139,124,246,0.4) 0%, transparent 65%); }
-.halo.sad     { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(110,140,255,0.4) 0%, transparent 65%); }
-.halo.angry   { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(255,111,145,0.45) 0%, transparent 65%); }
-.halo.scared  { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(139,124,246,0.4) 0%, transparent 65%); }
-.halo.tired   { background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(139,124,246,0.25) 0%, transparent 65%); }
-.halo.excited { background: radial-gradient(ellipse 60% 60% at 40% 45%, rgba(255,182,72,0.55) 0%, transparent 65%), radial-gradient(ellipse 60% 60% at 62% 55%, rgba(79,216,232,0.5) 0%, transparent 65%); }
+.halo.happy   { background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.46) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(79,227,193,.34) 0%, transparent 66%); }
+.halo.sad     { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(90,140,255,.38) 0%, transparent 66%); }
+.halo.angry   { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(255,122,138,.40) 0%, transparent 66%); }
+.halo.scared  { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(157,139,255,.38) 0%, transparent 66%); }
+.halo.tired   { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(120,140,170,.26) 0%, transparent 66%); }
+.halo.excited { background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.55) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(56,217,240,.44) 0%, transparent 66%); }
 
-/* 2. Plattform ist am Boden verankert */
 .platform {
-  position: absolute; 
-  bottom: -35%; 
-  left: 50%;
-  transform: translateX(-50%); 
-  width: 110%;
-  pointer-events: none; 
-  z-index: 2;
-  filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.3));
+  position:absolute; bottom:-35%; left:50%; transform:translateX(-50%);
+  width:110%; pointer-events:none; z-index:2;
+  filter: drop-shadow(0 0 40px rgba(79,227,193,.55));
 }
-.platform img { display: block; width: 100%; height: auto; }
+.platform img { display:block; width:100%; height:auto; }
 
-@keyframes platform-glow {
-  0%, 100% { filter: drop-shadow(0 0 50px rgba(0, 220, 255, 0.8)) drop-shadow(0 0 80px rgba(0, 150, 255, 0.5)); }
-  50% { filter: drop-shadow(0 0 70px rgba(0, 220, 255, 1)) drop-shadow(0 0 100px rgba(0, 150, 255, 0.7)); }
-}
-
-/* 3. Lio schwebt über der Plattform */
+/* 🕹️ HÖHE von Lio über der Plattform */
 .robot-wrap {
-  position: absolute; 
-  bottom: -15%; /* HIER STELLST DU DIE HÖHE EIN */
-  left: 45%;
-  transform: translateX(-50%);
-  width: 75%; 
-  z-index: 3;
-  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
+  position:absolute; bottom:-15%; left:45%;
+  transform: translateX(-50%); width:75%; z-index:3;
+  filter: drop-shadow(0 16px 38px rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(79,227,193,.30));
   will-change: transform;
-  animation: LioFloat 3.6s ease-in-out infinite;
-}
-.robot-wrap img { display: block; width: 100%; height: auto; }
-
-/* 4. Die alten Animationen zwingend an den neuen Platz ketten! */
-.robot-wrap.talking   { animation: LioTalk 1.1s ease-in-out infinite; }
-.robot-wrap.listening { animation: LioListen 2.5s ease-in-out infinite; }
-.robot-wrap.excited   { animation: LioJoy 1.6s ease-in-out infinite; }
-.robot-wrap.sad       { animation: LioSad 3.0s ease-in-out infinite; }
-.robot-wrap.tired     { animation: LioTired 4.0s ease-in-out infinite; }
-
-@keyframes LioFloat {
-  0%, 100% { transform: translateX(-50%) translateY(0px); }
-  50% { transform: translateX(-50%) translateY(-15px); }
-}
-@keyframes LioTalk {
-  0%, 100% { transform: translateX(-50%) translateY(-5px); }
-  50% { transform: translateX(-50%) translateY(-15px); }
-}
-@keyframes LioListen {
-  0%, 100% { transform: translateX(-50%) translateY(0px) scale(1); }
-  50% { transform: translateX(-50%) translateY(-5px) scale(1.02); }
-}
-@keyframes LioJoy {
-  0%, 100% { transform: translateX(-50%) translateY(0px); }
-  50% { transform: translateX(-50%) translateY(-25px); }
-}
-@keyframes LioSad {
-  0%, 100% { transform: translateX(-50%) translateY(10px); }
-  50% { transform: translateX(-50%) translateY(15px); }
-}
-@keyframes LioTired {
-  0%, 100% { transform: translateX(-50%) translateY(5px); }
-  50% { transform: translateX(-50%) translateY(10px); }
-}
-
-/* SPEECH BUBBLE - prominent like in Buddy.ai */
-.speech-bubble {
-  background: white;
-  color: var(--ink);
-  padding: 12px 18px;
-  border-radius: 22px;
-  font-size: clamp(14px, 3.8vw, 17px);
-  font-weight: 700;
-  z-index: 5;
-  text-align: center;
-  max-width: min(440px, 92vw);
-  width: calc(100% - 32px);
-  margin: 0 16px;
-  border: none;
-  box-shadow: 0 10px 30px rgba(46,42,107,0.35), 0 0 0 3px rgba(139,124,246,0.35);
-  line-height: 1.4;
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  position: relative;
-}
-.speech-bubble::before {
-  content: '';
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0; height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-bottom: 14px solid rgba(139,124,246,0.5);
-}
-.speech-bubble::after {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0; height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 8px solid white;
-  z-index: 1;
-}
-
-.quick-replies {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  padding: 8px 16px 0;
-  max-width: min(440px, 92vw);
-  z-index: 5;
-}
-.quick-chip {
-  background: rgba(255,255,255,0.92);
-  color: var(--ink);
-  border: none;
-  border-radius: 50px;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: var(--font-display);
+  animation: lioFloat 3.6s ease-in-out infinite;
   cursor: pointer;
-  box-shadow: 0 6px 14px rgba(46,42,107,0.3);
-  transition: transform 0.15s, box-shadow 0.15s;
 }
-.quick-chip:active { transform: translateY(2px) scale(0.96); box-shadow: 0 3px 8px rgba(46,42,107,0.25); }
+.robot-wrap img { display:block; width:100%; height:auto; pointer-events:none; }
 
-.dots span {
-  display: inline-block; width: 8px; height: 8px;
-  background: #00aadd; border-radius: 50%;
-  margin: 0 2px;
-  animation: dotPulse 1.4s ease-in-out infinite;
-}
-.dots span:nth-child(2) { animation-delay: 0.2s; }
-.dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes dotPulse {
-  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-  40% { opacity: 1; transform: scale(1.2); }
-}
+.robot-wrap.talking   { animation: lioTalk   1.1s ease-in-out infinite; }
+.robot-wrap.listening { animation: lioListen 2.5s ease-in-out infinite; }
+.robot-wrap.excited   { animation: lioJoy    1.6s ease-in-out infinite; }
+.robot-wrap.sad       { animation: lioSad    3.0s ease-in-out infinite; }
+.robot-wrap.tired     { animation: lioTired  4.0s ease-in-out infinite; }
 
-/* Sparkles around robot */
-.sparkle { position: absolute; width: 8px; height: 8px; pointer-events:none; z-index: 4; }
-.sparkle::before {
-  content: '✨';
-  font-size: 16px;
-  display: block;
-  filter: drop-shadow(0 0 8px rgba(255,220,100,0.9));
-}
-.sp1 { top:25%; left:8%; animation: sparkFloat 3.2s ease-in-out infinite; }
-.sp2 { top:30%; right:8%; animation: sparkFloat 3.8s ease-in-out infinite 0.7s; }
+@keyframes lioFloat  { 0%,100% { transform: translateX(-50%) translateY(0); }    50% { transform: translateX(-50%) translateY(-15px); } }
+@keyframes lioTalk   { 0%,100% { transform: translateX(-50%) translateY(-5px); } 50% { transform: translateX(-50%) translateY(-15px); } }
+@keyframes lioListen { 0%,100% { transform: translateX(-50%) translateY(0) scale(1); } 50% { transform: translateX(-50%) translateY(-5px) scale(1.02); } }
+@keyframes lioJoy    { 0%,100% { transform: translateX(-50%) translateY(0); }    50% { transform: translateX(-50%) translateY(-25px); } }
+@keyframes lioSad    { 0%,100% { transform: translateX(-50%) translateY(10px); } 50% { transform: translateX(-50%) translateY(15px); } }
+@keyframes lioTired  { 0%,100% { transform: translateX(-50%) translateY(5px); }  50% { transform: translateX(-50%) translateY(10px); } }
+
+.sparkle { position:absolute; width:8px; height:8px; pointer-events:none; z-index:4; }
+.sparkle::before { content:''; display:block; width:7px; height:7px; border-radius:50%;
+  background: var(--mint); box-shadow: 0 0 12px 3px var(--glow-mint); }
+.sp1 { top:25%; left:8%;   animation: sparkFloat 3.2s ease-in-out infinite; }
+.sp2 { top:30%; right:8%;  animation: sparkFloat 3.8s ease-in-out infinite .7s; }
 .sp3 { top:60%; left:10%;  animation: sparkFloat 4.2s ease-in-out infinite 1.4s; }
 .sp4 { top:65%; right:12%; animation: sparkFloat 3.5s ease-in-out infinite 2.1s; }
 @keyframes sparkFloat {
-  0%, 100% { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.5); }
-  20%, 80% { opacity: 1; }
-  50%       { transform: translateY(-30px) rotate(180deg) scale(1.2); }
+  0%,100% { opacity:0; transform: translateY(0) scale(.4); }
+  20%,80% { opacity:1; }
+  50%     { transform: translateY(-30px) scale(1.15); }
 }
 
-/* MOOD BUTTONS — small, on the side */
-.mood-side {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  z-index: 5;
-}
+.mood-side { position:absolute; right:10px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:7px; z-index:5; }
 .mood-pill {
-  background: white;
-  border: 2px solid rgba(139,124,246,0.4);
-  border-radius: 50%;
-  width: 36px; height: 36px;
-  font-size: 18px;
-  cursor: pointer;
-  flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(46,42,107,0.25);
+  background: var(--glass-2);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border:1px solid var(--stroke-2); border-radius:50%;
+  width:38px; height:38px; font-size:18px; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  transition: all .2s; box-shadow:0 6px 16px rgba(0,0,0,.4);
 }
-.mood-pill:active { transform: translateY(2px) scale(0.96); }
+.mood-pill:active { transform: translateY(2px) scale(.94); }
 .mood-pill.selected {
-  background: var(--sun);
-  border-color: white;
-  transform: scale(1.15);
-  box-shadow: 0 0 16px rgba(255,182,72,0.8);
-}
-/* ════════════════════════════════════════
-   BOTTOM ACTION AREA — Big mic + scrollable lesson cards
-═══════════════════════════════════════ */
-.bottom-area {
-  width: 100%;
-  z-index: 5;
-  flex-shrink: 0;
-  padding: 0 0 12px 0;
+  background: var(--grad); border-color: rgba(255,255,255,.5);
+  transform: scale(1.16);
+  box-shadow: 0 0 22px var(--glow-mint), 0 0 40px var(--glow-lime);
 }
 
-/* Lesson cards row — like Buddy.ai's lesson selector */
-.lesson-row {
-  display: flex;
-  gap: 10px;
-  padding: 8px 14px 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
+/* Sprechblase als Glasfläche.
+   Bewusst hoher Kontrast: helle Schrift, kräftige Größe — Kinder
+   müssen das auch bei Sonnenlicht lesen können. */
+.speech-bubble {
+  background: rgba(14,22,32,0.78);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  color:#fff; padding:14px 20px; border-radius:var(--r-lg);
+  font-size: clamp(15px,4vw,18px); font-weight:700;
+  text-align:center; max-width:min(440px,92vw);
+  width:calc(100% - 32px); margin:0 16px;
+  border:1px solid rgba(79,227,193,0.28);
+  box-shadow: 0 14px 40px rgba(0,0,0,.55), 0 0 26px rgba(79,227,193,.12), inset 0 1px 0 rgba(255,255,255,.06);
+  line-height:1.45; min-height:56px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; position:relative; z-index:5;
 }
-.lesson-row::-webkit-scrollbar { display: none; }
+.speech-bubble::before {
+  content:''; position:absolute; top:-9px; left:50%; transform:translateX(-50%) rotate(45deg);
+  width:16px; height:16px; background: rgba(14,22,32,0.95);
+  border-left:1px solid rgba(79,227,193,0.28); border-top:1px solid rgba(79,227,193,0.28);
+  border-radius:3px 0 0 0;
+}
+.speech-bubble::after { content:none; }
+
+.quick-replies { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:10px 16px 0; max-width:min(440px,92vw); z-index:5; }
+.quick-chip {
+  background: var(--glass-2);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  color: var(--text); border:1px solid var(--stroke-2); border-radius:50px;
+  padding:10px 17px; font-size:13.5px; font-weight:700; font-family:var(--font-display);
+  cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.4); transition: all .15s;
+}
+.quick-chip:active { transform: translateY(2px) scale(.96); border-color: var(--mint); box-shadow:0 0 18px var(--glow-mint); }
+
+.dots span {
+  display:inline-block; width:9px; height:9px; border-radius:50%;
+  background: var(--mint); box-shadow:0 0 10px var(--glow-mint);
+  margin:0 3px; animation: dotPulse 1.4s ease-in-out infinite;
+}
+.dots span:nth-child(2) { animation-delay:.2s; }
+.dots span:nth-child(3) { animation-delay:.4s; }
+@keyframes dotPulse { 0%,80%,100% { opacity:.3; transform:scale(.8); } 40% { opacity:1; transform:scale(1.25); } }
+
+/* Untere Leiste als schwebendes Glas-Dock */
+.bottom-area {
+  width:calc(100% - 20px); margin:0 10px;
+  z-index:5; flex-shrink:0;
+  padding: 10px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(10,16,23,0.62);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  border:1px solid var(--stroke); border-bottom:none;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.lesson-row { display:flex; gap:10px; padding:6px 14px 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; scrollbar-width:none; }
+.lesson-row::-webkit-scrollbar { display:none; }
 
 .lesson-card {
-  flex-shrink: 0;
-  scroll-snap-align: center;
-  background: linear-gradient(135deg, var(--c1), var(--c2));
-  border: none;
-  border-radius: 20px;
-  padding: 10px 6px;
-  width: 92px;
-  min-height: 76px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: white;
-  font-weight: 700;
-  font-family: var(--font-display);
-  font-size: 11px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.22);
-  text-align: center;
-  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink:0; scroll-snap-align:center;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border:1px solid var(--stroke); border-radius:var(--r-sm);
+  padding:11px 6px; width:94px; min-height:80px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  color: var(--text-dim); font-weight:800; font-family:var(--font-display); font-size:11.5px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.4); text-align:center;
+  transition: all .16s ease;
 }
-.lesson-card:active { transform: translateY(2px) scale(0.97); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+.lesson-card:active { transform: translateY(3px) scale(.97); }
 .lesson-card.active {
-  box-shadow: 0 0 0 3px white, 0 0 18px rgba(139,124,246,0.7), 0 8px 20px rgba(0,0,0,0.22);
+  background: var(--grad-soft);
+  border-color: rgba(79,227,193,.55); color:#fff;
+  box-shadow: 0 8px 26px rgba(0,0,0,.45), 0 0 22px rgba(79,227,193,.28);
 }
-.lesson-card .lesson-icon { font-size: 28px; line-height: 1; }
-.lesson-card .lesson-label { line-height: 1.1; }
-
-.mode-stories  { --c1: #ff9eb1; --c2: #e8467a; }
-.mode-learn    { --c1: #6bd4ff; --c2: #2d8fe8; }
-.mode-jokes    { --c1: #ffd062; --c2: #ff8a2a; }
-.mode-creative { --c1: #c896ff; --c2: #8852e8; }
-.mode-karaoke  { --c1: #ff96be; --c2: #d44280; }
-.mode-talk     { --c1: #6cf5b9; --c2: #1ab87e; }
-.mode-homework { --c1: #ffb088; --c2: #cc6699; }
-.mode-guess    { --c1: #ffb088; --c2: #e8632a; }
-.mode-iSpy     { --c1: #88e8ff; --c2: #00aacc; }
-.mode-wouldYou { --c1: #f8b4d9; --c2: #d859a9; }
-
-/* Big mic button — Buddy.ai style — DOMINANT and centered */
-.mic-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 4px 14px 0;
-  position: relative;
+.lesson-card .lesson-icon {
+  font-size:23px; line-height:1;
+  width:40px; height:40px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--glass-2); border:1px solid var(--stroke);
 }
+.lesson-card.active .lesson-icon {
+  background: var(--grad); border-color: transparent;
+  box-shadow: 0 0 18px var(--glow-mint);
+}
+.lesson-card .lesson-label { line-height:1.15; }
 
+.mic-row { display:flex; align-items:center; justify-content:center; gap:14px; padding:6px 14px 0; }
+
+/* Das Mikro ist der Held der Oberfläche */
 .big-mic {
-  flex-shrink: 0;
-  width: clamp(90px, 24vw, 110px);
-  height: clamp(90px, 24vw, 110px);
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, var(--sun), var(--sun-deep));
-  color: white;
-  font-size: clamp(40px, 11vw, 50px);
-  cursor: pointer;
-  box-shadow: 0 10px 28px rgba(255,138,61,0.55), 0 0 0 6px rgba(255,255,255,0.15);
-  transition: transform 0.15s, box-shadow 0.15s;
-  display: flex; align-items: center; justify-content: center;
-  font-family: inherit;
-  position: relative;
+  position:relative; flex-shrink:0;
+  width:clamp(88px,23vw,106px); height:clamp(88px,23vw,106px);
+  border-radius:50%; border:none;
+  background: var(--grad); color: var(--on-accent);
+  font-size:clamp(38px,10vw,46px); cursor:pointer;
+  box-shadow: 0 12px 34px rgba(79,227,193,.42), 0 0 0 6px rgba(79,227,193,.10), 0 0 46px rgba(184,242,74,.22);
+  transition: transform .15s, box-shadow .15s;
+  display:flex; align-items:center; justify-content:center; font-family:inherit;
 }
-.big-mic:active:not(:disabled) {
-  transform: translateY(3px) scale(0.98);
-  box-shadow: 0 6px 16px rgba(255,138,61,0.5), 0 0 0 6px rgba(255,255,255,0.12);
-}
+.big-mic:active:not(:disabled) { transform: translateY(3px) scale(.97); }
 .big-mic.listening {
-  background: linear-gradient(135deg, #ff5577, #cc2244);
-  animation: pulseListen 1.2s ease-out infinite;
+  background: linear-gradient(135deg, #FF7A8A, #FF4D6D);
+  color:#fff; animation: pulseListen 1.2s ease-out infinite;
 }
 @keyframes pulseListen {
-  0% { box-shadow: 0 10px 28px rgba(255,80,120,0.55), 0 0 0 6px rgba(255,255,255,0.15); }
-  100% { box-shadow: 0 10px 28px rgba(255,80,120,0.35), 0 0 0 28px rgba(255,80,120,0); }
+  0%   { box-shadow: 0 12px 34px rgba(255,77,109,.5), 0 0 0 6px rgba(255,77,109,.18); }
+  100% { box-shadow: 0 12px 34px rgba(255,77,109,.3), 0 0 0 30px rgba(255,77,109,0); }
 }
-.big-mic:disabled { opacity: 0.5; cursor: not-allowed; }
+.big-mic:disabled { opacity:.45; cursor:not-allowed; }
 
-/* Side action buttons */
 .side-btn {
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-family: inherit;
-  font-size: 22px;
-  color: white;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.3);
-  transition: transform 0.15s, box-shadow 0.15s;
-  flex-shrink: 0;
+  width:56px; height:56px; border-radius:50%;
+  background: var(--glass-2);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border:1px solid var(--stroke-2); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-family:inherit; font-size:22px; color: var(--text);
+  box-shadow:0 8px 22px rgba(0,0,0,.45); transition: all .15s; flex-shrink:0;
 }
-.side-btn:active { transform: translateY(2px) scale(0.96); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
-.side-btn.keyboard { background: linear-gradient(135deg, var(--aurora-2), #1ab87e); }
-.side-btn.repeat { background: linear-gradient(135deg, var(--aurora-1), #6a4fd8); }
+.side-btn:active { transform: translateY(2px) scale(.95); }
+.side-btn.keyboard:active { border-color: var(--cyan);  box-shadow:0 0 20px rgba(56,217,240,.4); }
+.side-btn.repeat:active   { border-color: var(--violet); box-shadow:0 0 20px rgba(157,139,255,.4); }
 
-/* Mic label/hint */
-.mic-hint {
-  text-align: center;
-  font-size: 12px;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  font-weight: bold;
-  margin-top: 6px;
-  min-height: 16px;
-}
+.mic-hint { text-align:center; font-size:12.5px; color: var(--text-mute); font-weight:700; margin-top:8px; min-height:16px; letter-spacing:.2px; }
 
-/* TEXT INPUT MODE (overlay) */
+/* ── Text-Eingabe ── */
 .text-overlay {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: white;
-  padding: 16px 14px;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
-  box-shadow: 0 -8px 30px rgba(0,0,0,0.3);
-  z-index: 25;
-  transform: translateY(100%);
-  transition: transform 0.3s;
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  position:fixed; bottom:0; left:0; right:0;
+  background: rgba(10,16,23,0.94);
+  -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px);
+  border-top:1px solid var(--stroke-2);
+  padding:16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top-left-radius:var(--r-lg); border-top-right-radius:var(--r-lg);
+  box-shadow:0 -14px 44px rgba(0,0,0,.6); z-index:25;
+  transform: translateY(110%); transition: transform .3s;
+  display:flex; gap:10px; align-items:center;
 }
 .text-overlay.show { transform: translateY(0); }
-
 .text-overlay input {
-  flex: 1;
-  padding: 14px 18px;
-  border: 3px solid var(--aurora-1);
-  background: #f5f9ff;
-  border-radius: 50px;
-  font-size: 15px;
-  outline: none;
-  font-family: inherit;
-  font-weight: 500;
-  min-width: 0;
-  color: #1a3050;
+  flex:1; padding:14px 18px;
+  border:1px solid var(--stroke-2); background: var(--glass);
+  border-radius:50px; font-size:16px; outline:none; font-family:inherit;
+  font-weight:600; min-width:0; color: var(--text);
 }
-.text-overlay input:focus { border-color: var(--sun-deep); background: white; }
-
+.text-overlay input::placeholder { color: var(--text-mute); }
+.text-overlay input:focus { border-color: var(--mint); box-shadow:0 0 0 3px rgba(79,227,193,.16); }
 .text-overlay .send {
-  width: 50px; height: 50px;
-  border-radius: 50%;
-  border: 3px solid white;
-  background: linear-gradient(135deg, var(--sun), var(--sun-deep));
-  color: white;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-  flex-shrink: 0;
+  width:52px; height:52px; border-radius:50%; border:none;
+  background: var(--grad); color: var(--on-accent);
+  font-size:21px; cursor:pointer; flex-shrink:0;
+  box-shadow:0 6px 20px rgba(79,227,193,.4);
 }
 .text-overlay .close {
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  border: 2px solid #aab;
-  background: white;
-  color: #555;
-  font-size: 18px;
-  cursor: pointer;
-  flex-shrink: 0;
+  width:42px; height:42px; border-radius:50%;
+  border:1px solid var(--stroke-2); background: var(--glass);
+  color: var(--text-dim); font-size:17px; cursor:pointer; flex-shrink:0;
 }
 
-/* ════════════════════════════════════════
-   MENU DRAWER
-═══════════════════════════════════════ */
-.menu-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0);
-  z-index: 30;
-  pointer-events: none;
-  transition: background 0.3s;
-}
-.menu-overlay.show {
-  background: rgba(0,0,0,0.5);
-  pointer-events: all;
-}
-
+/* ── Menü ── */
+.menu-overlay { position:fixed; inset:0; background:rgba(0,0,0,0); z-index:30; pointer-events:none; transition: background .3s; }
+.menu-overlay.show { background:rgba(2,4,7,.72); pointer-events:all; }
 .menu-drawer {
-  position: fixed;
-  top: 0; left: 0;
-  bottom: 0;
-  width: min(280px, 80vw);
-  background: linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-mid) 100%);
-  border-right: none;
-  z-index: 31;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease-out;
-  display: flex;
-  flex-direction: column;
-  padding: 18px 14px;
-  overflow-y: auto;
-  color: white;
-  box-shadow: 4px 0 30px rgba(0,0,0,0.4);
+  position:fixed; top:0; left:0; bottom:0; width:min(292px,82vw);
+  background: linear-gradient(180deg, rgba(14,22,32,.97) 0%, rgba(4,7,11,.99) 100%);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  border-right:1px solid var(--stroke-2);
+  z-index:31; transform: translateX(-100%); transition: transform .3s ease-out;
+  display:flex; flex-direction:column; padding:22px 16px calc(22px + env(safe-area-inset-bottom,0px));
+  overflow-y:auto; color: var(--text);
+  box-shadow:14px 0 50px rgba(0,0,0,.6);
 }
 .menu-drawer.show { transform: translateX(0); }
-
 .menu-title {
-  font-size: 22px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  margin-bottom: 4px;
+  font-size:23px; font-family:var(--font-display); font-weight:700; margin-bottom:4px;
+  background: var(--grad); -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
 }
-.menu-subtitle {
-  font-size: 12px;
-  opacity: 0.85;
-  margin-bottom: 14px;
-}
-
-.menu-section-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.85;
-  margin: 12px 0 6px;
-  font-weight: bold;
-}
+.menu-subtitle { font-size:12.5px; color: var(--text-mute); margin-bottom:16px; }
+.menu-section-label { font-size:10.5px; text-transform:uppercase; letter-spacing:1.4px; color: var(--text-mute); margin:14px 0 8px; font-weight:800; }
 
 .menu-item {
-  background: linear-gradient(135deg, var(--c1), var(--c2));
-  border: none;
-  border-radius: 16px;
-  padding: 11px 14px;
-  margin-bottom: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: white;
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  width: 100%;
-  text-align: left;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
-  transition: transform 0.15s, box-shadow 0.15s;
+  background: var(--glass); border:1px solid var(--stroke);
+  border-radius:var(--r-sm); padding:12px 14px; margin-bottom:7px; cursor:pointer;
+  display:flex; align-items:center; gap:12px; color: var(--text);
+  font-family:var(--font-display); font-size:14px; font-weight:600;
+  width:100%; text-align:left; transition: all .15s;
 }
-.menu-item:active { transform: translateY(2px) scale(0.98); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
-.menu-item .menu-icon { font-size: 22px; flex-shrink: 0; }
+.menu-item:active { transform: translateY(2px) scale(.985); }
+.menu-item .menu-icon {
+  font-size:19px; flex-shrink:0;
+  width:36px; height:36px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--c-soft); border:1px solid var(--c-line);
+}
 .menu-item.active {
-  box-shadow: 0 0 0 3px white, 0 0 16px rgba(139,124,246,0.7);
+  background: var(--grad-soft); border-color: rgba(79,227,193,.5);
+  box-shadow: 0 0 20px rgba(79,227,193,.2);
 }
 
-.menu-mode-talk       { --c1: #6cf5b9; --c2: #1ab87e; }
-.menu-mode-homework   { --c1: #ffb088; --c2: #cc6699; }
-.menu-mode-stories    { --c1: #ff9eb1; --c2: #e8467a; }
-.menu-mode-learn      { --c1: #6bd4ff; --c2: #2d8fe8; }
-.menu-mode-jokes      { --c1: #ffd062; --c2: #ff8a2a; }
-.menu-mode-creative   { --c1: #c896ff; --c2: #8852e8; }
-.menu-mode-guess      { --c1: #ffb088; --c2: #e8632a; }
-.menu-mode-iSpy       { --c1: #88e8ff; --c2: #00aacc; }
-.menu-mode-wouldYou   { --c1: #f8b4d9; --c2: #d859a9; }
-.menu-mode-karaoke    { --c1: #ff96be; --c2: #d44280; }
+.menu-mode-talk     { --c-line: rgba(79,227,193,.5);  --c-soft: rgba(79,227,193,.14); }
+.menu-mode-homework { --c-line: rgba(184,242,74,.5);  --c-soft: rgba(184,242,74,.13); }
+.menu-mode-stories  { --c-line: rgba(255,122,138,.5); --c-soft: rgba(255,122,138,.13); }
+.menu-mode-learn    { --c-line: rgba(56,217,240,.5);  --c-soft: rgba(56,217,240,.13); }
+.menu-mode-jokes    { --c-line: rgba(255,196,74,.5);  --c-soft: rgba(255,196,74,.13); }
+.menu-mode-creative { --c-line: rgba(157,139,255,.5); --c-soft: rgba(157,139,255,.13); }
+.menu-mode-guess    { --c-line: rgba(255,150,90,.5);  --c-soft: rgba(255,150,90,.13); }
+.menu-mode-iSpy     { --c-line: rgba(120,220,255,.5); --c-soft: rgba(120,220,255,.13); }
+.menu-mode-wouldYou { --c-line: rgba(255,140,200,.5); --c-soft: rgba(255,140,200,.13); }
+.menu-mode-karaoke  { --c-line: rgba(255,120,170,.5); --c-soft: rgba(255,120,170,.13); }
 
 .menu-action {
-  background: rgba(255,255,255,0.15);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 12px;
-  padding: 10px 14px;
-  margin-bottom: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: white;
-  font-family: inherit;
-  font-size: 13px;
-  width: 100%;
-  text-align: left;
+  background: transparent; border:1px dashed var(--stroke-2);
+  border-radius:12px; padding:11px 14px; margin-bottom:7px; cursor:pointer;
+  display:flex; align-items:center; gap:10px; color: var(--text-dim);
+  font-family:inherit; font-size:13px; width:100%; text-align:left;
 }
-.menu-action:active { background: rgba(255,255,255,0.25); }
+.menu-action:active { background: var(--glass); color: var(--text); }
 
-/* ════════════════════════════════════════
-   PARENT PANEL
-═══════════════════════════════════════ */
-.panel {
-  position: fixed; inset: 0; background: rgba(20,16,50,0.7);
-  display: none; align-items: center; justify-content: center;
-  z-index: 40; padding: 20px;
-}
-.panel.show { display: flex; }
+/* ── Panels ── */
+.panel { position:fixed; inset:0; background:rgba(2,4,7,.78); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:40; padding:20px; }
+.panel.show { display:flex; }
 .panel-inner {
-  background: white; border-radius: 24px; padding: 24px;
-  max-width: 400px; width: 100%; color: var(--ink);
-  max-height: 90vh; overflow-y: auto;
-  border: none;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-  font-family: inherit;
+  background: linear-gradient(180deg, rgba(18,27,38,.98) 0%, rgba(8,13,19,.99) 100%);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  border:1px solid var(--stroke-2);
+  border-radius:var(--r-lg); padding:26px 22px; max-width:420px; width:100%;
+  color: var(--text); max-height:88vh; overflow-y:auto;
+  box-shadow:0 26px 70px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);
+  font-family:var(--font-body);
 }
-.panel h2 { margin-bottom: 10px; font-size: 20px; color: var(--sky-mid); font-family: var(--font-display); }
-.panel label { display: block; margin: 12px 0 5px; font-size: 13px; font-weight: bold; }
-.panel select, .panel input[type=range], .panel input[type=password], .panel input[type=text] {
-  width: 100%; padding: 8px; border: 2px solid #d8d5f5; border-radius: 10px;
-  font-size: 14px; font-family: inherit;
+.panel h2 { margin-bottom:12px; font-size:20px; color:#fff; font-family:var(--font-display); }
+.panel p { color: var(--text-dim); }
+.panel hr { border:none !important; border-top:1px solid var(--stroke) !important; }
+.panel label { display:block; margin:14px 0 6px; font-size:13px; font-weight:800; color: var(--text-dim); }
+.panel select, .panel input[type=range], .panel input[type=password], .panel input[type=text], .panel input[type=number] {
+  width:100%; padding:12px; background: var(--glass);
+  border:1px solid var(--stroke-2); border-radius:12px;
+  font-size:16px; font-family:inherit; color: var(--text);
 }
+.panel input::placeholder { color: var(--text-mute); }
+.panel input:focus { outline:none; border-color: var(--mint); box-shadow:0 0 0 3px rgba(79,227,193,.15); }
+.panel input[type=range] { padding:0; accent-color: var(--mint); }
+.panel input[type=checkbox] { accent-color: var(--mint); }
 .panel button {
-  margin-top: 8px; padding: 12px 18px;
-  background: linear-gradient(135deg, var(--sun), var(--sun-deep));
-  color: white; border: none;
-  border-radius: 50px; cursor: pointer; font-size: 15px;
-  width: 100%; font-weight: 700; font-family: var(--font-display);
-  box-shadow: 0 8px 18px rgba(255,138,61,0.4);
-  transition: transform 0.15s, box-shadow 0.15s;
+  margin-top:12px; padding:15px 20px;
+  background: var(--grad); color: var(--on-accent);
+  border:none; border-radius:16px;
+  cursor:pointer; font-size:15px; width:100%; font-weight:900;
+  font-family:var(--font-body); text-transform:uppercase; letter-spacing:.6px;
+  box-shadow:0 8px 26px rgba(79,227,193,.32); transition: all .15s;
 }
-.panel button:active { transform: translateY(2px) scale(0.98); }
-.panel button.cancel { background: #8b87b8; box-shadow: 0 8px 18px rgba(46,42,107,0.25); }
+.panel button:active { transform: translateY(3px); box-shadow:0 2px 10px rgba(79,227,193,.25); }
+.panel button.cancel {
+  background: var(--glass-2); color: var(--text-dim);
+  border:1px solid var(--stroke-2); box-shadow:none;
+}
+.panel button.cancel:active { transform: translateY(3px); }
+.pin-hint { background: rgba(184,242,74,.09); border:1px solid rgba(184,242,74,.24); padding:11px 14px; border-radius:12px; font-size:13px; margin:8px 0; color: rgba(226,247,180,.92); }
 
-.pin-hint {
-  background: #fff3cd; padding: 10px 14px;
-  border-radius: 10px; font-size: 13px;
-  margin: 8px 0; color: #664;
-}
-
-/* KARAOKE */
-.song-list { display: flex; flex-direction: column; gap: 10px; padding: 8px 16px; max-width: 480px; width: 100%; }
-.song-btn {
-  background: linear-gradient(90deg, #ff96be, #d44280);
-  border: 3px solid white;
-  border-radius: 18px;
-  padding: 14px 16px;
-  color: white;
-  font-weight: bold;
-  font-family: inherit;
-  font-size: clamp(13px, 3.4vw, 15px);
-  cursor: pointer;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-}
-.song-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
-.song-btn .song-icon { font-size: 26px; }
-
-
-/* ── Lio keyframe animations ── */
-/* Idle: very gentle float — calm and friendly */
-@keyframes LioIdle {
-  0%   { transform: translate(-50%, -50%) translateY(0px); }
-  50%  { transform: translate(-50%, -50%) translateY(-14px); }
-  100% { transform: translate(-50%, -50%) translateY(0px); }
-}
-/* Talking: subtle head bob — not hectic */
-@keyframes LioTalk {
-  0%,100% { transform: translate(-50%, -50%) translateY(-4px) rotate(0deg); }
-  30%     { transform: translate(-50%, -50%) translateY(-10px) rotate(0.5deg); }
-  70%     { transform: translate(-50%, -50%) translateY(-2px)  rotate(-0.4deg); }
-}
-/* Listening: lean in gently */
-@keyframes LioListen {
-  0%,100% { transform: translate(-50%, -50%) translateY(-2px) scale(1); }
-  50%     { transform: translate(-50%, -50%) translateY(-8px)  scale(1.02); }
-}
-/* Joy: happy bounce — smooth arcs */
-@keyframes LioJoy {
-  0%,100% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
-  30%     { transform: translate(-50%, -50%) translateY(-18px) rotate(1.5deg); }
-  60%     { transform: translate(-50%, -50%) translateY(-8px)  rotate(-1deg); }
-  80%     { transform: translate(-50%, -50%) translateY(-14px) rotate(0.8deg); }
-}
-/* Sad: slow gentle drop */
-@keyframes LioSad {
-  0%,100% { transform: translate(-50%, -50%) translateY(0px) rotate(-1deg); }
-  50%     { transform: translate(-50%, -50%) translateY(-4px) rotate(1deg); }
-}
-/* Tired: very slow nod */
-@keyframes LioTired {
-  0%,100% { transform: translate(-50%, -50%) translateY(0px) rotate(-1.5deg); }
-  50%     { transform: translate(-50%, -50%) translateY(-3px) rotate(1.5deg); }
-}
-  /* ════════════════════════════════════════
-   PARENT GATE / DSGVO SCREEN
-═══════════════════════════════════════ */
-#screen-parent-gate {
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-}
+/* ── Eltern-Gate ── */
+#screen-parent-gate { justify-content:center; align-items:center; padding:20px; }
 .parent-card {
-  background: white; color: #1a3050; padding: 24px; border-radius: 24px;
-  max-width: 90%; width: 340px; text-align: center; 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(180deg, rgba(18,27,38,.96) 0%, rgba(8,13,19,.98) 100%);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  border:1px solid var(--stroke-2);
+  color: var(--text); padding:28px 24px; border-radius:var(--r-lg);
+  max-width:92%; width:360px; text-align:center;
+  box-shadow:0 26px 70px rgba(0,0,0,.7), 0 0 60px rgba(79,227,193,.08), inset 0 1px 0 rgba(255,255,255,.06);
+  font-family:var(--font-body); max-height:90vh; overflow-y:auto;
 }
-.parent-card h2 { margin-bottom: 12px; color: var(--sky-mid); font-weight: 900; }
-.parent-card p { font-size: 15px; margin-bottom: 20px; font-weight: 600; color: #555; }
-.privacy-note { 
-  font-size: 12px !important; background: #f0f8ff; padding: 12px; 
-  border-radius: 12px; margin-bottom: 20px; line-height: 1.4; border: 1px solid #cce7ff;
+.parent-card h2 { margin-bottom:14px; font-size:21px; color:#fff; font-weight:900; }
+.parent-card p { font-size:15px; margin-bottom:16px; font-weight:600; color: var(--text-dim); line-height:1.5; }
+.privacy-note {
+  font-size:12.5px !important; background: var(--glass);
+  border:1px solid var(--stroke); padding:14px; border-radius:14px;
+  margin-bottom:16px; line-height:1.6; text-align:left;
+  color: var(--text-dim) !important;
 }
-.parent-card input { 
-  width: 100%; padding: 14px; border: 2px solid #ddd; border-radius: 12px; 
-  margin-bottom: 12px; font-size: 18px; text-align: center; font-family: inherit; font-weight: bold;
+.privacy-note b { color: var(--text); }
+.privacy-note a { color: var(--mint); }
+.parent-card input {
+  width:100%; padding:14px; background: var(--glass);
+  border:1px solid var(--stroke-2); border-radius:14px;
+  margin-bottom:12px; font-size:17px; text-align:center;
+  font-family:inherit; font-weight:800; color: var(--text);
 }
-.parent-card input:focus { outline: none; border-color: var(--sky-mid); }
-.parent-card button { 
-  background: linear-gradient(135deg, var(--sun), var(--sun-deep)); color: white; border: none; 
-  padding: 14px 20px; border-radius: 12px; font-size: 18px; font-weight: 900; 
-  cursor: pointer; width: 100%; font-family: inherit; box-shadow: 0 4px 15px rgba(0,200,255,0.3);
-  transition: transform 0.2s;
-}
-.parent-card button:active { transform: translateY(3px); }
-  /* ════════════════════════════════════════
-   PREMIUM "BUBBLY" BUTTON DESIGN (Nachhilfe-App Style)
-═══════════════════════════════════════ */
-
-/* 1. Das Eltern-Gate und generelle Action-Buttons */
+.parent-card input::placeholder { color: var(--text-mute); font-weight:600; }
+.parent-card input:focus { outline:none; border-color: var(--mint); box-shadow:0 0 0 3px rgba(79,227,193,.15); }
 .parent-card button {
-  background-color: #1cb0f6; /* Freundliches, klares Lern-Blau */
-  color: white;
-  border: 2px solid #1899d6;
-  border-radius: 16px;
-  padding: 16px 24px;
-  font-size: 18px;
-  font-weight: 900;
-  font-family: 'Nunito', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  box-shadow: 0 6px 0 #1899d6; /* Der harte 3D-Boden */
-  transition: all 0.1s ease-in-out; 
-  width: 100%;
+  background: var(--grad); color: var(--on-accent);
+  border:none; border-radius:16px; padding:16px 24px;
+  font-size:16px; font-weight:900; cursor:pointer; width:100%;
+  font-family:inherit; text-transform:uppercase; letter-spacing:1px;
+  box-shadow:0 8px 28px rgba(79,227,193,.35); transition: all .15s;
+}
+.parent-card button:active { transform: translateY(3px); box-shadow:0 2px 10px rgba(79,227,193,.25); }
+.parent-card button:disabled { opacity:.4; cursor:not-allowed; }
+#mathQuestion { color:#fff; }
+.consent-row { display:flex; gap:11px; align-items:flex-start; text-align:left; font-size:13px; font-weight:600; color: var(--text-dim); margin-bottom:16px; line-height:1.45; }
+.consent-row input { width:22px; height:22px; margin:1px 0 0; flex-shrink:0; accent-color: var(--mint); }
+
+/* Halte-Knopf des Eltern-Gates */
+.hold-btn {
+  position:relative; overflow:hidden;
+  background: var(--grad) !important; color: var(--on-accent) !important;
+  border:none; border-radius:16px; padding:20px 24px;
+  font-size:15px; font-weight:900; width:100%; cursor:pointer;
+  text-transform:uppercase; letter-spacing:1px; font-family:inherit;
+  box-shadow:0 8px 28px rgba(79,227,193,.35);
+  touch-action:none; user-select:none; -webkit-user-select:none;
+}
+.hold-progress { position:absolute; inset:0; background:rgba(255,255,255,.42); width:0%; transition:width .05s linear; }
+.hold-label { position:relative; }
+
+/* ── Karaoke ── */
+#screen-karaoke { justify-content:flex-start; }
+.karaoke-title { font-size:18px; font-weight:800; font-family:var(--font-display); }
+.karaoke-sub { text-align:center; padding:8px 16px; font-size:14px; font-weight:700; color: var(--text-dim); }
+.song-list { display:flex; flex-direction:column; gap:11px; padding:8px 16px; max-width:480px; width:100%; }
+.song-btn {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border:1px solid var(--stroke-2); border-radius:var(--r-md);
+  padding:15px 17px; color: var(--text); font-weight:800; font-family:inherit;
+  font-size: clamp(13px,3.4vw,15px); cursor:pointer; text-align:left;
+  display:flex; align-items:center; gap:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4); transition: all .15s;
+}
+.song-btn:active { transform: translateY(3px) scale(.99); border-color: rgba(255,120,170,.55); box-shadow:0 0 22px rgba(255,120,170,.28); }
+.song-btn .song-icon {
+  font-size:22px; width:42px; height:42px; border-radius:12px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(255,120,170,.14); border:1px solid rgba(255,120,170,.4);
 }
 
-.parent-card button:active {
-  transform: translateY(6px); /* Knopf drückt sich physisch ein */
-  box-shadow: 0 0 0 #1899d6; /* Schatten verschwindet komplett */
+/* ── Hilfe-Panel ── */
+.help-text { font-size:14.5px; line-height:1.6; color: var(--text-dim); margin-bottom:12px; }
+.help-text b { color:#fff; }
+.help-box {
+  font-size:14.5px; line-height:1.7;
+  background: rgba(79,227,193,.08); border:1px solid rgba(79,227,193,.26);
+  border-radius:16px; padding:15px; color: var(--text-dim);
+}
+.help-box b { color:#fff; }
+.help-box a { color: var(--mint); font-weight:900; text-decoration:none; }
+.help-box a.emergency { color: var(--coral); }
+
+.note-row { padding:9px 0; border-bottom:1px solid var(--stroke); }
+.note-time { color: var(--text-mute); font-size:12px; margin-top:2px; }
+
+/* Barrierefreiheit */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
 }
 
-/* ════════════════════════════════════════
-   DIE 4 ALTERS-BUTTONS (Premium Look)
-═══════════════════════════════════════ */
-#screen-age button {
-  border-radius: 20px;
-  padding: 20px 10px;
-  font-family: 'Nunito', sans-serif;
-  font-weight: 800;
-  color: white;
-  border: 2px solid rgba(0,0,0,0.05); 
-  transition: all 0.1s ease;
-  cursor: pointer;
-}
-
-/* Pink (1-3 Jahre) */
-#screen-age button:nth-child(1) {
-  background-color: #ff4b4b;
-  box-shadow: 0 6px 0 #d93d3d;
-}
-#screen-age button:nth-child(1):active { transform: translateY(6px); box-shadow: 0 0 0 #d93d3d; }
-
-/* Blau (4-6 Jahre) */
-#screen-age button:nth-child(2) {
-  background-color: #1cb0f6;
-  box-shadow: 0 6px 0 #1899d6;
-}
-#screen-age button:nth-child(2):active { transform: translateY(6px); box-shadow: 0 0 0 #1899d6; }
-
-/* Grün (7-9 Jahre) */
-#screen-age button:nth-child(3) {
-  background-color: #58cc02;
-  box-shadow: 0 6px 0 #46a302;
-}
-#screen-age button:nth-child(3):active { transform: translateY(6px); box-shadow: 0 0 0 #46a302; }
-
-/* Gelb/Orange (10-12 Jahre) */
-#screen-age button:nth-child(4) {
-  background-color: #ffc800;
-  color: #a07a00; 
-  box-shadow: 0 6px 0 #d9aa00;
-}
-#screen-age button:nth-child(4):active { transform: translateY(6px); box-shadow: 0 0 0 #d9aa00; }
-
-/* ════════════════════════════════════════
-   LESSON CARDS (Die Kacheln auf dem Hauptbildschirm)
-═══════════════════════════════════════ */
-.lesson-card {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 16px;
-  padding: 15px;
-  color: #4b4b4b;
-  font-weight: 800;
-  box-shadow: 0 6px 0 #e5e5e5;
-  transition: all 0.1s ease;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.lesson-card:hover { background: #f7f7f7; }
-.lesson-card:active { transform: translateY(6px); box-shadow: 0 0 0 #e5e5e5; }
-
-.lesson-card.active {
-  border-color: #1cb0f6;
-  background: #ddf4ff;
-  box-shadow: 0 6px 0 #1899d6;
-  color: #1cb0f6;
-}
-.lesson-card.active:active { transform: translateY(6px); box-shadow: 0 0 0 #1899d6; }
-
- /* ════════════════════════════════════════
-   Lio & PORTAL POSITIONIERUNG (Perfektioniert)
-═══════════════════════════════════════ */
-
-/* 1. Lio nach unten ziehen UND links/rechts verschieben */
-#screen-age .age-robot-wrap,
-#screen-age #robot,
-#screen-age img[src*="Lio"] {
-  margin-bottom: -40px !important; /* Deine perfekte Höhe */
-  
-  /* 🕹️ LINKS / RECHTS REGLER:
-     Höherer Wert = weiter nach rechts (z.B. 30px, 50px).
-     Minus-Wert = weiter nach links (z.B. -20px). */
-  left: 70px !important; 
-  
-  position: relative;
-  z-index: 100;
-}
-
-/* 2. Das Portal rückt nach oben */
-#screen-age img[src*="portal"],
-#screen-age .portal {
-  margin-top: -90px !important; /* Deine perfekte Höhe */
-  position: relative;
-  z-index: 1;
-}
-
-/* 3. Buttons ganz nach vorne holen (Sicherheits-Fix für den blauen Bildschirm!) */
-#screen-age .buttons-container,
-#screen-age button {
-  position: relative;
-  z-index: 200; /* Holt die Buttons wieder vor den blauen Hintergrund */
-}
 </style>
 </head>
 <body>
 
 <div id="clouds"></div>
 
-  <!-- ════════════════════════════════════════
-     DSGVO PARENT GATE SCREEN
+<!-- ════════════════════════════════════════
+     ELTERN-GATE / EINRICHTUNG
 ═══════════════════════════════════════ -->
 <div id="screen-parent-gate" class="screen">
   <div class="parent-card">
-    <h2>🔒 Eltern-Bereich</h2>
-    
+    <h2>🔒 Nur für Erwachsene</h2>
+
     <div id="mathChallenge">
-      <p>Um Lio sicher und DSGVO-konform einzurichten, löse bitte diese kurze Aufgabe:</p>
-      <span style="font-size: 24px; font-weight: bold; display: block; margin-bottom: 10px;">3 x 4 = </span>
-      <input type="number" id="mathAnswer" placeholder="?">
-      <button onclick="checkParentMath()">Entsperren</button>
+      <p>Diese App ist nur für Erwachsene einzurichten. Bitte rechne:</p>
+      <span id="mathQuestion" style="font-size:26px; font-weight:900; display:block; margin-bottom:12px;"></span>
+      <input type="number" id="mathAnswer" inputmode="numeric" placeholder="Ergebnis eingeben" autocomplete="off">
+      <button id="btnMath">Weiter</button>
+      <p id="mathLockMsg" style="display:none; font-size:13px; color:#c33; font-weight:700; margin-top:10px;"></p>
     </div>
-    
+
+    <div id="holdChallenge" style="display:none;">
+      <p>Fast geschafft. Halte den Knopf 3 Sekunden gedrückt, um zu bestätigen, dass du erwachsen bist.</p>
+      <button id="holdBtn" type="button" class="hold-btn">
+        <span id="holdProgress" class="hold-progress"></span>
+        <span id="holdLabel" class="hold-label">Gedrückt halten…</span>
+      </button>
+    </div>
+
     <div id="setupForm" style="display:none;">
-      <p class="privacy-note">Wir speichern den Namen <b>nur lokal auf diesem Gerät</b>. Alle Chats sind privat und werden <b>nicht</b> für KI-Training verwendet (OpenAI API-Standard). Keine Datenkrake!</p>
-      <input type="text" id="childNameInput" placeholder="Spitzname (z.B. Leo)">
-      <p class="privacy-note" style="margin-top:14px;">Vergib eine Eltern-PIN (4–6 Ziffern) für den Eltern-Bereich:</p>
-      <input type="password" id="setupPinInput" inputmode="numeric" pattern="[0-9]*" placeholder="Eltern-PIN wählen" maxlength="6">
-      <button onclick="saveSetup()">Speichern & Loslegen</button>
+      <!-- Dieser Text muss stimmen. Falsche Angaben zur Datenverarbeitung
+           gegenüber Eltern sind bei einer Kinder-App ein echtes Risiko. -->
+      <p class="privacy-note">
+        <b>Was passiert mit den Daten?</b><br>
+        Der Spitzname wird auf diesem Gerät gespeichert <b>und bei jeder Frage an
+        unseren Server übertragen</b>, damit Lio das Kind ansprechen kann. Bitte nur
+        einen Spitznamen verwenden, keinen vollen Namen.<br><br>
+        Die Nachrichten werden zur Beantwortung an unsere Dienstleister für
+        Sprachmodell und Sprachausgabe übermittelt und dort nicht dauerhaft
+        gespeichert. Gespräche werden <b>nicht</b> zum Training von KI-Modellen genutzt.
+        Wir speichern keine Chatverläufe auf unseren Servern.<br><br>
+        Details in der <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.
+      </p>
+
+      <input type="text" id="childNameInput" placeholder="Spitzname (z. B. Leo)" maxlength="24" autocomplete="off">
+
+      <p class="privacy-note" style="margin-bottom:10px;">
+        Vergib eine Eltern-PIN (4–6 Ziffern). Damit kommst du später in den Eltern-Bereich.
+      </p>
+      <input type="password" id="setupPinInput" inputmode="numeric" placeholder="Eltern-PIN" maxlength="6" autocomplete="new-password">
+
+      <label class="consent-row">
+        <input type="checkbox" id="consentBox">
+        <span>Ich bin ein Elternteil bzw. sorgeberechtigt und stimme der oben beschriebenen Verarbeitung zu.</span>
+      </label>
+
+      <button id="btnSaveSetup">Speichern &amp; loslegen</button>
     </div>
   </div>
 </div>
+
 <!-- ════════════════════════════════════════
-     SCREEN: AGE SELECT
+     ALTERSAUSWAHL
 ═══════════════════════════════════════ -->
-<div class="screen active" id="screen-age">
+<div class="screen" id="screen-age">
   <div class="age-top">
-    <div class="age-greeting">Hallo! Ich bin Lio 🤖</div>
+    <div class="age-greeting">Hallo!<br>Ich bin <span class="accent">Lio</span></div>
     <div class="age-subtitle">Wie alt bist du?</div>
   </div>
 
   <div class="age-middle">
-  <div class="age-scene">
-    <div class="age-halo"></div>
-    <div class="age-bubble" id="ageBubble"></div>
-    
-    <div class="age-platform">
-      <img src="assets/plattform.png" alt="Plattform">
+    <div class="age-scene">
+      <div class="age-bubble" id="ageBubble"></div>
+      <div class="age-platform"><img src="assets/plattform.png" alt=""></div>
+      <div class="age-robot-wrap" id="ageRobot"><img src="assets/lio.png" alt="Lio, ein freundlicher Roboter"></div>
     </div>
-    
-    <div class="age-robot-wrap" id="ageRobot">
-      <img src="assets/lio.png" alt="Lio">
-    </div>
-    
   </div>
-</div>
 
   <div class="age-bottom">
     <div class="age-grid">
-      <button class="age-card age-1" onclick="selectAge('1-3')">
-        <div class="age-icon">🍼</div>
-        <div class="age-range">1 - 3 Jahre</div>
-        <div class="age-desc">Mein erster Freund</div>
+      <button class="age-card age-1" data-age="3-5">
+        <span class="age-icon">🧸</span><span class="age-range">3 – 5 Jahre</span><span class="age-desc">Kita &amp; Vorschule</span>
       </button>
-      <button class="age-card age-2" onclick="selectAge('4-6')">
-        <div class="age-icon">🎈</div>
-        <div class="age-range">4 - 6 Jahre</div>
-        <div class="age-desc">Kita & Vorschule</div>
+      <button class="age-card age-2" data-age="5-8">
+        <span class="age-icon">🎈</span><span class="age-range">5 – 8 Jahre</span><span class="age-desc">Vor- &amp; Grundschule</span>
       </button>
-      <button class="age-card age-3" onclick="selectAge('7-9')">
-        <div class="age-icon">🎒</div>
-        <div class="age-range">7 - 9 Jahre</div>
-        <div class="age-desc">Grundschüler:in</div>
+      <button class="age-card age-3" data-age="8-12">
+        <span class="age-icon">🎒</span><span class="age-range">8 – 12 Jahre</span><span class="age-desc">Grundschule</span>
       </button>
-      <button class="age-card age-4" onclick="selectAge('10-12')">
-        <div class="age-icon">🎮</div>
-        <div class="age-range">10 - 12 Jahre</div>
-        <div class="age-desc">Pre-Teen Crew</div>
+      <button class="age-card age-4" data-age="12+">
+        <span class="age-icon">🎮</span><span class="age-range">12+ Jahre</span><span class="age-desc">Teen Crew</span>
       </button>
     </div>
   </div>
 </div>
 
 <!-- ════════════════════════════════════════
-     MAIN SCREEN — Buddy.ai style
+     HAUPTBILDSCHIRM
+     Wichtig: ALLES bis zum schließenden </div> gehört in diesen Screen.
+     Vorher standen Sprechblase, Lernkarten und Mikro außerhalb — deshalb
+     waren sie auf jedem Bildschirm sichtbar.
 ═══════════════════════════════════════ -->
 <div class="screen" id="screen-main">
   <div class="top-bar">
-    <button class="top-circle-btn" onclick="openMenu()" aria-label="Menü">☰</button>
-    <button class="top-circle-btn help-btn" onclick="openHelpPanel()" aria-label="Hilfe">💙</button>
-    <button class="top-circle-btn" onclick="openSettings()" aria-label="Eltern">🔒</button>
+    <button class="top-circle-btn" id="btnMenu" aria-label="Menü">☰</button>
+    <button class="top-circle-btn" id="btnHelp" aria-label="Ich brauche Hilfe">💙</button>
+    <button class="top-circle-btn" id="btnParent" aria-label="Eltern-Bereich">🔒</button>
   </div>
 
- <div class="Lio-area">
-  <div class="scene">
-    <div class="halo" id="halo"></div>
-    <div class="sparkle sp1"></div>
-    <div class="sparkle sp2"></div>
-    <div class="sparkle sp3"></div>
-    <div class="sparkle sp4"></div>
-    
-    <div class="platform">
-      <img src="assets/plattform.png" alt="Plattform">
-    </div>
-    
-    <div class="robot-wrap" id="robot">
-      <img src="assets/lio.png" alt="Lio">
-    </div>
-    
-  </div>
-</div>
-      <!-- Mood pills on the side -->
-      <div class="mood-side" id="moods">
-        <button class="mood-pill" onclick="selectMood(this, 'happy')" title="Glücklich">😊</button>
-        <button class="mood-pill" onclick="selectMood(this, 'sad')" title="Traurig">😢</button>
-        <button class="mood-pill" onclick="selectMood(this, 'angry')" title="Wütend">😠</button>
-        <button class="mood-pill" onclick="selectMood(this, 'scared')" title="Ängstlich">😨</button>
-        <button class="mood-pill" onclick="selectMood(this, 'tired')" title="Müde">😴</button>
-        <button class="mood-pill" onclick="selectMood(this, 'excited')" title="Aufgeregt">🤩</button>
+  <div class="lio-area">
+    <div class="scene">
+      <div class="halo" id="halo"></div>
+      <div class="sparkle sp1"></div><div class="sparkle sp2"></div>
+      <div class="sparkle sp3"></div><div class="sparkle sp4"></div>
+      <div class="platform"><img src="assets/plattform.png" alt=""></div>
+      <div class="robot-wrap" id="robot" title="Antippen, um Lio zu stoppen">
+        <img src="assets/lio.png" alt="Lio, ein freundlicher Roboter">
       </div>
     </div>
+
+    <div class="mood-side" id="moods">
+      <button class="mood-pill" data-mood="happy"   title="Glücklich">😊</button>
+      <button class="mood-pill" data-mood="sad"     title="Traurig">😢</button>
+      <button class="mood-pill" data-mood="angry"   title="Wütend">😠</button>
+      <button class="mood-pill" data-mood="scared"  title="Ängstlich">😨</button>
+      <button class="mood-pill" data-mood="tired"   title="Müde">😴</button>
+      <button class="mood-pill" data-mood="excited" title="Aufgeregt">🤩</button>
+    </div>
   </div>
 
-  <!-- Speech bubble — between Lio and lesson cards -->
-  <div class="speech-bubble" id="bubble">Hi! Tipp das Mikro und sprich mit mir!</div>
+  <div class="speech-bubble" id="bubble" aria-live="polite">Hi! Tipp das Mikro und sprich mit mir!</div>
   <div class="quick-replies" id="quickReplies"></div>
 
-  <!-- Bottom: Lesson cards + big mic -->
   <div class="bottom-area">
     <div class="lesson-row" id="lessonRow"></div>
     <div class="mic-row">
-      <button class="side-btn keyboard" onclick="openTextInput()" aria-label="Tippen">⌨️</button>
-      <button class="big-mic" id="micBtn" onclick="toggleListen()" aria-label="Sprechen">🎤</button>
-      <button class="side-btn repeat" onclick="repeatLast()" aria-label="Wiederholen">🔁</button>
+      <button class="side-btn keyboard" id="btnKeyboard" aria-label="Tippen">⌨️</button>
+      <button class="big-mic" id="micBtn" aria-label="Sprechen">🎤</button>
+      <button class="side-btn repeat" id="btnRepeat" aria-label="Wiederholen">🔁</button>
     </div>
     <div class="mic-hint" id="hint">Tipp das Mikro und sprich!</div>
   </div>
 </div>
 
 <!-- ════════════════════════════════════════
-     SCREEN: KARAOKE
+     KARAOKE
 ═══════════════════════════════════════ -->
 <div class="screen" id="screen-karaoke">
   <div class="top-bar">
-    <button class="top-circle-btn" onclick="backToMain()">←</button>
-    <div style="font-size:18px; font-weight:bold; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.3);">🎤 Karaoke</div>
+    <button class="top-circle-btn" id="btnKaraokeBack" aria-label="Zurück">←</button>
+    <div class="karaoke-title">🎤 Karaoke</div>
     <div style="width:46px"></div>
   </div>
-  <div style="text-align:center; padding:8px 16px; font-size:14px; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.3); font-weight:bold;">
-    Wähle ein Lied — Lio singt mit! 🎶
-  </div>
+  <div class="karaoke-sub">Wähle ein Lied — Lio singt mit! 🎶</div>
   <div style="flex:1; overflow-y:auto; width:100%; display:flex; justify-content:center;">
     <div class="song-list" id="songList"></div>
   </div>
-  <div style="padding:10px; display:flex; justify-content:center;">
-    <button class="top-circle-btn" onclick="stopKaraoke()" id="stopSongBtn" style="display:none; width:auto; padding:8px 18px; border-radius:50px;">⏹ Stopp</button>
+  <div style="padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px)); display:flex; justify-content:center;">
+    <button class="top-circle-btn" id="stopSongBtn" style="display:none; width:auto; padding:8px 18px; border-radius:50px;">⏹ Stopp</button>
   </div>
 </div>
 
-<!-- TEXT INPUT OVERLAY -->
+<!-- ── Text-Eingabe ── -->
 <div class="text-overlay" id="textOverlay">
-  <button class="close" onclick="closeTextInput()">✕</button>
-  <input type="text" id="textInput" placeholder="Frag Lio was..." maxlength="500">
-  <button class="send" onclick="sendText()">➤</button>
+  <button class="close" id="btnCloseText" aria-label="Schließen">✕</button>
+  <input type="text" id="textInput" placeholder="Frag Lio was…" maxlength="500" autocomplete="off">
+  <button class="send" id="btnSendText" aria-label="Senden">➤</button>
 </div>
 
-<!-- MENU DRAWER -->
-<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+<!-- ── Menü ── -->
+<div class="menu-overlay" id="menuOverlay"></div>
 <div class="menu-drawer" id="menuDrawer">
   <div class="menu-title">🤖 Lio-Menü</div>
-  <div class="menu-subtitle">Wähle was wir machen</div>
-
+  <div class="menu-subtitle">Wähle, was wir machen</div>
   <div class="menu-section-label">Modi</div>
-
-  <button class="menu-item menu-mode-talk" onclick="switchMode('talk')" id="m-talk">
-    <span class="menu-icon">💬</span><span>Frei chatten</span>
-  </button>
-  <button class="menu-item menu-mode-homework" onclick="switchMode('homework')" id="m-homework" style="box-shadow:0 0 0 2px #FFB648, 0 6px 14px rgba(0,0,0,0.25);">
-    <span class="menu-icon">📚</span><span>Hausaufgaben-Hilfe <span style="font-size:11px; color:#FFE3B0; font-weight:bold;">· wie ein:e Lehrer:in</span></span>
-  </button>
-  <button class="menu-item menu-mode-stories" onclick="switchMode('stories')" id="m-stories">
-    <span class="menu-icon">📖</span><span>Geschichte</span>
-  </button>
-  <button class="menu-item menu-mode-learn" onclick="switchMode('learn')" id="m-learn">
-    <span class="menu-icon">🧠</span><span>Lernen & Quiz</span>
-  </button>
-  <button class="menu-item menu-mode-jokes" onclick="switchMode('jokes')" id="m-jokes">
-    <span class="menu-icon">😂</span><span>Witze & Rätsel</span>
-  </button>
-  <button class="menu-item menu-mode-creative" onclick="switchMode('creative')" id="m-creative">
-    <span class="menu-icon">🎨</span><span>Kreativ</span>
-  </button>
-  <button class="menu-item menu-mode-guess" onclick="switchMode('guess')" id="m-guess">
-    <span class="menu-icon">🎯</span><span>Ratespiel</span>
-  </button>
-  <button class="menu-item menu-mode-iSpy" onclick="switchMode('iSpy')" id="m-iSpy">
-    <span class="menu-icon">👀</span><span>Ich sehe was</span>
-  </button>
-  <button class="menu-item menu-mode-wouldYou" onclick="switchMode('wouldYou')" id="m-wouldYou">
-    <span class="menu-icon">🤷</span><span>Würdest du eher?</span>
-  </button>
-  <button class="menu-item menu-mode-karaoke" onclick="goToKaraoke()" id="m-karaoke">
-    <span class="menu-icon">🎤</span><span>Karaoke</span>
-  </button>
-
+  <div id="menuModes"></div>
   <div class="menu-section-label">🛠️ Mehr</div>
-  <button class="menu-action" onclick="resetChat()">
-    <span style="font-size:18px;">🧹</span><span>Neu anfangen</span>
-  </button>
-  <button class="menu-action" onclick="goToAgeSelect()">
-    <span style="font-size:18px;">👶</span><span>Alter ändern</span>
-  </button>
+  <button class="menu-action" id="btnResetChat"><span style="font-size:18px;">🧹</span><span>Neu anfangen</span></button>
+  <button class="menu-action" id="btnChangeAge"><span style="font-size:18px;">👶</span><span>Alter ändern</span></button>
 </div>
 
-<!-- PIN Panel -->
+<!-- ── PIN ── -->
 <div class="panel" id="panelPin">
   <div class="panel-inner">
     <h2>🔒 Eltern-Bereich</h2>
-    <div class="pin-hint">
-      Nur für Eltern. Bitte PIN eingeben.
-    </div>
+    <div class="pin-hint">Nur für Eltern. Bitte PIN eingeben.</div>
     <label for="pinInput">PIN:</label>
-    <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••">
-    <button onclick="checkPin()">Bestätigen</button>
-    <button class="cancel" onclick="closePinPanel()">Abbrechen</button>
+    <input type="password" id="pinInput" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="current-password">
+    <button id="btnCheckPin">Bestätigen</button>
+    <button class="cancel" id="btnClosePin">Abbrechen</button>
   </div>
 </div>
 
-<!-- Settings Panel -->
+<!-- ── Einstellungen ── -->
 <div class="panel" id="panelSettings">
   <div class="panel-inner">
     <h2>⚙️ Einstellungen</h2>
-    <label for="voiceSel">🗣️ Stimme:</label>
-    <select id="voiceSel" onchange="onVoiceChange()"></select>
-    <label for="rateSlider">⏱️ Geschwindigkeit: <span id="rateVal">1.0</span></label>
-    <input type="range" id="rateSlider" min="0.7" max="1.3" step="0.05" value="1.0" oninput="onRateChange()">
-    <label for="pitchSlider">🎵 Tonhöhe: <span id="pitchVal">1.28</span></label>
-    <input type="range" id="pitchSlider" min="0.6" max="1.6" step="0.05" value="1.28" oninput="onPitchChange()">
-    <button onclick="testVoice()">🔊 Stimme testen</button>
 
-    <hr style="margin:14px 0; border:none; border-top:1px solid #ddd;">
-    <h2 style="font-size:16px; margin-top:6px;">🛡️ Modi sperren</h2>
+    <label for="voiceSel">🗣️ Stimme:</label>
+    <select id="voiceSel"></select>
+
+    <label for="rateSlider">⏱️ Geschwindigkeit: <span id="rateVal">1.00</span></label>
+    <input type="range" id="rateSlider" min="0.7" max="1.3" step="0.05" value="1.0">
+
+    <label for="pitchSlider">🎵 Tonhöhe: <span id="pitchVal">1.15</span></label>
+    <input type="range" id="pitchSlider" min="0.6" max="1.6" step="0.05" value="1.15">
+
+    <button id="btnTestVoice">🔊 Stimme testen</button>
+
+    <hr style="margin:16px 0;">
+    <h2 style="font-size:16px;">🛡️ Modi sperren</h2>
     <div id="lockToggles"></div>
 
-    <hr style="margin:14px 0; border:none; border-top:1px solid #ddd;">
-    <h2 style="font-size:16px; margin-top:6px;">💙 Hinweise</h2>
+    <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
+    <h2 style="font-size:16px;">💙 Hinweise</h2>
     <div id="parentNotices" style="font-size:13px; line-height:1.5;"></div>
 
-    <hr style="margin:14px 0; border:none; border-top:1px solid #ddd;">
-    <label for="newPinInput">🔑 Neue PIN setzen:</label>
-    <input type="text" id="newPinInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="z.B. 4321">
-    <button onclick="changePin()">PIN ändern</button>
-    <button class="cancel" onclick="closeSettings()">Schließen</button>
+    <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
+    <h2 style="font-size:16px;">🗑️ Daten</h2>
+    <p style="font-size:13px; margin-bottom:8px;">Löscht Spitzname, Alter, Hinweise und PIN von diesem Gerät.</p>
+    <button class="cancel" id="btnWipe">Alle Daten löschen</button>
+
+    <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
+    <label for="newPinInput">🔑 Neue PIN:</label>
+    <input type="text" id="newPinInput" inputmode="numeric" maxlength="6" placeholder="z. B. 4321">
+    <button id="btnChangePin">PIN ändern</button>
+    <button class="cancel" id="btnCloseSettings">Schließen</button>
   </div>
 </div>
 
-<!-- Help Panel — immer verfügbar, unabhängig von der KI-Antwort -->
+<!-- ── Hilfe ── -->
 <div class="panel" id="panelHelp">
   <div class="panel-inner">
     <h2>💙 Ich brauche Hilfe</h2>
-    <p style="font-size:14px; line-height:1.5; margin-bottom:10px;">
-      Wenn dich jemand ärgert, mobbt, dir wehtut oder du dich nicht sicher fühlst:
-      Das ist <b>nicht deine Schuld</b>. Sprich mit einem Erwachsenen, dem du vertraust —
-      z. B. Eltern, Lehrer:in, Großeltern.
+    <p class="help-text">
+      Wenn dich jemand ärgert, dir wehtut oder du dich nicht sicher fühlst:
+      Das ist <b>nicht deine Schuld</b>. Sprich mit einem Erwachsenen, dem du vertraust.
     </p>
-    <p style="font-size:14px; line-height:1.6; background:#eef6ff; border-radius:12px; padding:12px;">
+    <p class="help-box">
       📞 <b>Kinder- und Jugendtelefon</b><br>
-      <a href="tel:116111" style="color:#1899d6; font-weight:bold; font-size:18px;">116 111</a>
-      — kostenlos, anonym, täglich erreichbar<br><br>
-      📞 <b>Elterntelefon</b> (für Erwachsene)<br>
-      <a href="tel:08001110550" style="color:#1899d6; font-weight:bold;">0800 111 0 550</a>
+      <a href="tel:116111" style="font-size:22px;">116 111</a><br>
+      kostenlos und anonym<br><br>
+      📞 <b>Elterntelefon</b><br>
+      <a href="tel:08001110550">0800 111 0 550</a><br><br>
+      🚨 <b>Notruf</b> <a href="tel:112" class="emergency">112</a>
     </p>
-    <button class="cancel" onclick="closeHelpPanel()">Zurück</button>
+    <button class="cancel" id="btnCloseHelp">Zurück</button>
   </div>
 </div>
 
-<!-- Homework Subject Panel -->
+<!-- ── Fach-Auswahl ── -->
 <div class="panel" id="panelSubject">
   <div class="panel-inner">
     <h2>📚 Hausaufgaben-Hilfe</h2>
-    <p style="font-size:14px; margin-bottom:12px;">Lio erklärt wie ein:e Lehrer:in — Schritt für Schritt, mit Fragen statt Vorsagen. Welches Fach?</p>
+    <p style="font-size:14px; margin-bottom:12px;">Lio erklärt Schritt für Schritt — mit Fragen statt Vorsagen. Welches Fach?</p>
     <div id="subjectGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
-    <button class="cancel" onclick="closeSubjectPanel()" style="margin-top:14px;">Zurück</button>
+    <button class="cancel" id="btnCloseSubject" style="margin-top:14px;">Zurück</button>
   </div>
 </div>
 
 <script>
 'use strict';
 
+/* ══════════════════════════════════════════════════════════
+   KONFIGURATION
+   APP_TOKEN muss zum APP_TOKEN im Backend passen.
+   Hinweis: In einer ausgelieferten App ist dieser Wert auslesbar.
+   Er hält Gelegenheits-Missbrauch ab, ersetzt aber keine
+   App Attest / Play Integrity Prüfung.
+══════════════════════════════════════════════════════════ */
+const CFG = Object.assign({
+  apiBase: '',
+  appToken: 'HIER_DEN_APP_TOKEN_EINSETZEN',
+}, window.LIO_CONFIG || {});
+
+const $ = (id) => document.getElementById(id);
+
+/* ── Geräte-ID: zufällig, kein Login, kein Tracking ── */
+function getDeviceId() {
+  let id = localStorage.getItem('lio_device');
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+    localStorage.setItem('lio_device', id);
+  }
+  return id;
+}
+
+async function apiFetch(path, body) {
+  return fetch(CFG.apiBase + path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-app-token': CFG.appToken,
+      'x-device-id': getDeviceId(),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   ZUSTAND
+══════════════════════════════════════════════════════════ */
+const MAX_HISTORY = 12;          // muss ≤ MAX_HISTORY_MESSAGES im Backend sein
 let messages = [];
-const MAX_HISTORY = 20;
 let currentMood = null;
 let currentMode = 'talk';
 let currentAge = null;
-let isKaraoke = false;
-let lastLioText = '';
-let childName = localStorage.getItem('Lio_name') || ''; // DSGVO-Name
-
-// Globale Variablen für den Echo-Schutz und die Klicksperre
-let currentAudio = null;
-let isLioSpeaking = false;
-
-// ERZWINGT DEN STARTBILDSCHIRM BEIM NEULADEN DER SEITE
-window.addEventListener('load', () => {
-  
-  // 🚀 STERNE-STAUBSÄUGER: Sucht und versteckt alle alten Stern-Elemente im HTML
-  const starIds = ['starCount', 'star-count', 'starContainer', 'star-container', 'stars'];
-  starIds.forEach(id => {
-    const el = document.getElementById(id) || document.querySelector('.' + id);
-    if (el) {
-      el.style.setProperty('display', 'none', 'important');
-      if (el.parentElement && (el.parentElement.textContent.includes('⭐') || el.parentElement.textContent.includes('🌟'))) {
-        el.parentElement.style.setProperty('display', 'none', 'important');
-      }
-    }
-  });
-
-  // Schalte alle Bildschirme aus
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  
-  // Aktiviere NUR die Altersauswahl
-  document.getElementById('screen-age').classList.add('active');
-  
-  // Wenn du willst, dass erst der Eltern-Bereich kommt, falls noch kein Name gespeichert ist
-  if (!childName || childName.trim() === '') {
-    document.getElementById('screen-age').classList.remove('active');
-    document.getElementById('screen-parent-gate').classList.add('active');
-  }
-});
-
-const AGE_GROUPS = {
-  // 🎯 JETZT NATÜRLICH, JUNG & GENDERNEUTRAL
-  '1-3':  { label: '🍼 1-3 Jahre',  rate: 0.98, pitch: 1.15,
-             greeting: 'Hallo {name}! Ich bin Lio! Schön, dass du da bist!' },
-  '4-6':  { label: '🎈 4-6 Jahre',  rate: 0.98, pitch: 1.15,
-             greeting: 'Hallo {name}! Ich bin Lio, dein Freund! Was machen wir heute?' },
-  '7-9':  { label: '🎒 7-9 Jahre',  rate: 1.02, pitch: 1.15,
-             greeting: 'Hi {name}! Ich bin Lio! Worauf hast du heute Lust?' },
-  '10-12':{ label: '🎮 10-12 Jahre', rate: 1.05, pitch: 1.15,
-             greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
-};
-
-// Modes
-const MODES = {
-  talk: {
-    icon: '💬', title: 'Chat',
-    welcome: {
-      '1-3':  'Hallo {name}! Du kannst mit mir reden.',
-      '4-6':  'Hallo {name}! Frag mich was du willst!',
-      '7-9':  'Hi {name}! Frag mich was du willst!',
-      '10-12':'Hey {name}! Frag mich alles!',
-    },
-  },
-  homework: {
-    icon: '📚', title: 'Hausaufgaben',
-    welcome: {
-      '1-3':  'Lass uns spielerisch was lernen!',
-      '4-6':  'Bei welchen Aufgaben kann ich helfen?',
-      '7-9':  'Hausaufgaben-Hilfe! Welches Fach?',
-      '10-12':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.',
-    },
-  },
-  stories: {
-    icon: '📖', title: 'Geschichte',
-    welcome: {
-      '1-3':  'Möchtest du eine Geschichte?',
-      '4-6':  'Eine Geschichte! Worüber soll sie sein?',
-      '7-9':  'Welche Geschichte soll ich erzählen?',
-      '10-12':'Geschichten-Modus! Sag mir das Thema.',
-    },
-  },
-  learn: {
-    icon: '🧠', title: 'Lernen',
-    welcome: {
-      '1-3':  'Lass uns spielen und lernen!',
-      '4-6':  'Cool, wir lernen! Welches Thema?',
-      '7-9':  'Lern-Modus! Welches Thema?',
-      '10-12':'Lernen oder Quiz? Sag mir das Thema!',
-    },
-  },
-  jokes: {
-    icon: '😂', title: 'Witze',
-    welcome: {
-      '1-3':  'Hihi! Magst du lustige Geräusche?',
-      '4-6':  'Witz oder Rätsel?',
-      '7-9':  'Bereit zum Lachen?',
-      '10-12':'Lass uns lachen!',
-    },
-  },
-  creative: {
-    icon: '🎨', title: 'Kreativ',
-    welcome: {
-      '1-3':  'Wir basteln mit Worten!',
-      '4-6':  'Lass uns was Tolles erfinden!',
-      '7-9':  'Kreativ-Modus! Was wollen wir erfinden?',
-      '10-12':'Creator-Time! Was geht?',
-    },
-  },
-  guess: {
-    icon: '🎯', title: 'Raten',
-    welcome: {
-      '1-3':  'Lass uns raten! Welches Tier mag ich?',
-      '4-6':  'Ratespiel! Welches Tier denke ich?',
-      '7-9':  'Ratespiel! Was soll ich raten lassen?',
-      '10-12':'20 Fragen! Sag mir die Kategorie.',
-    },
-  },
-  iSpy: {
-    icon: '👀', title: 'Ich seh was',
-    welcome: {
-      '1-3':  'Ich sehe was, was du nicht siehst!',
-      '4-6':  'Ich sehe was — bereit?',
-      '7-9':  'Ich denke an eine Szene. Du musst raten!',
-      '10-12':'Ich beschreibe — finde was ich meine!',
-    },
-  },
-  wouldYou: {
-    icon: '🤷', title: 'Eher?',
-    welcome: {
-      '1-3':  'Lass uns wählen! Was magst du lieber?',
-      '4-6':  'Würdest du eher fliegen oder schwimmen?',
-      '7-9':  'Würdest-du-eher! Bereit?',
-      '10-12':'Tough choices ahead!',
-    },
-  },
-};
-
-const ALL_SONGS = [
-  { icon: '🐭', title: 'Alle meine Entchen', ages: ['1-3','4-6','7-9','10-12'], lyrics: [
-    'Alle meine Entchen schwimmen auf dem See.',
-    'Köpfchen in das Wasser, Schwänzchen in die Höh!',
-    'Alle meine Täubchen sitzen auf dem Dach.',
-    'Klipper, klapper, klapp, klapp, fliegen übers Dach.',
-  ]},
-  { icon: '🦊', title: 'Fuchs, du hast die Gans gestohlen', ages: ['4-6','7-9','10-12'], lyrics: [
-    'Fuchs, du hast die Gans gestohlen, gib sie wieder her!',
-    'Sonst wird dich der Jäger holen mit dem Schießgewehr.',
-  ]},
-  { icon: '🌙', title: 'Der Mond ist aufgegangen', ages: ['1-3','4-6','7-9','10-12'], lyrics: [
-    'Der Mond ist aufgegangen, die goldnen Sternlein prangen.',
-    'Am Himmel hell und klar.',
-  ]},
-  { icon: '🐝', title: 'Summ, summ, summ', ages: ['1-3','4-6','7-9'], lyrics: [
-    'Summ, summ, summ! Bienchen summ herum!',
-  ]},
-  { icon: '🐑', title: 'Schlaf, Kindlein, schlaf', ages: ['1-3','4-6'], lyrics: [
-    'Schlaf, Kindlein, schlaf! Der Vater hüt die Schaf.',
-  ]},
-  { icon: '🌟', title: 'Weißt du, wieviel Sternlein stehen', ages: ['4-6','7-9','10-12'], lyrics: [
-    'Weißt du, wieviel Sternlein stehen an dem blauen Himmelszelt?',
-  ]},
-];
-
-let parentLocks = JSON.parse(localStorage.getItem('Lio_locks') || '{}');
-let parentPin = localStorage.getItem('Lio_pin') || '';
-
-// ════════════════════════════════════════
-// DSGVO PARENT GATE LOGIK (NEU)
-// ════════════════════════════════════════
-function checkParentMath() {
-  const val = document.getElementById('mathAnswer').value;
-  if (val == 12) {
-    document.getElementById('mathChallenge').style.display = 'none';
-    document.getElementById('setupForm').style.display = 'block';
-  } else {
-    alert('Falsche Antwort. Das war wohl ein Tippfehler!');
-  }
-}
-
-function saveSetup() {
-  const name = document.getElementById('childNameInput').value.trim();
-  if (!name) { alert('Bitte gib einen Namen oder Spitznamen ein.'); return; }
-
-  const pinField = document.getElementById('setupPinInput');
-  const pin = pinField ? pinField.value.trim() : '';
-  if (!/^\d{4,6}$/.test(pin)) { alert('Bitte vergib eine Eltern-PIN mit 4-6 Ziffern.'); return; }
-  parentPin = pin;
-  localStorage.setItem('Lio_pin', parentPin);
-
-  childName = name;
-  localStorage.setItem('Lio_name', childName);
-  showScreen('age');
-}
-
-// ════════════════════════════════════════
-// AGE SELECTION & INIT
-// ════════════════════════════════════════
-function selectAge(age) {
-  currentAge = age;
-  localStorage.setItem('Lio_age', age);
-  
-  // Altersspezifische Sprach-Einstellungen laden
-  const grp = AGE_GROUPS[age] || AGE_GROUPS['7-9'];
-  speechRate = grp.rate || 0.95;
-  speechPitch = grp.pitch || 1.0;
-
-  const greeting = grp.greeting.replace('{name}', childName);
-  showAgeBubble(greeting);
-
-  // SOFORTIGER WECHSEL ZU MAIN!
-  showScreen('main');
-  initMain(greeting);
-}
-
-function goToAgeSelect() {
-  closeMenu();
-  if (synth) synth.cancel();
-  showScreen('age');
-}
-
-function showAgeBubble(text) {
-  const bubble = document.getElementById('ageBubble');
-  if(bubble) {
-    bubble.textContent = text;
-    bubble.classList.add('show');
-    clearTimeout(showAgeBubble._t);
-    showAgeBubble._t = setTimeout(() => bubble.classList.remove('show'), 4500);
-  }
-}
-
-function speakOnAge(text, onDone) {
-  let isDone = false;
-  function finishCallback() {
-    if (isDone) return;
-    isDone = true;
-    if (onDone) onDone();
-  }
-
-  if (!synth) { 
-    setTimeout(finishCallback, 500); 
-    return; 
-  }
-
-  synth.cancel();
-  const r = document.getElementById('robot'); 
-  if (r) r.classList.add('talking');
-
-  const cleanText = String(text).replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
-
-  const utter = new SpeechSynthesisUtterance(cleanText);
-  const voice = availableVoices.find(v => 
-    v.lang.includes('de') && (v.name.includes('Google') || v.name.includes('Premium') || v.name.includes('Neural'))
-  ) || availableVoices.find(v => v.lang.includes('de'));
-  
-  if (voice) utter.voice = voice;
-  utter.lang = 'de-DE';
-  utter.rate = speechRate || 1.05;
-  utter.pitch = speechPitch || 1.15;
-  utter.volume = 1.0;
-
-  utter.onend = () => { 
-    if (r) r.classList.remove('talking');
-    finishCallback();
-  };
-  utter.onerror = (err) => { 
-    if (r) r.classList.remove('talking');
-    finishCallback();
-  };
-  synth.speak(utter);
-
-  const estimatedMs = Math.max(2500, cleanText.length * 75);
-  setTimeout(finishCallback, estimatedMs);
-}
-
-// ════════════════════════════════════════
-// MAIN SCREEN INIT
-// ════════════════════════════════════════
-function initMain(customText = null) {
-  if (!messages) messages = [];
-  messages = [];
-  renderLessonCards();
-  const m = MODES[currentMode];
-  if (!m) {
-    console.warn('[initMain] Mode nicht gefunden:', currentMode);
-    return;
-  }
-  
-  const defaultWelcome = m.welcome[currentAge] || m.welcome['7-9'];
-  const welcome = (customText ? customText : defaultWelcome).replace('{name}', childName);
-  
-  setBubble(welcome);
-  lastLioText = welcome;
-  setTimeout(() => speakJorin(welcome), 200);
-}
-
-function renderLessonCards() {
-  const row = document.getElementById('lessonRow');
-  if (!row) {
-    console.warn('[renderLessonCards] Element lessonRow nicht gefunden!');
-    return;
-  }
-  row.innerHTML = '';
-  Object.entries(MODES).forEach(([key, m]) => {
-    if (parentLocks[key]) return;
-    const card = document.createElement('button');
-    card.className = 'lesson-card mode-' + key;
-    if (key === currentMode) card.classList.add('active');
-    const badge = key === 'homework' ? '<div style="font-size:9px; color:#FFE3B0; font-weight:bold;">wie ein:e Lehrer:in</div>' : '';
-    card.innerHTML = '<div class="lesson-icon">' + m.icon + '</div><div class="lesson-label">' + m.title + '</div>' + badge;
-    card.onclick = () => switchMode(key);
-    row.appendChild(card);
-  });
-
-  if (!parentLocks['karaoke']) {
-    const k = document.createElement('button');
-    k.className = 'lesson-card mode-karaoke';
-    k.innerHTML = '<div class="lesson-icon">🎤</div><div class="lesson-label">Karaoke</div>';
-    k.onclick = () => goToKaraoke();
-    row.appendChild(k);
-  }
-}
-
-function switchMode(mode) {
-  // 🚀 Klicksperre während Lio spricht
-  if (isLioSpeaking) return;
-
-  if (parentLocks[mode]) {
-    setBubble('🔒 Diese Funktion wurde von deinen Eltern gesperrt.');
-    return;
-  }
-  closeMenu();
-  clearQuickReplies();
-
-  if (mode === 'homework') {
-    currentMode = mode;
-    renderLessonCards();
-    document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-    const activeBtn = document.getElementById('m-homework');
-    if (activeBtn) activeBtn.classList.add('active');
-    openSubjectPanel();
-    return;
-  }
-
-  currentMode = mode;
-  messages = [];
-  activeTopic = null;
-  topicResolved = true;
-  const m = MODES[mode];
-  const welcome = (m.welcome[currentAge] || m.welcome['7-9']).replace('{name}', childName);
-
-  renderLessonCards();
-  setBubble(welcome);
-  lastLioText = welcome;
-  speakJorin(welcome);
-
-  document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
-  const activeBtn = document.getElementById('m-' + mode);
-  if (activeBtn) activeBtn.classList.add('active');
-}
-
-// ════════════════════════════════════════
-// HAUSAUFGABEN-HILFE — Fach-Auswahl, Lehrer-Stil
-// ════════════════════════════════════════
-const SUBJECTS = [
-  { key: 'mathe',    icon: '🔢', label: 'Mathe' },
-  { key: 'deutsch',  icon: '📖', label: 'Deutsch' },
-  { key: 'englisch', icon: '🇬🇧', label: 'Englisch' },
-  { key: 'sachkunde',icon: '🌍', label: 'Sachkunde' },
-  { key: 'sonstiges',icon: '✏️', label: 'Etwas anderes' },
-];
 let currentSubject = null;
+let activeTopic = null;
+let topicResolved = true;        // false = Lio bleibt beim laufenden Thema
+let lastSpeech = null;           // {text, exp, sig} von /api/chat
+let lastLioText = '';
+let isLioSpeaking = false;
+let isListening = false;
+let isKaraoke = false;
+let currentAudio = null;
+let childName = localStorage.getItem('lio_name') || '';
 
-// ════════════════════════════════════════
-// THEMEN-TRACKING — Lio soll beim Thema/bei der Aufgabe bleiben,
-// bis das Kind sie verstanden hat, statt einfach zu springen
-// ════════════════════════════════════════
-let activeTopic = null;      // Kurzbeschreibung der aktuellen Aufgabe/des Themas
-let topicResolved = true;    // true = frei für neues Thema, false = noch mitten in der Erklärung
-
-// Themen-Vorschläge, damit Lio von sich aus anfängt zu erklären,
-// statt erst zu fragen "Welches Thema?" — weniger Tippen, mehr Antippen.
-const HOMEWORK_TOPICS = {
-  mathe:     [ { label: '🔢 Einmaleins', prompt: 'Erklär mir bitte das Einmaleins, Schritt für Schritt.' },
-               { label: '➗ Textaufgaben', prompt: 'Ich hab eine Textaufgabe und weiß nicht, wo ich anfangen soll.' },
-               { label: '🍰 Brüche', prompt: 'Erklär mir Brüche mit einem einfachen Beispiel.' } ],
-  deutsch:   [ { label: '📝 Rechtschreibung', prompt: 'Kannst du mir eine Rechtschreibregel an einem Beispiel erklären?' },
-               { label: '📖 Text verstehen', prompt: 'Ich soll einen Text lesen und verstehen, hilf mir Schritt für Schritt.' },
-               { label: '✍️ Aufsatz', prompt: 'Ich muss einen Aufsatz schreiben und weiß nicht, wie ich anfange.' } ],
-  englisch:  [ { label: '🔤 Vokabeln', prompt: 'Übe mit mir ein paar einfache englische Vokabeln.' },
-               { label: '🗣️ Sätze bilden', prompt: 'Zeig mir, wie ich einen einfachen englischen Satz bilde.' } ],
-  sachkunde: [ { label: '🌍 Thema erklären', prompt: 'Erklär mir mein Sachkunde-Thema einfach und mit Beispielen.' } ],
-  sonstiges: [ { label: '💡 Zeig mir ein Beispiel', prompt: 'Zeig mir bitte ein einfaches Beispiel zu meiner Aufgabe.' } ],
-};
-
-// Anschluss-Chips nach Lios Antwort im Hausaufgaben-Modus — Kind tippt statt tippt & schreibt
-const HOMEWORK_FOLLOWUPS = [
-  { label: '👍 Verstanden', prompt: 'Ich hab es verstanden, was kommt als Nächstes?', resolvesTopic: true },
-  { label: '🔁 Nochmal, langsamer', prompt: 'Kannst du das nochmal langsamer und einfacher erklären?' },
-  { label: '📝 Anderes Beispiel', prompt: 'Zeig mir noch ein anderes Beispiel dazu.' },
-];
-
-function renderQuickReplies(items, kind) {
-  const row = document.getElementById('quickReplies');
-  if (!row) return;
-  row.innerHTML = '';
-  items.forEach(item => {
-    const chip = document.createElement('button');
-    chip.className = 'quick-chip';
-    chip.textContent = item.label;
-    chip.onclick = () => {
-      clearQuickReplies();
-      if (kind === 'topic-start') {
-        activeTopic = item.prompt;
-        topicResolved = false;
-      } else if (item.resolvesTopic) {
-        topicResolved = true;
-      }
-      sendMessage(item.prompt);
-    };
-    row.appendChild(chip);
-  });
-}
-function clearQuickReplies() {
-  const row = document.getElementById('quickReplies');
-  if (row) row.innerHTML = '';
-}
-
-function openSubjectPanel() {
-  const grid = document.getElementById('subjectGrid');
-  grid.innerHTML = '';
-  SUBJECTS.forEach(s => {
-    const btn = document.createElement('button');
-    btn.className = 'lesson-card';
-    btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;';
-    btn.innerHTML = '<div class="lesson-icon">' + s.icon + '</div><div class="lesson-label">' + s.label + '</div>';
-    btn.onclick = () => selectSubject(s);
-    grid.appendChild(btn);
-  });
-  document.getElementById('panelSubject').classList.add('show');
-}
-function closeSubjectPanel() {
-  document.getElementById('panelSubject').classList.remove('show');
-  if (!currentSubject) switchMode('talk');
-}
-function selectSubject(subject) {
-  currentSubject = subject.key;
-  activeTopic = null;
-  topicResolved = true;
-  document.getElementById('panelSubject').classList.remove('show');
-  messages = [];
-  const welcomes = {
-    mathe:     'Mathe! Ich hab schon ein paar Ideen für dich — oder erzähl mir direkt, woran du gerade arbeitest.',
-    deutsch:   'Deutsch! Hier sind ein paar Themen — oder sag mir direkt, was du übst.',
-    englisch:  'English time! Wähl ein Thema, oder erzähl mir, was du gerade übst.',
-    sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir direkt, worum es geht.',
-    sonstiges: 'Klar, erzähl mir, bei welcher Aufgabe ich dir wie ein:e Lehrer:in helfen soll.',
-  };
-  const welcome = (welcomes[subject.key] || welcomes.sonstiges).replace('{name}', childName);
-  setBubble(welcome);
-  lastLioText = welcome;
-  speakJorin(welcome);
-  renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
-}
-
-function goToKaraoke() {
-  // 🚀 Klicksperre während Lio spricht
-  if (isLioSpeaking) return;
-
-  if (parentLocks['karaoke']) {
-    setBubble('🔒 Karaoke wurde von deinen Eltern gesperrt.');
-    return;
-  }
-  closeMenu();
-  showScreen('karaoke');
-  renderSongList();
-}
-
-function backToMain() {
-  if (synth) synth.cancel();
-  stopKaraoke();
-  showScreen('main');
-}
-
-function resetChat() {
-  closeMenu();
-  initMain();
-  setHint('Drück das Mikro und sprich!');
-}
-
-function showScreen(name) {
-  try {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    const screenEl = document.getElementById('screen-' + name);
-    if (screenEl) {
-      screenEl.classList.add('active');
-    } else {
-      console.warn('[showScreen] Screen nicht gefunden:', name);
-    }
-
-    // 🚀 Lio NUR auf screen-main und screen-age einblenden!
-    const robot = document.getElementById('robot');
-    if (robot) {
-      if (name === 'main' || name === 'age') {
-        robot.style.display = ''; // Nutzt zu 100% deine originalen CSS-Klassen!
-      } else {
-        robot.style.display = 'none'; // Unsichtbar auf allen anderen Screens
-      }
-    }
-  } catch (e) {
-    console.error('[showScreen] Fehler:', e.message);
-  }
-}
-
-// ════════════════════════════════════════
-// MENU
-// ════════════════════════════════════════
-function openMenu() {
-  try {
-    const drawer = document.getElementById('menuDrawer');
-    const overlay = document.getElementById('menuOverlay');
-    if (drawer) drawer.classList.add('show');
-    if (overlay) overlay.classList.add('show');
-    document.querySelectorAll('.menu-item').forEach(el => {
-      const id = el.id.replace('m-', '');
-      if (parentLocks[id]) {
-        el.style.opacity = '0.4';
-        const lab = el.querySelector('span:last-child');
-        if (!lab.textContent.includes('🔒')) lab.textContent += ' 🔒';
-      } else {
-        el.style.opacity = '1';
-      }
-    });
-  } catch (e) {
-    console.error('[openMenu] Fehler:', e.message);
-  }
-}
-function closeMenu() {
-  try {
-    const drawer = document.getElementById('menuDrawer');
-    const overlay = document.getElementById('menuOverlay');
-    if (drawer) drawer.classList.remove('show');
-    if (overlay) overlay.classList.remove('show');
-  } catch (e) {
-    console.error('[closeMenu] Fehler:', e.message);
-  }
-}
-
-// ════════════════════════════════════════
-// SPEECH BUBBLE + NEUES BELOHNUNGSSYSTEM (KONFETTI)
-// ════════════════════════════════════════
-function setBubble(text) {
-  const bubble = document.getElementById('bubble');
-  if (bubble) {
-    bubble.textContent = text;
-  } else {
-    console.warn('[setBubble] Element bubble nicht gefunden!');
-  }
-}
-function setBubbleLoading() {
-  const bubble = document.getElementById('bubble');
-  if (bubble) {
-    bubble.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
-  } else {
-    console.warn('[setBubbleLoading] Element bubble nicht gefunden!');
-  }
-}
-function setHint(text) {
-  const hint = document.getElementById('hint');
-  if (hint) {
-    hint.textContent = text;
-  } else {
-    console.warn('[setHint] Element hint nicht gefunden!');
-  }
-}
-
-// Konfetti-Belohnung (erstellt buntes fallendes Konfetti)
-function triggerConfetti() {
-  for (let i = 0; i < 40; i++) {
-    const confetti = document.createElement('div');
-    confetti.className = 'confetti';
-    confetti.style.left = Math.random() * 100 + 'vw';
-    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 60%)`; 
-    
-    confetti.style.position = 'fixed';
-    confetti.style.top = '-10px';
-    confetti.style.width = '12px';
-    confetti.style.height = '12px';
-    confetti.style.borderRadius = '50%';
-    confetti.style.zIndex = '9999';
-    confetti.style.pointerEvents = 'none';
-    
-    confetti.animate([
-      { transform: `translate3d(0, 0, 0) rotate(0deg)`, opacity: 1 },
-      { transform: `translate3d(${Math.random()*100 - 50}px, 100vh, 0) rotate(${Math.random()*360}deg)`, opacity: 0 }
-    ], {
-      duration: Math.random() * 2000 + 2000,
-      easing: 'ease-out'
-    });
-
-    document.body.appendChild(confetti);
-
-    setTimeout(() => {
-      confetti.remove();
-    }, 4000);
-  }
-  console.log('[triggerConfetti] Konfetti-Regen gestartet!');
-}
-
-function repeatLast() {
-  if (lastLioText) speakJorin(lastLioText);
-}
-
-// ════════════════════════════════════════
-// MOOD
-// ════════════════════════════════════════
-function selectMood(btn, mood) {
-  // 🚀 Klicksperre während Lio spricht
-  if (isLioSpeaking) return;
-
-  if (currentMood === mood) {
-    currentMood = null;
-    btn.classList.remove('selected');
-    document.getElementById('halo').className = 'halo';
-    setLioEmotion('normal');
-    return;
-  }
-  document.querySelectorAll('.mood-pill').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  currentMood = mood;
-  document.getElementById('halo').className = 'halo ' + mood;
-  reactToMood(mood);
-}
-
-function reactToMood(mood) {
-  const reactions = {
-    happy:   'Oh wie toll, du bist glücklich! Was ist denn Schönes passiert?',
-    sad:     'Oh, du bist traurig... Magst du mir erzählen, was los ist? Danach schauen wir zusammen, wie ich dir wieder ein Lächeln zaubern kann!',
-    angry:   'Du bist wütend? Das ist total okay, jeder ist mal wütend. Erzähl mir, was passiert ist, und dann finden wir zusammen was, das dich wieder aufmuntert.',
-    scared:  'Hab keine Angst, ich bin bei dir und du bist sicher. Was hat dich erschreckt? Wollen wir danach zusammen was Lustiges machen, damit du dich wieder wohlfühlst?',
-    tired:   'Du bist müde? Soll ich dir eine ruhige Geschichte erzählen?',
-    excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
-  };
-  const text = reactions[mood];
-  if (text) { setBubble(text); lastLioText = text; speakJorin(text); }
-
-  const robot = document.getElementById('robot');
-  if (!robot) return;
-  robot.classList.remove('excited','sad','tired','listening');
-  if (mood === 'excited' || mood === 'happy') {
-    robot.classList.add('excited');
-    setLioEmotion('excited');
-  }
-  else if (mood === 'sad' || mood === 'scared') {
-    robot.classList.add('sad');
-    setLioEmotion('sad');
-  }
-  else if (mood === 'tired') {
-    robot.classList.add('tired');
-    setLioEmotion('tired');
-  }
-}
-
-// ════════════════════════════════════════
-// VOICE / TTS
-// ════════════════════════════════════════
-const synth = window.speechSynthesis;
+/* Stimm-Einstellungen (Gerätestimme) */
 let voices = [];
 let selectedVoice = null;
-let speechRate = 0.95;    
-let speechPitch = 1.0;    
+let speechRate = 1.0;
+let speechPitch = 1.15;
 
-// ════════════════════════════════════════
-// MOOD-STIMMPROFILE — Lios Stimmlage & Sprechweise
-// passen sich an, welches Gefühl-Emoji der User gewählt hat
-// ════════════════════════════════════════
+let parentLocks = {};
+try { parentLocks = JSON.parse(localStorage.getItem('lio_locks') || '{}'); } catch (e) { parentLocks = {}; }
+
+/* ══════════════════════════════════════════════════════════
+   INHALTE
+══════════════════════════════════════════════════════════ */
+const AGE_GROUPS = {
+  '3-5':  { label: '🧸 3–5 Jahre',  rate: 0.95, pitch: 1.20, greeting: 'Hallo {name}! Ich bin Lio! Schön, dass du da bist!' },
+  '5-8':  { label: '🎈 5–8 Jahre',  rate: 0.98, pitch: 1.18, greeting: 'Hallo {name}! Ich bin Lio, dein Freund! Was machen wir heute?' },
+  '8-12': { label: '🎒 8–12 Jahre', rate: 1.00, pitch: 1.12, greeting: 'Hi {name}! Ich bin Lio! Worauf hast du heute Lust?' },
+  '12+':  { label: '🎮 12+ Jahre',  rate: 1.05, pitch: 1.05, greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
+};
+
+/* Diese Schlüssel müssen exakt den MODES im Backend entsprechen. */
+const MODES = {
+  talk:     { icon:'💬', title:'Chat',        welcome:{ '3-5':'Hallo {name}! Du kannst mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
+  homework: { icon:'📚', title:'Hausaufgaben',welcome:{ '3-5':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
+  stories:  { icon:'📖', title:'Geschichte',  welcome:{ '3-5':'Möchtest du eine Geschichte?', '5-8':'Eine Geschichte! Worüber soll sie sein?', '8-12':'Welche Geschichte soll ich erzählen?', '12+':'Geschichten-Modus! Sag mir das Thema.' } },
+  learn:    { icon:'🧠', title:'Lernen',      welcome:{ '3-5':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
+  jokes:    { icon:'😂', title:'Witze',       welcome:{ '3-5':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
+  creative: { icon:'🎨', title:'Kreativ',     welcome:{ '3-5':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
+  guess:    { icon:'🎯', title:'Raten',       welcome:{ '3-5':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
+  iSpy:     { icon:'👀', title:'Ich seh was', welcome:{ '3-5':'Ich sehe was, was du nicht siehst!', '5-8':'Ich sehe was — bereit?', '8-12':'Ich denke an eine Szene. Du musst raten!', '12+':'Ich beschreibe — finde, was ich meine!' } },
+  wouldYou: { icon:'🤷', title:'Eher?',       welcome:{ '3-5':'Lass uns wählen! Was magst du lieber?', '5-8':'Würdest du eher fliegen oder schwimmen?', '8-12':'Würdest-du-eher! Bereit?', '12+':'Schwere Entscheidungen!' } },
+};
+
+const SUBJECTS = [
+  { key:'mathe',     icon:'🔢', label:'Mathe' },
+  { key:'deutsch',   icon:'📖', label:'Deutsch' },
+  { key:'englisch',  icon:'🔤', label:'Englisch' },
+  { key:'sachkunde', icon:'🌍', label:'Sachkunde' },
+  { key:'sonstiges', icon:'✏️', label:'Etwas anderes' },
+];
+
+const HOMEWORK_TOPICS = {
+  mathe:     [ {label:'🔢 Einmaleins', prompt:'Erklär mir bitte das Einmaleins, Schritt für Schritt.'},
+               {label:'➗ Textaufgaben', prompt:'Ich hab eine Textaufgabe und weiß nicht, wo ich anfangen soll.'},
+               {label:'🍰 Brüche', prompt:'Erklär mir Brüche mit einem einfachen Beispiel.'} ],
+  deutsch:   [ {label:'📝 Rechtschreibung', prompt:'Kannst du mir eine Rechtschreibregel an einem Beispiel erklären?'},
+               {label:'📖 Text verstehen', prompt:'Ich soll einen Text lesen und verstehen, hilf mir Schritt für Schritt.'},
+               {label:'✍️ Aufsatz', prompt:'Ich muss einen Aufsatz schreiben und weiß nicht, wie ich anfange.'} ],
+  englisch:  [ {label:'🔤 Vokabeln', prompt:'Übe mit mir ein paar einfache englische Vokabeln.'},
+               {label:'🗣️ Sätze bilden', prompt:'Zeig mir, wie ich einen einfachen englischen Satz bilde.'} ],
+  sachkunde: [ {label:'🌍 Thema erklären', prompt:'Erklär mir mein Sachkunde-Thema einfach und mit Beispielen.'} ],
+  sonstiges: [ {label:'💡 Zeig mir ein Beispiel', prompt:'Zeig mir bitte ein einfaches Beispiel zu meiner Aufgabe.'} ],
+};
+
+const HOMEWORK_FOLLOWUPS = [
+  { label:'👍 Verstanden',        prompt:'Ich hab es verstanden, was kommt als Nächstes?', resolvesTopic:true },
+  { label:'🔁 Nochmal, langsamer', prompt:'Kannst du das nochmal langsamer und einfacher erklären?' },
+  { label:'📝 Anderes Beispiel',   prompt:'Zeig mir noch ein anderes Beispiel dazu.' },
+];
+
+/* Nur gemeinfreie Volks- und Kinderlieder (Hoffmann von Fallersleben,
+   Claudius u. a. — Schutzfrist abgelaufen).
+   Moderne Lieder brauchen eine GEMA-Lizenz — bitte nichts einfach ergänzen. */
+const ALL_SONGS = [
+  { icon:'🐭', title:'Alle meine Entchen', ages:['3-5','5-8','8-12','12+'], lyrics:[
+      'Alle meine Entchen schwimmen auf dem See.',
+      'Köpfchen in das Wasser, Schwänzchen in die Höh!',
+      'Alle meine Täubchen sitzen auf dem Dach.',
+      'Klipper, klapper, klapp, klapp, fliegen übers Dach.' ]},
+  { icon:'🦊', title:'Fuchs, du hast die Gans gestohlen', ages:['5-8','8-12','12+'], lyrics:[
+      'Fuchs, du hast die Gans gestohlen, gib sie wieder her!',
+      'Sonst wird dich der Jäger holen mit dem Schießgewehr.' ]},
+  { icon:'🌙', title:'Der Mond ist aufgegangen', ages:['3-5','5-8','8-12','12+'], lyrics:[
+      'Der Mond ist aufgegangen, die goldnen Sternlein prangen.',
+      'Am Himmel hell und klar.',
+      'Der Wald steht schwarz und schweiget,',
+      'und aus den Wiesen steiget der weiße Nebel wunderbar.' ]},
+  { icon:'🐝', title:'Summ, summ, summ', ages:['3-5','5-8','8-12'], lyrics:[
+      'Summ, summ, summ! Bienchen summ herum!',
+      'Ei, wir tun dir nichts zuleide,',
+      'flieg nur aus in Wald und Heide!' ]},
+  { icon:'🐑', title:'Schlaf, Kindlein, schlaf', ages:['3-5','5-8'], lyrics:[
+      'Schlaf, Kindlein, schlaf! Der Vater hüt die Schaf.',
+      'Die Mutter schüttelt s Bäumelein,',
+      'da fällt herab ein Träumelein.' ]},
+  { icon:'🌟', title:'Weißt du, wieviel Sternlein stehen', ages:['5-8','8-12','12+'], lyrics:[
+      'Weißt du, wieviel Sternlein stehen an dem blauen Himmelszelt?',
+      'Weißt du, wieviel Wolken gehen weithin über alle Welt?',
+      'Gott, der Herr, hat sie gezählet,',
+      'dass ihm auch nicht eines fehlet an der ganzen großen Zahl.' ]},
+];
+
+/* ══════════════════════════════════════════════════════════
+   STIMMPROFILE NACH GEFÜHL
+   Lios Sprechweise passt sich an, welches Emoji das Kind gewählt hat.
+══════════════════════════════════════════════════════════ */
 const MOOD_VOICE_PROFILES = {
-  happy:   { rate: 1.12, pitch: 1.28, style: 'fröhlich, warm, mit einem Lächeln in der Stimme' },
-  excited: { rate: 1.18, pitch: 1.34, style: 'aufgeregt, lebendig, schnell und begeistert' },
-  sad:     { rate: 0.85, pitch: 1.05, style: 'sanft, ruhig, tröstend und langsam' },
-  angry:   { rate: 0.88, pitch: 1.08, style: 'ruhig, geduldig, beruhigend, ohne Eile' },
-  scared:  { rate: 0.88, pitch: 1.10, style: 'ruhig, sicher, beschützend' },
-  tired:   { rate: 0.82, pitch: 1.00, style: 'leise, sanft, langsam' },
+  happy:   { rate: 1.12, pitch: 1.28 },
+  excited: { rate: 1.18, pitch: 1.34 },
+  sad:     { rate: 0.85, pitch: 1.05 },
+  angry:   { rate: 0.88, pitch: 1.08 },
+  scared:  { rate: 0.88, pitch: 1.10 },
+  tired:   { rate: 0.82, pitch: 1.00 },
 };
 
 function getMoodVoiceProfile() {
   return (currentMood && MOOD_VOICE_PROFILES[currentMood]) ? MOOD_VOICE_PROFILES[currentMood] : null;
 }
 
-function loadVoices() {
-  if (!synth) return;
-  const allVoices = synth.getVoices();
-  voices = allVoices.filter(v => v.lang.toLowerCase().startsWith('de'));
-  
-  // 🚀 FIX: bestIdx MUSS VOR dem if(sel) deklariert werden!
-  let bestIdx = 0; 
-  
-  const sel = document.getElementById('voiceSel');
-  if (sel) {
-    sel.innerHTML = '';
-    if (voices.length === 0) {
-      const opt = document.createElement('option');
-      opt.textContent = 'Keine deutsche Stimme';
-      sel.appendChild(opt);
-      sel.disabled = true;
-      return;
+/* ══════════════════════════════════════════════════════════
+   BILDSCHIRME
+══════════════════════════════════════════════════════════ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = $('screen-' + name);
+  if (el) el.classList.add('active');
+}
+
+function setBubble(text)   { const b = $('bubble'); if (b) b.textContent = text; }
+function setBubbleLoading(){ const b = $('bubble'); if (b) b.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>'; }
+function setHint(text)     { const h = $('hint');   if (h) h.textContent = text; }
+
+/* ══════════════════════════════════════════════════════════
+   ELTERN-GATE
+   Zwei Stufen, damit ein neugieriges Kind nicht durch Zufall oder
+   schnelles Tippen durchkommt:
+   1. Zweistellige Multiplikation, für kleine Kinder nicht im Kopf lösbar.
+   2. 3 Sekunden gedrückt halten — das schafft kein Zufallstreffer.
+   Nach 3 falschen Rechenversuchen sperrt das Gate für 30 Sekunden.
+   Die Sperre wird in localStorage gemerkt, damit ein Neuladen sie nicht umgeht.
+══════════════════════════════════════════════════════════ */
+let mathSolution = 0;
+let gateFails = parseInt(localStorage.getItem('lio_gate_fails') || '0', 10);
+
+function newMathChallenge() {
+  const a = 12 + Math.floor(Math.random() * 78);  // 12–89
+  const b = 12 + Math.floor(Math.random() * 78);  // 12–89
+  mathSolution = a * b;
+  $('mathQuestion').textContent = a + ' × ' + b + ' = ?';
+}
+
+function gateLockedUntil() { return parseInt(localStorage.getItem('lio_gate_lock') || '0', 10); }
+
+function updateGateLockUI() {
+  const remaining = gateLockedUntil() - Date.now();
+  const msg = $('mathLockMsg');
+  if (remaining > 0) {
+    msg.style.display = 'block';
+    msg.textContent = 'Zu viele falsche Versuche. Bitte warte ' + Math.ceil(remaining / 1000) + ' Sekunden.';
+    $('btnMath').disabled = true;
+    $('mathAnswer').disabled = true;
+    setTimeout(updateGateLockUI, 1000);
+  } else {
+    msg.style.display = 'none';
+    $('btnMath').disabled = false;
+    $('mathAnswer').disabled = false;
+  }
+}
+
+function checkParentMath() {
+  if (gateLockedUntil() > Date.now()) return;
+
+  if (Number($('mathAnswer').value) === mathSolution) {
+    gateFails = 0;
+    localStorage.setItem('lio_gate_fails', '0');
+    $('mathChallenge').style.display = 'none';
+    startHoldChallenge();
+  } else {
+    gateFails++;
+    localStorage.setItem('lio_gate_fails', String(gateFails));
+    $('mathAnswer').value = '';
+    newMathChallenge();
+    if (gateFails >= 3) {
+      localStorage.setItem('lio_gate_lock', String(Date.now() + 30000));
+      gateFails = 0;
+      localStorage.setItem('lio_gate_fails', '0');
+      updateGateLockUI();
     }
-    sel.disabled = false;
-    
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const preferredNames = isMobile
-      ? [
-          'Google Deutsch',
-          'Microsoft Katja',
-          'Anna',
-          'Hanna', 'Microsoft Hanna',
-          'Microsoft Clara',
-          'Microsoft Zira',
-          'Hedda',
-        ]
-      : [
-          'Microsoft Katja',
-          'Anna',
-          'Google Deutsch',
-          'Microsoft Clara',
-          'Hanna', 'Microsoft Hanna',
-          'Microsoft Zira',
-          'Hedda',
-        ];
-    
-    voices.forEach((v, i) => {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = v.name + ' (' + v.lang + ')';
-      sel.appendChild(opt);
-      if (preferredNames.some(n => v.name.includes(n))) bestIdx = i;
-    });
-    
-    const savedIdx = parseInt(localStorage.getItem('Lio_voice_idx'));
-    if (!isNaN(savedIdx) && voices[savedIdx]) bestIdx = savedIdx;
-    sel.selectedIndex = bestIdx;
-  }
-  selectedVoice = voices[bestIdx || 0];
-  console.log('[loadVoices] Stimme:', selectedVoice?.name);
-}
-
-if (synth) {
-  if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
-  loadVoices();
-  setTimeout(loadVoices, 100);
-  setTimeout(loadVoices, 300);
-  setTimeout(loadVoices, 500);
-  setTimeout(loadVoices, 1500);
-  if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-    setTimeout(loadVoices, 200);
-    setTimeout(loadVoices, 800);
-    setTimeout(loadVoices, 2500);
   }
 }
 
-function onVoiceChange() {
-  const idx = parseInt(document.getElementById('voiceSel').value);
-  if (!isNaN(idx) && voices[idx]) { selectedVoice = voices[idx]; localStorage.setItem('Lio_voice_idx', idx); }
+$('btnMath').addEventListener('click', checkParentMath);
+$('mathAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkParentMath(); });
+
+/* ── Stufe 2: 3 Sekunden gedrückt halten ── */
+const HOLD_MS = 3000;
+let holdRaf = null;
+let holdStart = 0;
+
+function startHoldChallenge() {
+  $('holdChallenge').style.display = 'block';
+  resetHold();
 }
-function onRateChange() {
-  speechRate = parseFloat(document.getElementById('rateSlider').value);
-  document.getElementById('rateVal').textContent = speechRate.toFixed(2);
+function resetHold() {
+  $('holdProgress').style.width = '0%';
+  $('holdLabel').textContent = 'Gedrückt halten…';
 }
-function onPitchChange() {
-  speechPitch = parseFloat(document.getElementById('pitchSlider').value);
-  document.getElementById('pitchVal').textContent = speechPitch.toFixed(2);
-}
-function testVoice() { speakJorin('Hallo! Ich bin Lio, dein Roboter-Freund!'); }
-
-
-let availableVoices = [];
-if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    availableVoices = window.speechSynthesis.getVoices();
-  };
-}
-
-function speak(text) {
-  fallbackSpeak(text); 
-}
-
-function toggleListen() {
-  // 🚀 Klicksperre während Lio spricht
-  if (isLioSpeaking) return;
-
-  try {
-    if (typeof SR === 'undefined' || !SR) {
-      setBubble('Sprache nicht unterstützt. Tipp lieber!');
-      openTextInput();
-      return;
-    }
-    if (isListening) {
-      if (recognition) try { recognition.stop(); } catch (e) {}
-      return;
-    }
-    if (synth) synth.cancel();
-    const robot = document.getElementById('robot');
-    if (robot) robot.classList.remove('talking');
-    try { recognition.start(); startListening(); }
-    catch (err) { setBubble('Konnte nicht starten. Probier nochmal!'); stopListening(); }
-  } catch (e) {
-    console.error('[toggleListen]', e.message);
-  }
-}
-
-function startListening() {
-  isListening = true;
-  document.getElementById('micBtn').classList.add('listening');
-  setHint('Ich höre dich... 👂');
-  const robot = document.getElementById('robot');
-  if (robot) { robot.classList.remove('excited','sad','tired'); robot.classList.add('listening'); }
-}
-function stopListening() {
-  isListening = false;
-  document.getElementById('micBtn').classList.remove('listening');
-  setHint('Drück das Mikro und sprich!');
-  const robot = document.getElementById('robot');
-  if (robot) robot.classList.remove('listening');
-}
-
-// ════════════════════════════════════════
-// SEND MESSAGE
-// ════════════════════════════════════════
-function openTextInput() {
-  document.getElementById('textOverlay').classList.add('show');
-  setTimeout(() => document.getElementById('textInput').focus(), 100);
-}
-function closeTextInput() {
-  document.getElementById('textOverlay').classList.remove('show');
-  document.getElementById('textInput').value = '';
-}
-function sendText() {
-  // 🚀 Klicksperre während Lio spricht
-  if (isLioSpeaking) return;
-
-  const inp = document.getElementById('textInput');
-  const val = inp.value.trim();
-  if (val) {
-    inp.value = '';
-    closeTextInput();
-    sendMessage(val);
-  }
-}
-document.getElementById('textInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendText();
-});
-
-// ════════════════════════════════════════
-// LIAM INTEGRATION - TTS & VOICE OPTIMIZATION
-// ════════════════════════════════════════
-
-function validateGenderNeutralLanguage(text) {
-  const genderMarkers = {
-    '/in': 'Nutze stattdessen: Lehrpersonen',
-    '\\*in': 'Nutze stattdessen: Studierende',
-    ':in': 'Nutze stattdessen: Mitarbeitende',
-  };
-  
-  let hasIssues = false;
-  Object.entries(genderMarkers).forEach(([marker, suggestion]) => {
-    if (text.includes(marker)) {
-      console.warn('[Liam Gender Check]', marker, '→', suggestion);
-      hasIssues = true;
-    }
-  });
-  
-  return !hasIssues;
-}
-
-function parseForSpeech(text) {
-  text = text.replace(/<[^>]*>/g, '').trim();
-  const sentences = text.match(/[^.!?]*[.!?]+/g) || [text];
-  
-  const chunks = [];
-  let currentChunk = '';
-  
-  sentences.forEach(sentence => {
-    const trimmed = sentence.trim();
-    if (!trimmed) return;
-    
-    if ((currentChunk + trimmed).split(' ').length > 15) {
-      if (currentChunk) chunks.push(currentChunk.trim());
-      currentChunk = trimmed;
-    } else {
-      currentChunk += ' ' + trimmed;
-    }
-  });
-  
-  if (currentChunk) chunks.push(currentChunk.trim());
-  return chunks;
-}
-
-// ════════════════════════════════════════
-// PREMIUM KI-STIMME (ELEVENLABS) & ECHO-SCHUTZ
-// ════════════════════════════════════════
-async function speakJorin(text) {
-  if (!text || !text.trim()) return;
-
-  // 🚀 Echo-Schutz: Bricht vorheriges Vorlesen sofort ab
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-  }
-
-  try {
-    // 🚀 Klicksperre für alle Buttons aktivieren
-    isLioSpeaking = true; 
-    const micBtn = document.getElementById('micBtn');
-    if (micBtn) micBtn.style.opacity = '0.5';
-
-    // Stimmlage & Sprechweise an das aktuell gewählte Gefühl anpassen
-    const moodProfile = getMoodVoiceProfile();
-
-    // Fragt deinen Server nach der Audiodatei
-    const response = await fetch('/api/speak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: text,
-        mood: currentMood,
-        rate: moodProfile ? moodProfile.rate : speechRate,
-        pitch: moodProfile ? moodProfile.pitch : speechPitch,
-        voiceStyle: moodProfile ? moodProfile.style : null
-      })
-    });
-
-    if (!response.ok) throw new Error('Fehler beim Laden der Stimme');
-
-    // Spielt die Datei ab
-    const audioBlob = await response.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-    audio.playbackRate = moodProfile ? moodProfile.rate : (speechRate || 1.0);
-
-    currentAudio = audio; // Speichern fürs Abbrechen
-
-    // Klicksperre aufheben, wenn Lio fertig gesprochen hat
-    audio.onended = () => {
-      isLioSpeaking = false;
-      if (micBtn) micBtn.style.opacity = '1';
-      currentAudio = null;
-    };
-    audio.onerror = () => {
-      isLioSpeaking = false;
-      if (micBtn) micBtn.style.opacity = '1';
-      currentAudio = null;
-    };
-
-    await audio.play();
-    
-  } catch (err) {
-    console.error('Sprachfehler:', err);
-    isLioSpeaking = false;
-    const micBtn = document.getElementById('micBtn');
-    if (micBtn) micBtn.style.opacity = '1';
-  }
-}
-
-// Unser Sicherheits-Netz
-function fallbackSpeak(text) {
-  if (!('speechSynthesis' in window)) {
-    const robot = document.getElementById('robot');
-    const ageRobot = document.querySelector('.age-robot-wrap');
-    if (robot) robot.classList.remove('talking');
-    if (ageRobot) ageRobot.classList.remove('talking');
+function holdTick() {
+  const pct = Math.min(100, ((Date.now() - holdStart) / HOLD_MS) * 100);
+  $('holdProgress').style.width = pct + '%';
+  if (pct >= 100) {
+    $('holdLabel').textContent = 'Bestätigt ✓';
+    setTimeout(() => {
+      $('holdChallenge').style.display = 'none';
+      $('setupForm').style.display = 'block';
+    }, 200);
     return;
   }
-  
+  holdRaf = requestAnimationFrame(holdTick);
+}
+function holdStartHandler(e) { e.preventDefault(); holdStart = Date.now(); holdTick(); }
+function holdEndHandler() { if (holdRaf) cancelAnimationFrame(holdRaf); holdRaf = null; resetHold(); }
+
+const holdBtn = $('holdBtn');
+holdBtn.addEventListener('pointerdown', holdStartHandler);
+holdBtn.addEventListener('pointerup', holdEndHandler);
+holdBtn.addEventListener('pointerleave', holdEndHandler);
+holdBtn.addEventListener('pointercancel', holdEndHandler);
+
+/* PIN wird gehasht gespeichert, nicht im Klartext. */
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('lio:' + pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function saveSetup() {
+  const name = $('childNameInput').value.trim();
+  const pin  = $('setupPinInput').value.trim();
+
+  if (!name) { alert('Bitte einen Spitznamen eingeben.'); return; }
+  if (!/^\d{4,6}$/.test(pin)) { alert('Bitte eine PIN mit 4–6 Ziffern vergeben.'); return; }
+  if (!$('consentBox').checked) { alert('Bitte bestätige die Einwilligung.'); return; }
+
+  childName = name.slice(0, 24);
+  localStorage.setItem('lio_name', childName);
+  localStorage.setItem('lio_pin', await hashPin(pin));
+  localStorage.setItem('lio_consent', new Date().toISOString());
+  showScreen('age');
+}
+$('btnSaveSetup').addEventListener('click', saveSetup);
+
+/* ══════════════════════════════════════════════════════════
+   ALTERSAUSWAHL
+══════════════════════════════════════════════════════════ */
+document.querySelectorAll('.age-card').forEach(btn => {
+  btn.addEventListener('click', () => selectAge(btn.dataset.age));
+});
+
+function showAgeBubble(text) {
+  const bubble = $('ageBubble');
+  if (!bubble) return;
+  bubble.textContent = text;
+  bubble.classList.add('show');
+  clearTimeout(showAgeBubble._t);
+  showAgeBubble._t = setTimeout(() => bubble.classList.remove('show'), 4500);
+}
+
+/* Spricht die Begrüßung auf dem Altersbildschirm und ruft danach onDone auf.
+   Der Timeout ist das Sicherheitsnetz: manche Browser feuern onend nicht. */
+function speakOnAge(text, onDone) {
+  let done = false;
+  const finish = () => { if (done) return; done = true; if (onDone) onDone(); };
+
+  const ageRobot = $('ageRobot');
+  if (ageRobot) ageRobot.classList.add('talking');
+
+  const clean = stripEmoji(text);
+
+  if (!('speechSynthesis' in window) || !clean) {
+    if (ageRobot) ageRobot.classList.remove('talking');
+    setTimeout(finish, 400);
+    return;
+  }
+
   window.speechSynthesis.cancel();
-  const cleanText = String(text).replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  const moodProfile = getMoodVoiceProfile();
-  utterance.lang = 'de-DE';
-  utterance.pitch = moodProfile ? moodProfile.pitch : 1.15;
-  utterance.rate = moodProfile ? moodProfile.rate : 1.05;
-  
-  const robot = document.getElementById('robot');
-  const ageRobot = document.querySelector('.age-robot-wrap');
-  
-  utterance.onend = () => { 
-    if (robot) robot.classList.remove('talking'); 
-    if (ageRobot) ageRobot.classList.remove('talking');
-  };
-  utterance.onerror = () => { 
-    if (robot) robot.classList.remove('talking'); 
-    if (ageRobot) ageRobot.classList.remove('talking');
-  };
-  
-  window.speechSynthesis.speak(utterance);
+  const u = new SpeechSynthesisUtterance(clean);
+  if (selectedVoice) u.voice = selectedVoice;
+  u.lang = 'de-DE';
+  u.rate = speechRate;
+  u.pitch = speechPitch;
+  u.volume = 1.0;
+  u.onend = () => { if (ageRobot) ageRobot.classList.remove('talking'); finish(); };
+  u.onerror = () => { if (ageRobot) ageRobot.classList.remove('talking'); finish(); };
+  window.speechSynthesis.speak(u);
+
+  setTimeout(finish, Math.max(2500, clean.length * 75));
 }
 
-// RESTAURIERT: Die echte Emotions-Erkennung
-function detectUserEmotionAdvanced(userText) {
-  const lower = userText.toLowerCase();
-  
-  const emotions = {
-    happy: ['freut', 'glücklich', 'toll', 'super', 'wunderbar', 'schön', 'lachen', 'erleichtert', 'prima', 'klasse'],
-    sad: ['traurig', 'niedergeschlagen', 'deprimiert', 'heulend', 'trauern', 'weinen', 'betrübt', 'mutlos'],
-    anxious: ['angst', 'nervös', 'besorgnis', 'angespannt', 'beängstigt', 'panik', 'stress', 'unsicher'],
-    frustrated: ['frustriert', 'wütend', 'sauer', 'entnervt', 'genervt', 'zornig', 'verständnislos'],
-    tired: ['müde', 'erschöpft', 'schläfrig', 'energielos', 'ausgelaugt', 'kaputt'],
-  };
-  
-  let maxScore = 0;
-  let detectedEmotion = 'normal';
-  
-  Object.entries(emotions).forEach(([emotion, keywords]) => {
-    const score = keywords.filter(kw => lower.includes(kw)).length;
-    if (score > maxScore) {
-      maxScore = score;
-      detectedEmotion = emotion;
-    }
+function selectAge(age) {
+  currentAge = age;
+  localStorage.setItem('lio_age', age);
+
+  const grp = AGE_GROUPS[age];
+  speechRate = grp.rate;
+  speechPitch = grp.pitch;
+
+  const greeting = grp.greeting.replace('{name}', childName);
+  showAgeBubble(greeting);
+
+  showScreen('main');
+  initMain(greeting);
+}
+
+function goToAgeSelect() {
+  closeMenu();
+  stopSpeaking();
+  showScreen('age');
+}
+
+/* ══════════════════════════════════════════════════════════
+   HAUPTBILDSCHIRM
+══════════════════════════════════════════════════════════ */
+function initMain(customText) {
+  messages = [];
+  activeTopic = null;
+  topicResolved = true;
+  renderLessonCards();
+  renderMenuModes();
+  const m = MODES[currentMode] || MODES.talk;
+  const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
+  setBubble(text);
+  lastLioText = text;
+  speakLocal(text);            // Begrüßung mit Gerätestimme — spart TTS-Kosten
+}
+
+function resetChat() {
+  closeMenu();
+  initMain();
+  setHint('Tipp das Mikro und sprich!');
+}
+
+function renderLessonCards() {
+  const row = $('lessonRow');
+  if (!row) return;
+  row.innerHTML = '';
+  Object.entries(MODES).forEach(([key, m]) => {
+    if (parentLocks[key]) return;
+    const card = document.createElement('button');
+    card.className = 'lesson-card' + (key === currentMode ? ' active' : '');
+    card.innerHTML = '<span class="lesson-icon"></span><span class="lesson-label"></span>';
+    card.querySelector('.lesson-icon').textContent = m.icon;
+    card.querySelector('.lesson-label').textContent = m.title;
+    card.addEventListener('click', () => switchMode(key));
+    row.appendChild(card);
   });
-  
-  return detectedEmotion;
+  if (!parentLocks.karaoke) {
+    const k = document.createElement('button');
+    k.className = 'lesson-card';
+    k.innerHTML = '<span class="lesson-icon">🎤</span><span class="lesson-label">Karaoke</span>';
+    k.addEventListener('click', goToKaraoke);
+    row.appendChild(k);
+  }
 }
 
-// Lio-Gefühls-Antworten
-const lioEmotionalResponses = {
-  happy: { greeting: 'Das freut mich zu hören. Deine Energie kommt an.', follow: 'Das ist wunderbar. Erzähl mir mehr davon.' },
-  sad: { greeting: 'Ich sehe, dass es dir gerade nicht so gut geht.', follow: 'Das ist okay. Deine Gefühle sind wichtig. Ich bin für dich da.' },
-  anxious: { greeting: 'Ich merke, dass dich etwas beunruhigt.', follow: 'Das ist völlig normal. Lass uns das zusammen angehen.' },
-  frustrated: { greeting: 'Ich spüre, dass dich etwas frustriert.', follow: 'Das ist berechtigt. Lass mich dir helfen, das zu sortieren.' },
-  tired: { greeting: 'Du klingst erschöpft. Das ist verständlich.', follow: 'Dein Körper sagt dir, dass du Ruhe brauchst. Das ist wichtig.' },
-  normal: { greeting: 'Hallo. Ich bin Lio. Wie kann ich dir heute helfen?', follow: 'Ich höre dir zu.' }
-};
+function renderMenuModes() {
+  const box = $('menuModes');
+  if (!box) return;
+  box.innerHTML = '';
+  const entries = Object.entries(MODES).concat([['karaoke', { icon:'🎤', title:'Karaoke' }]]);
+  entries.forEach(([key, m]) => {
+    const btn = document.createElement('button');
+    btn.className = 'menu-item menu-mode-' + key + (key === currentMode ? ' active' : '');
+    btn.innerHTML = '<span class="menu-icon"></span><span class="menu-label"></span>';
+    btn.querySelector('.menu-icon').textContent = m.icon;
+    btn.querySelector('.menu-label').textContent = m.title + (parentLocks[key] ? ' 🔒' : '');
+    if (parentLocks[key]) btn.style.opacity = '0.45';
+    btn.addEventListener('click', () => key === 'karaoke' ? goToKaraoke() : switchMode(key));
+    box.appendChild(btn);
+  });
+}
 
-function generateLioGreeting(emotion) {
-  const response = lioEmotionalResponses[emotion] || lioEmotionalResponses.normal;
-  return response.greeting + ' ' + response.follow;
+function switchMode(mode) {
+  if (isLioSpeaking) stopSpeaking();
+  if (parentLocks[mode]) { setBubble('🔒 Das haben deine Eltern gesperrt.'); return; }
+
+  closeMenu();
+  clearQuickReplies();
+  currentMode = mode;
+  messages = [];
+  activeTopic = null;
+  topicResolved = true;
+  renderLessonCards();
+  renderMenuModes();
+
+  if (mode === 'homework') { openSubjectPanel(); return; }
+
+  const m = MODES[mode];
+  const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
+  setBubble(welcome);
+  lastLioText = welcome;
+  speakLocal(welcome);
+}
+
+/* ── Fach-Auswahl ── */
+function openSubjectPanel() {
+  const grid = $('subjectGrid');
+  grid.innerHTML = '';
+  SUBJECTS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'lesson-card';
+    btn.style.cssText = 'width:100%;';
+    btn.innerHTML = '<span class="lesson-icon"></span><span class="lesson-label"></span>';
+    btn.querySelector('.lesson-icon').textContent = s.icon;
+    btn.querySelector('.lesson-label').textContent = s.label;
+    btn.addEventListener('click', () => selectSubject(s));
+    grid.appendChild(btn);
+  });
+  $('panelSubject').classList.add('show');
+}
+
+function closeSubjectPanel() {
+  $('panelSubject').classList.remove('show');
+  if (!currentSubject) switchMode('talk');
+}
+$('btnCloseSubject').addEventListener('click', closeSubjectPanel);
+
+function selectSubject(subject) {
+  currentSubject = subject.key;
+  activeTopic = null;
+  topicResolved = true;
+  $('panelSubject').classList.remove('show');
+  messages = [];
+  const welcomes = {
+    mathe:     'Mathe! Ich hab ein paar Ideen — oder erzähl mir direkt, woran du gerade arbeitest.',
+    deutsch:   'Deutsch! Such dir ein Thema aus, oder sag mir, was du übst.',
+    englisch:  'English time! Wähl ein Thema, oder erzähl mir, was du gerade übst.',
+    sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir, worum es geht.',
+    sonstiges: 'Klar — erzähl mir, bei welcher Aufgabe ich dir helfen soll.',
+  };
+  const welcome = welcomes[subject.key] || welcomes.sonstiges;
+  setBubble(welcome);
+  lastLioText = welcome;
+  speakLocal(welcome);
+  renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
+}
+
+/* ── Schnellantworten ── */
+function renderQuickReplies(items, kind) {
+  const row = $('quickReplies');
+  if (!row) return;
+  row.innerHTML = '';
+  items.forEach(item => {
+    const chip = document.createElement('button');
+    chip.className = 'quick-chip';
+    chip.textContent = item.label;
+    chip.addEventListener('click', () => {
+      clearQuickReplies();
+      if (kind === 'topic-start') {
+        activeTopic = item.prompt;
+        topicResolved = false;
+      } else if (item.resolvesTopic) {
+        topicResolved = true;
+        activeTopic = null;
+      }
+      sendMessage(item.prompt);
+    });
+    row.appendChild(chip);
+  });
+}
+function clearQuickReplies() { const r = $('quickReplies'); if (r) r.innerHTML = ''; }
+
+/* ══════════════════════════════════════════════════════════
+   STIMMUNG
+══════════════════════════════════════════════════════════ */
+document.querySelectorAll('.mood-pill').forEach(btn => {
+  btn.addEventListener('click', () => selectMood(btn, btn.dataset.mood));
+});
+
+function selectMood(btn, mood) {
+  if (isLioSpeaking) stopSpeaking();
+
+  if (currentMood === mood) {
+    currentMood = null;
+    btn.classList.remove('selected');
+    $('halo').className = 'halo';
+    setLioEmotion('normal');
+    return;
+  }
+  document.querySelectorAll('.mood-pill').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  currentMood = mood;
+  $('halo').className = 'halo ' + mood;
+  reactToMood(mood);
+}
+
+function reactToMood(mood) {
+  const reactions = {
+    happy:   'Oh, wie schön! Was ist denn Tolles passiert?',
+    sad:     'Oh, du bist traurig. Magst du mir erzählen, was los ist? Ich hör dir zu.',
+    angry:   'Du bist wütend? Das ist völlig okay — jeder ist mal wütend. Erzähl mal, was passiert ist.',
+    scared:  'Hab keine Angst, ich bin da. Was hat dich erschreckt?',
+    tired:   'Du bist müde? Soll ich dir eine ruhige Geschichte erzählen?',
+    excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
+  };
+  const text = reactions[mood];
+  if (text) { setBubble(text); lastLioText = text; speakLocal(text); }
+
+  if (mood === 'excited' || mood === 'happy') setLioEmotion('excited');
+  else if (mood === 'sad' || mood === 'scared') setLioEmotion('sad');
+  else if (mood === 'tired') setLioEmotion('tired');
+  else setLioEmotion('normal');
 }
 
 function setLioEmotion(emotion) {
-  const robot = document.getElementById('robot');
+  const robot = $('robot');
   if (!robot) return;
-  
-  robot.classList.remove('excited', 'sad', 'tired', 'listening');
-  
-  if (emotion === 'sad') {
-    robot.classList.add('sad');
-  } else if (emotion === 'happy' || emotion === 'excited') {
-    robot.classList.add('excited');
-  } else if (emotion === 'tired') {
-    robot.classList.add('tired');
-  }
+  robot.classList.remove('excited','sad','tired','listening');
+  if (emotion === 'sad' || emotion === 'anxious') robot.classList.add('sad');
+  else if (emotion === 'happy' || emotion === 'excited') robot.classList.add('excited');
+  else if (emotion === 'tired') robot.classList.add('tired');
 }
 
-// ════════════════════════════════════════
-// SICHERHEITSNETZ: MOBBING-ERKENNUNG
-// ════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
+   GEFÜHLSERKENNUNG IM TEXT
+   Steuert Lios Animation und wird als Hinweis ans Backend geschickt.
+══════════════════════════════════════════════════════════ */
+const EMOTION_KEYWORDS = {
+  happy:      ['freut','glücklich','toll','super','wunderbar','schön','lachen','erleichtert','prima','klasse','cool','mega'],
+  sad:        ['traurig','niedergeschlagen','deprimiert','heulen','weine','weinen','betrübt','mutlos','allein','einsam'],
+  anxious:    ['angst','nervös','sorge','angespannt','panik','stress','unsicher','aufgeregt vor','fürchte'],
+  frustrated: ['frustriert','wütend','sauer','entnervt','genervt','zornig','ärgerlich','doof','blöd'],
+  tired:      ['müde','erschöpft','schläfrig','energielos','ausgelaugt','kaputt','keine lust'],
+};
+
+function detectUserEmotionAdvanced(userText) {
+  const lower = String(userText).toLowerCase();
+  let best = 'normal';
+  let bestScore = 0;
+  Object.entries(EMOTION_KEYWORDS).forEach(([emotion, words]) => {
+    const score = words.filter(w => lower.includes(w)).length;
+    if (score > bestScore) { bestScore = score; best = emotion; }
+  });
+  return best;
+}
+
+/* Wird genutzt, wenn der Server nicht erreichbar ist — dann antwortet
+   Lio wenigstens einfühlsam statt nur mit einer Fehlermeldung. */
+const lioEmotionalResponses = {
+  happy:      { greeting:'Das freut mich zu hören!',            follow:'Erzähl mir gleich mehr davon.' },
+  sad:        { greeting:'Ich merke, dass es dir gerade nicht gut geht.', follow:'Deine Gefühle sind wichtig. Ich bin gleich wieder für dich da.' },
+  anxious:    { greeting:'Ich merke, dass dich etwas beunruhigt.',        follow:'Das ist ganz normal. Gleich reden wir in Ruhe darüber.' },
+  frustrated: { greeting:'Ich spüre, dass dich etwas ärgert.',            follow:'Das darf auch mal sein. Gleich sortieren wir das zusammen.' },
+  tired:      { greeting:'Du klingst müde.',                              follow:'Ruh dich ruhig kurz aus, ich warte auf dich.' },
+  normal:     { greeting:'Ich konnte dich gerade nicht hören.',           follow:'Probier es gleich nochmal!' },
+};
+
+function generateLioGreeting(emotion) {
+  const r = lioEmotionalResponses[emotion] || lioEmotionalResponses.normal;
+  return r.greeting + ' ' + r.follow;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SICHERHEITSNETZ IM CLIENT
+   Der Server prüft dasselbe gründlicher — aber wenn er gerade nicht
+   erreichbar ist, greift wenigstens das hier.
+══════════════════════════════════════════════════════════ */
 const BULLYING_PATTERNS = [
   /mobb/i, /gemobbt/i, /gehänselt|hänseln/i, /ausgelacht/i, /ausgeschlossen/i,
-  /schlagen mich|schlägt mich|geschlagen/i, /keiner mag mich|niemand mag mich/i,
-  /haben mich fertig ?gemacht/i, /tut mir weh in der schule/i, /angst vor der schule/i,
+  /schlagen mich|schlägt mich|geschlagen|haut mich/i,
+  /keiner mag mich|niemand mag mich|habe keine freunde/i,
+  /haben mich fertig ?gemacht/i, /tut mir weh/i, /angst vor der schule/i,
   /nennen mich (immer )?(dumm|hässlich|fett|blöd)/i, /wollen nicht mit mir spielen/i,
 ];
 
@@ -2432,353 +1592,744 @@ function detectBullyingSignal(text) {
   return BULLYING_PATTERNS.some(p => p.test(text));
 }
 
-// Speichert nur Datum + Kategorie, NIE den Wortlaut des Gesprächs (Datenschutz)
+/* Speichert nur Kategorie + Datum, NIE den Wortlaut (Datenschutz). */
 function logParentNotice(category) {
   try {
-    const notices = JSON.parse(localStorage.getItem('Lio_notices') || '[]');
+    const notices = JSON.parse(localStorage.getItem('lio_notices') || '[]');
     notices.push({ category, date: new Date().toISOString() });
-    localStorage.setItem('Lio_notices', JSON.stringify(notices.slice(-20)));
-  } catch (e) { console.warn('[logParentNotice] fehlgeschlagen', e); }
+    localStorage.setItem('lio_notices', JSON.stringify(notices.slice(-20)));
+  } catch (e) {}
 }
 
-function openHelpPanel() {
-  document.getElementById('panelHelp').classList.add('show');
+/* ══════════════════════════════════════════════════════════
+   SPRACHAUFBEREITUNG
+══════════════════════════════════════════════════════════ */
+function stripEmoji(text) {
+  return String(text).replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s{2,}/g, ' ').trim();
 }
-function closeHelpPanel() {
-  document.getElementById('panelHelp').classList.remove('show');
+
+/* Zerlegt lange Antworten in sprechbare Häppchen von max. 15 Wörtern.
+   Die Gerätestimme klingt dadurch natürlicher und bricht nicht ab. */
+function parseForSpeech(text) {
+  const clean = String(text).replace(/<[^>]*>/g, '').trim();
+  const sentences = clean.match(/[^.!?]*[.!?]+/g) || [clean];
+  const chunks = [];
+  let current = '';
+  sentences.forEach(s => {
+    const t = s.trim();
+    if (!t) return;
+    if ((current + ' ' + t).trim().split(/\s+/).length > 15) {
+      if (current) chunks.push(current.trim());
+      current = t;
+    } else {
+      current += ' ' + t;
+    }
+  });
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
 }
+
+/* Warnt in der Konsole, wenn die KI Gendersonderzeichen benutzt —
+   die liest jede Sprachausgabe unschön vor. */
+function validateGenderNeutralLanguage(text) {
+  const markers = [
+    { re: /\w+:innen/g,  hint: 'Doppelpunkt-Form, besser: Lehrkräfte, Mitarbeitende' },
+    { re: /\w+\*innen/g, hint: 'Sternchen-Form, besser: Studierende' },
+    { re: /\w+\/-?innen/g, hint: 'Schrägstrich-Form, besser: Lehrpersonen' },
+  ];
+  let clean = true;
+  markers.forEach(m => {
+    const hits = text.match(m.re);
+    if (hits) { console.warn('[Sprachprüfung]', hits.join(', '), '→', m.hint); clean = false; }
+  });
+  return clean;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GERÄTESTIMMEN
+══════════════════════════════════════════════════════════ */
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const all = window.speechSynthesis.getVoices();
+  voices = all.filter(v => v.lang.toLowerCase().startsWith('de'));
+
+  const sel = $('voiceSel');
+  let bestIdx = 0;
+
+  if (sel) {
+    sel.innerHTML = '';
+    if (voices.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = 'Keine deutsche Stimme gefunden';
+      sel.appendChild(opt);
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const preferred = isMobile
+      ? ['Google Deutsch', 'Microsoft Katja', 'Anna', 'Hanna', 'Microsoft Clara', 'Hedda']
+      : ['Microsoft Katja', 'Anna', 'Google Deutsch', 'Microsoft Clara', 'Hanna', 'Hedda'];
+
+    voices.forEach((v, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(opt);
+      if (preferred.some(n => v.name.includes(n))) bestIdx = i;
+    });
+
+    const saved = parseInt(localStorage.getItem('lio_voice_idx') || '', 10);
+    if (!isNaN(saved) && voices[saved]) bestIdx = saved;
+    sel.selectedIndex = bestIdx;
+  }
+
+  selectedVoice = voices[bestIdx] || voices[0] || null;
+}
+
+function onVoiceChange() {
+  const idx = parseInt($('voiceSel').value, 10);
+  if (!isNaN(idx) && voices[idx]) {
+    selectedVoice = voices[idx];
+    localStorage.setItem('lio_voice_idx', String(idx));
+  }
+}
+
+function onRateChange() {
+  speechRate = parseFloat($('rateSlider').value);
+  $('rateVal').textContent = speechRate.toFixed(2);
+}
+function onPitchChange() {
+  speechPitch = parseFloat($('pitchSlider').value);
+  $('pitchVal').textContent = speechPitch.toFixed(2);
+}
+function testVoice() { speakLocal('Hallo! Ich bin Lio, dein Roboter-Freund!'); }
+
+if ('speechSynthesis' in window) {
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+  // Manche Browser liefern die Liste erst verzögert.
+  [0, 120, 350, 700, 1500, 2500].forEach(ms => setTimeout(loadVoices, ms));
+}
+
+/* ══════════════════════════════════════════════════════════
+   SPRACHAUSGABE
+   /api/speak akzeptiert nur noch signierte Texte aus /api/chat.
+   Fällt der Dienst aus (503), übernimmt die Gerätestimme.
+══════════════════════════════════════════════════════════ */
+function stopSpeaking() {
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  isLioSpeaking = false;
+  localQueue = [];
+  const robot = $('robot');
+  if (robot) robot.classList.remove('talking');
+  const micBtn = $('micBtn');
+  if (micBtn) micBtn.style.opacity = '1';
+}
+
+$('robot').addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); });
+
+async function speakSigned(speech) {
+  if (!speech || !speech.text) return;
+  stopSpeaking();
+
+  isLioSpeaking = true;
+  const robot = $('robot');
+  const micBtn = $('micBtn');
+  if (robot) robot.classList.add('talking');
+  if (micBtn) micBtn.style.opacity = '0.5';
+
+  try {
+    const res = await apiFetch('/api/speak', speech);
+
+    if (!res.ok) {
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (res.status === 503 || data.fallback === 'device_tts') { speakLocal(speech.text); return; }
+      throw new Error('speak failed');
+    }
+
+    const url = URL.createObjectURL(await res.blob());
+    const audio = new Audio(url);
+
+    // Tempo leicht an die Stimmung anpassen. Bewusst gedeckelt —
+    // starke Änderungen lassen die KI-Stimme blechern klingen.
+    const profile = getMoodVoiceProfile();
+    audio.playbackRate = profile ? Math.min(1.15, Math.max(0.9, profile.rate)) : 1.0;
+
+    currentAudio = audio;
+
+    const done = () => {
+      isLioSpeaking = false;
+      if (robot) robot.classList.remove('talking');
+      if (micBtn) micBtn.style.opacity = '1';
+      URL.revokeObjectURL(url);
+      currentAudio = null;
+    };
+    audio.onended = done;
+    audio.onerror = done;
+    await audio.play();
+  } catch (err) {
+    console.warn('[speak]', err.message);
+    speakLocal(speech.text);
+  }
+}
+
+/* Gerätestimme — kostenlos, offline, und unser Sicherheitsnetz.
+   Spricht satzweise über parseForSpeech, damit lange Geschichten
+   nicht mittendrin abbrechen. */
+let localQueue = [];
+
+function speakLocal(text) {
+  if (!('speechSynthesis' in window) || !text) { isLioSpeaking = false; return; }
+  window.speechSynthesis.cancel();
+
+  const clean = stripEmoji(text);
+  if (!clean) { isLioSpeaking = false; return; }
+
+  const profile = getMoodVoiceProfile();
+  const rate  = profile ? profile.rate  : speechRate;
+  const pitch = profile ? profile.pitch : speechPitch;
+
+  const robot = $('robot');
+  const micBtn = $('micBtn');
+  isLioSpeaking = true;
+  if (robot) robot.classList.add('talking');
+  if (micBtn) micBtn.style.opacity = '0.5';
+
+  const finish = () => {
+    isLioSpeaking = false;
+    if (robot) robot.classList.remove('talking');
+    if (micBtn) micBtn.style.opacity = '1';
+  };
+
+  localQueue = parseForSpeech(clean);
+
+  const speakNext = () => {
+    if (!isLioSpeaking || localQueue.length === 0) { finish(); return; }
+    const chunk = localQueue.shift();
+    const u = new SpeechSynthesisUtterance(chunk);
+    if (selectedVoice) u.voice = selectedVoice;
+    u.lang = 'de-DE';
+    u.rate = rate;
+    u.pitch = pitch;
+    u.volume = 1.0;
+    u.onend = speakNext;
+    u.onerror = finish;
+    window.speechSynthesis.speak(u);
+  };
+  speakNext();
+}
+
+function repeatLast() {
+  if (lastSpeech) speakSigned(lastSpeech);
+  else if (lastLioText) speakLocal(lastLioText);
+}
+$('btnRepeat').addEventListener('click', repeatLast);
+
+/* ══════════════════════════════════════════════════════════
+   SPRACHEINGABE
+   Vorher fehlten SR, recognition und isListening komplett —
+   das Mikro hat nie funktioniert, es öffnete nur die Tastatur.
+
+   DATENSCHUTZ: Die Web Speech API von Chrome überträgt die
+   Aufnahme an Google-Server. Für die Store-Version bitte die
+   native Erkennung nutzen (iOS SFSpeechRecognizer mit
+   requiresOnDeviceRecognition = true, Android SpeechRecognizer)
+   und hier über window.LioNativeSTT einhängen.
+══════════════════════════════════════════════════════════ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let recognition = null;
+
+if (SR) {
+  recognition = new SR();
+  recognition.lang = 'de-DE';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    stopListening();
+    if (text && text.trim()) sendMessage(text.trim());
+  };
+  recognition.onerror = (event) => {
+    stopListening();
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      setBubble('Ich darf dein Mikrofon nicht benutzen. Frag einen Erwachsenen um Hilfe — oder tipp einfach!');
+    } else if (event.error === 'no-speech') {
+      setHint('Ich hab nichts gehört. Nochmal?');
+    }
+  };
+  recognition.onend = () => { if (isListening) stopListening(); };
+}
+
+$('micBtn').addEventListener('click', toggleListen);
+
+function toggleListen() {
+  if (isLioSpeaking) { stopSpeaking(); return; }
+
+  // Hook für die native Spracherkennung im Capacitor-/Expo-Wrapper
+  if (window.LioNativeSTT && typeof window.LioNativeSTT.listen === 'function') {
+    startListening();
+    window.LioNativeSTT.listen()
+      .then(text => { stopListening(); if (text) sendMessage(text.trim()); })
+      .catch(() => stopListening());
+    return;
+  }
+
+  if (!recognition) {
+    setBubble('Sprechen geht auf diesem Gerät nicht. Tipp einfach!');
+    openTextInput();
+    return;
+  }
+  if (isListening) { try { recognition.stop(); } catch (e) {} return; }
+
+  try { recognition.start(); startListening(); }
+  catch (e) { stopListening(); }
+}
+
+function startListening() {
+  isListening = true;
+  $('micBtn').classList.add('listening');
+  setHint('Ich höre dich… 👂');
+  const robot = $('robot');
+  if (robot) { robot.classList.remove('excited','sad','tired'); robot.classList.add('listening'); }
+}
+function stopListening() {
+  isListening = false;
+  $('micBtn').classList.remove('listening');
+  setHint('Tipp das Mikro und sprich!');
+  const robot = $('robot');
+  if (robot) robot.classList.remove('listening');
+}
+
+/* ══════════════════════════════════════════════════════════
+   NACHRICHT SENDEN
+══════════════════════════════════════════════════════════ */
+function openTextInput() {
+  $('textOverlay').classList.add('show');
+  setTimeout(() => $('textInput').focus(), 100);
+}
+function closeTextInput() {
+  $('textOverlay').classList.remove('show');
+  $('textInput').value = '';
+}
+function sendText() {
+  const val = $('textInput').value.trim();
+  if (!val) return;
+  closeTextInput();
+  sendMessage(val);
+}
+$('btnKeyboard').addEventListener('click', openTextInput);
+$('btnCloseText').addEventListener('click', closeTextInput);
+$('btnSendText').addEventListener('click', sendText);
+$('textInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendText(); });
 
 async function sendMessage(userText) {
-
   if (!userText || !userText.trim()) return;
   userText = userText.trim().slice(0, 500);
   clearQuickReplies();
+  stopSpeaking();
 
-  // Sicherheitsnetz: Mobbing-/Notlage-Signale unabhängig von der KI-Antwort erkennen
+  // Sicherheitsnetz im Client — greift auch, wenn der Server nicht antwortet
   const bullyingSignal = detectBullyingSignal(userText);
-  if (bullyingSignal) logParentNotice('mobbing-hinweis');
+  if (bullyingSignal) logParentNotice('bullying');
 
+  // Gefühl aus dem Text ableiten und Lios Animation anpassen
   const userEmotion = detectUserEmotionAdvanced(userText);
   setLioEmotion(userEmotion);
 
-  // Themen-Tracking: falls das Kind frei tippt (statt einen Chip zu nutzen)
+  // Themen-Tracking: bleibt Lio bei der Aufgabe?
   if (currentMode === 'homework' && !activeTopic) {
-    activeTopic = userText;
+    activeTopic = userText.slice(0, 60);
     topicResolved = false;
   }
-  // falls das Kind selbst schreibt, dass es verstanden hat -> Thema gilt als erledigt
-  if (/verstanden|kapiert|check(e|t)? das|alles klar/i.test(userText)) {
+  if (/verstanden|kapiert|alles klar|check(e|t)? das/i.test(userText)) {
     topicResolved = true;
+    activeTopic = null;
   }
 
-  setBubble('Du: "' + userText + '"');
-  setHint('Lio denkt nach... 🤔');
-  setTimeout(setBubbleLoading, 800);
+  setBubble('Du: „' + userText + '"');
+  setHint('Lio denkt nach… 🤔');
+  setTimeout(setBubbleLoading, 700);
 
   messages.push({ role: 'user', content: userText });
   if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
 
-  document.getElementById('micBtn').disabled = true;
-
-  // Anweisung fürs Backend: beim Thema/bei der Aufgabe bleiben, statt zu springen,
-  // und wirklich auf das eingehen, was das Kind erzählt hat — echtes Gespräch statt Antwort-Automat
-  const conversationInstruction = (currentMode === 'homework' && !topicResolved && activeTopic)
-    ? 'Bleib bei dieser Aufgabe/diesem Thema: "' + activeTopic + '". Erkläre weiter dazu bzw. stelle Verständnisfragen, bis das Kind zeigt, dass es verstanden hat. Wechsle das Thema nicht von selbst. Geh dabei genau auf das ein, was das Kind zuletzt gesagt/gefragt hat.'
-    : 'Führe eine echte, zusammenhängende Unterhaltung: Geh konkret auf das ein, was das Kind gerade erzählt hat, bevor du selbst ein neues Thema ansprichst. Nutze den bisherigen Gesprächsverlauf und stelle bei Bedarf Rückfragen, statt nur generisch zu antworten.';
+  $('micBtn').disabled = true;
 
   try {
-    console.log('[sendMessage] Sende Nachricht an /api/chat:', userText);
-    
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        messages, 
-        mood: currentMood, 
-        mode: currentMode, 
-        age: currentAge, 
-        emotion: userEmotion,
-        childName: childName, // DSGVO: Name wird an die API übertragen
-        lioMode: true,
-        subject: currentMode === 'homework' ? currentSubject : undefined,
-        teachingStyle: currentMode === 'homework' ? 'socratic-teacher' : undefined,
-        teachingInstruction: currentMode === 'homework'
-          ? 'Du bist nur eine Hilfe, nicht die Lösung. Sag dem Kind NIEMALS direkt das fertige Endergebnis oder die komplette Lösung vor, auch wenn danach gefragt wird. Führe stattdessen Schritt für Schritt: stelle gezielte Verständnisfragen, gib kleine Hinweise und Denkanstöße, und lass das Kind selbst auf die Lösung kommen. Bestätige richtige Zwischenschritte, korrigiere Fehler behutsam ohne die Lösung vorwegzunehmen. Nutze anschauliche Beispiele, Eselsbrücken und Wiederholungen, damit sich das Kind den Stoff wirklich einprägen kann statt ihn nur abzuschreiben.'
-          : undefined,
-        activeTopic: activeTopic,
-        topicResolved: topicResolved,
-        conversationInstruction: conversationInstruction,
-        voiceStyle: (currentMood && MOOD_VOICE_PROFILES[currentMood]) ? MOOD_VOICE_PROFILES[currentMood].style : null,
-        moodInstruction: (currentMood === 'sad' || currentMood === 'angry' || currentMood === 'scared')
-          ? 'Das Kind fühlt sich gerade ' + currentMood + '. Nimm das Gefühl zuerst ernst und tröste einfühlsam. Versuche danach behutsam, das Kind aufzumuntern, aufzubauen und zu etwas Schönem oder Spaßigem zu animieren (z.B. ein Spiel, ein Lied oder eine lustige Geschichte vorschlagen). Bleib dabei geduldig, warm und nie belehrend.'
-          : undefined
-        // Hinweis fürs Backend: "voiceStyle" beschreibt, wie sich Lios Stimme gerade anhören soll
-        // (Tonhöhe/Tempo passend zum Emoji, das das Kind gewählt hat) — falls die TTS-Engine
-        // das unterstützt (z.B. SSML/Style-Parameter), bitte entsprechend anwenden.
-      }),
+    const res = await apiFetch('/api/chat', {
+      messages,
+      mode: currentMode,
+      mood: currentMood || undefined,
+      age: currentAge || undefined,
+      emotion: userEmotion !== 'normal' ? userEmotion : undefined,
+      subject: currentMode === 'homework' ? currentSubject || undefined : undefined,
+      childName,
+      topic: (!topicResolved && activeTopic) ? activeTopic : undefined,
     });
-    
-    const text = await res.text();
-    let data;
-    try { 
-      data = JSON.parse(text); 
-    }
-    catch (e) { 
-      throw new Error('Server-Antwort ist kein gültiges JSON: ' + text.substring(0, 100)); 
-    }
-    
-    if (!res.ok) {
-      const errorMsg = data.error || data.message || 'Server-Fehler ' + res.status;
-      throw new Error(errorMsg);
-    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Server-Fehler');
 
     const reply = data.reply || 'Hmm, mir fällt gerade nichts ein!';
-    console.log('[sendMessage] Lios Antwort:', reply);
-    
-    if (typeof validateGenderNeutralLanguage === 'function') {
-      validateGenderNeutralLanguage(reply);
-    }
-    
-    messages.push({ role: 'assistant', content: reply });
-    setBubble(reply);
-    lastLioText = reply;
-    setHint('Drück das Mikro und sprich!');
-    
-    await speakJorin(reply);
-    
-    // Konfetti-Regen auslösen!
-    triggerConfetti();
+    const flags = data.flags || {};
 
-    // Sicherheitsnetz: Hilfe-Panel mit echten Ansprechpartnern anzeigen,
-    // unabhängig davon, wie die KI inhaltlich geantwortet hat
-    if (bullyingSignal) {
-      setTimeout(() => openHelpPanel(), 900);
-    } else if (currentMode === 'homework') {
-      renderQuickReplies(HOMEWORK_FOLLOWUPS);
+    validateGenderNeutralLanguage(reply);
+
+    messages.push({ role: 'assistant', content: reply });
+    lastSpeech = data.speech || null;
+    lastLioText = reply;
+
+    setBubble(reply);
+    setHint('Tipp das Mikro und sprich!');
+
+    if (lastSpeech) await speakSigned(lastSpeech);
+    else speakLocal(reply);
+
+    /* Sicherheitsmeldungen des Servers auswerten */
+    if (flags.crisis || flags.blocked) {
+      logParentNotice(flags.crisis || 'inhalt-blockiert');
+      if (flags.helpline || flags.emergency) setTimeout(openHelpPanel, 900);
+      return;                       // hier ganz sicher kein Konfetti
     }
+
+    // Der Server hat nichts gemeldet, der Client aber schon — dann trotzdem helfen
+    if (bullyingSignal) { setTimeout(openHelpPanel, 900); return; }
+
+    maybeCelebrate(userText);
+
+    if (currentMode === 'homework') renderQuickReplies(HOMEWORK_FOLLOWUPS, 'followup');
 
   } catch (err) {
-    console.error('[sendMessage] Fehler abgefangen:', err.message);
-    const errorDisplay = 'Hoppla! ' + (err.message || 'Etwas ist schiefgelaufen.');
-    setBubble(errorDisplay);
-    setHint('Probier es nochmal!');
-    if (messages.length > 0) messages.pop();
-    setLioEmotion('normal');
+    console.error('[sendMessage]', err.message);
+    // Statt einer nackten Fehlermeldung eine Antwort, die zum Gefühl passt
+    const fallback = generateLioGreeting(userEmotion);
+    setBubble(fallback);
+    lastLioText = fallback;
+    speakLocal(fallback);
+    setHint('Nochmal versuchen?');
+    messages.pop();
+
+    // Das Sicherheitsnetz muss auch ohne Server funktionieren
+    if (bullyingSignal) setTimeout(openHelpPanel, 900);
   } finally {
-    document.getElementById('micBtn').disabled = false;
+    $('micBtn').disabled = false;
   }
 }
 
-// ════════════════════════════════════════
-// KARAOKE
-// ════════════════════════════════════════
+/* Konfetti gab es vorher nach JEDER Antwort — auch nachdem ein Kind
+   „ich bin traurig" geschrieben hatte. Jetzt nur noch, wenn es passt. */
+function maybeCelebrate(userText) {
+  if (['sad','angry','scared','tired'].includes(currentMood)) return;
+  const success = /verstanden|kapiert|alles klar|geschafft|richtig/i.test(userText);
+  const playful = ['jokes','guess','iSpy','wouldYou'].includes(currentMode);
+  if (success || (playful && Math.random() < 0.35)) triggerConfetti();
+}
+
+function triggerConfetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#4FE3C1', '#B8F24A', '#38D9F0', '#9D8BFF', '#FF7A8A'];
+  for (let i = 0; i < 34; i++) {
+    const c = document.createElement('div');
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    c.style.cssText = 'position:fixed;top:-12px;width:11px;height:11px;border-radius:50%;z-index:9999;' +
+                      'pointer-events:none;left:' + (Math.random() * 100) + 'vw;background:' + color +
+                      ';box-shadow:0 0 12px ' + color;
+    document.body.appendChild(c);
+    c.animate(
+      [ { transform:'translate3d(0,0,0) rotate(0deg)', opacity:1 },
+        { transform:'translate3d(' + (Math.random()*120-60) + 'px,100vh,0) rotate(' + (Math.random()*360) + 'deg)', opacity:0 } ],
+      { duration: 2000 + Math.random()*1500, easing:'ease-out' }
+    );
+    setTimeout(() => c.remove(), 3800);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MENÜ
+══════════════════════════════════════════════════════════ */
+function openMenu()  { $('menuDrawer').classList.add('show');    $('menuOverlay').classList.add('show'); }
+function closeMenu() { $('menuDrawer').classList.remove('show'); $('menuOverlay').classList.remove('show'); }
+$('btnMenu').addEventListener('click', openMenu);
+$('menuOverlay').addEventListener('click', closeMenu);
+$('btnResetChat').addEventListener('click', resetChat);
+$('btnChangeAge').addEventListener('click', goToAgeSelect);
+
+/* ══════════════════════════════════════════════════════════
+   KARAOKE
+══════════════════════════════════════════════════════════ */
+function goToKaraoke() {
+  if (parentLocks.karaoke) { setBubble('🔒 Karaoke ist gesperrt.'); return; }
+  closeMenu();
+  stopSpeaking();
+  showScreen('karaoke');
+  renderSongList();
+}
+function backToMain() {
+  stopKaraoke();
+  showScreen('main');
+}
+$('btnKaraokeBack').addEventListener('click', backToMain);
+$('stopSongBtn').addEventListener('click', stopKaraoke);
+
 function renderSongList() {
-  const list = document.getElementById('songList');
-  if(!list) return;
+  const list = $('songList');
   list.innerHTML = '';
   const songs = ALL_SONGS.filter(s => !currentAge || s.ages.includes(currentAge));
-  songs.forEach((song) => {
+  songs.forEach(song => {
     const btn = document.createElement('button');
     btn.className = 'song-btn';
-    btn.innerHTML = '<span class="song-icon">' + song.icon + '</span><span>' + song.title + '</span>';
-    btn.onclick = () => playSong(song);
+    btn.innerHTML = '<span class="song-icon"></span><span class="song-title"></span>';
+    btn.querySelector('.song-icon').textContent = song.icon;
+    btn.querySelector('.song-title').textContent = song.title;
+    btn.addEventListener('click', () => playSong(song));
     list.appendChild(btn);
   });
 }
 
 function playSong(song) {
-  // 🚀 Klicksperre während Lio spricht
-  if (isLioSpeaking) return;
-
-  if (!song || !synth) return;
+  if (!('speechSynthesis' in window) || !song) return;
   isKaraoke = true;
-  document.getElementById('stopSongBtn').style.display = 'inline-flex';
-  document.getElementById('songList').style.opacity = '0.5';
-  let lineIdx = 0;
-  function speakNext() {
-    if (!isKaraoke || lineIdx >= song.lyrics.length) { stopKaraoke(); return; }
-    const utter = new SpeechSynthesisUtterance(song.lyrics[lineIdx]);
-    if (selectedVoice) utter.voice = selectedVoice;
-    utter.lang = 'de-DE';
-    utter.rate = 0.9;
-    utter.pitch = 1.0;
-    utter.onend = () => { lineIdx++; setTimeout(speakNext, 400); };
-    utter.onerror = () => stopKaraoke();
-    synth.speak(utter);
-  }
-  synth.cancel();
-  setTimeout(speakNext, 200);
+  $('stopSongBtn').style.display = 'inline-flex';
+  $('songList').style.opacity = '0.5';
+
+  let i = 0;
+  const next = () => {
+    if (!isKaraoke || i >= song.lyrics.length) { stopKaraoke(); return; }
+    const u = new SpeechSynthesisUtterance(song.lyrics[i]);
+    if (selectedVoice) u.voice = selectedVoice;
+    u.lang = 'de-DE'; u.rate = 0.9; u.pitch = 1.05;
+    u.onend = () => { i++; setTimeout(next, 400); };
+    u.onerror = stopKaraoke;
+    window.speechSynthesis.speak(u);
+  };
+  window.speechSynthesis.cancel();
+  setTimeout(next, 200);
 }
 
-// ════════════════════════════════════════
-// STOP KARAOKE
-// ════════════════════════════════════════
 function stopKaraoke() {
   isKaraoke = false;
-  if (synth) synth.cancel();
-  document.getElementById('stopSongBtn').style.display = 'none';
-  if(document.getElementById('songList')) {
-    document.getElementById('songList').style.opacity = '1';
-  }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  $('stopSongBtn').style.display = 'none';
+  const list = $('songList');
+  if (list) list.style.opacity = '1';
 }
 
-// ════════════════════════════════════════
-// PARENT PIN & LOCKS (Lio ausblenden während PIN/Settings)
-// ════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
+   HILFE-PANEL
+══════════════════════════════════════════════════════════ */
+function openHelpPanel()  { $('panelHelp').classList.add('show'); }
+function closeHelpPanel() { $('panelHelp').classList.remove('show'); }
+$('btnHelp').addEventListener('click', openHelpPanel);
+$('btnCloseHelp').addEventListener('click', closeHelpPanel);
+
+/* ══════════════════════════════════════════════════════════
+   ELTERN-BEREICH
+══════════════════════════════════════════════════════════ */
 function openSettings() {
-  document.getElementById('panelPin').classList.add('show');
-  document.getElementById('pinInput').value = '';
-  setTimeout(() => document.getElementById('pinInput').focus(), 100);
-  
-  const robot = document.getElementById('robot');
-  if (robot) robot.style.display = 'none';
+  stopSpeaking();
+  $('panelPin').classList.add('show');
+  $('pinInput').value = '';
+  setTimeout(() => $('pinInput').focus(), 100);
 }
-function closePinPanel() { 
-  document.getElementById('panelPin').classList.remove('show'); 
-  
-  const robot = document.getElementById('robot');
-  if (robot) {
-    const mainActive = document.getElementById('screen-main').classList.contains('active');
-    const ageActive = document.getElementById('screen-age').classList.contains('active');
-    if (mainActive || ageActive) {
-      robot.style.display = '';
-    }
+function closePinPanel() { $('panelPin').classList.remove('show'); }
+
+$('btnParent').addEventListener('click', openSettings);
+$('btnClosePin').addEventListener('click', closePinPanel);
+$('btnCheckPin').addEventListener('click', checkPin);
+$('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPin(); });
+
+async function checkPin() {
+  const stored = localStorage.getItem('lio_pin');
+  if (!stored) { alert('Es ist noch keine PIN vergeben. Bitte die App neu einrichten.'); return; }
+  const entered = await hashPin($('pinInput').value);
+  if (entered === stored) {
+    closePinPanel();
+    openSettingsPanel();
+  } else {
+    alert('Falsche PIN.');
+    $('pinInput').value = '';
   }
-}
-function checkPin() {
-  if (!parentPin) {
-    const newPin = prompt('Für diesen Eltern-Bereich ist noch keine PIN vergeben. Bitte lege jetzt eine PIN (4-6 Ziffern) fest:');
-    if (newPin && /^\d{4,6}$/.test(newPin.trim())) {
-      parentPin = newPin.trim();
-      localStorage.setItem('Lio_pin', parentPin);
-      alert('✓ PIN gespeichert. Bitte gib sie jetzt zur Bestätigung ein.');
-    }
-    return;
-  }
-  const entered = document.getElementById('pinInput').value;
-  if (entered === parentPin) { closePinPanel(); openSettingsPanel(); }
-  else { alert('❌ Falsche PIN.'); document.getElementById('pinInput').value = ''; }
-}
-if(document.getElementById('pinInput')) {
-  document.getElementById('pinInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') checkPin();
-  });
 }
 
 function openSettingsPanel() {
+  loadVoices();
   renderLockToggles();
   renderParentNotices();
-  document.getElementById('panelSettings').classList.add('show');
-  
-  const robot = document.getElementById('robot');
-  if (robot) robot.style.display = 'none';
-}
-
-function renderParentNotices() {
-  const container = document.getElementById('parentNotices');
-  if (!container) return;
-  let notices = [];
-  try { notices = JSON.parse(localStorage.getItem('Lio_notices') || '[]'); } catch (e) {}
-  if (notices.length === 0) {
-    container.innerHTML = '<span style="color:#888;">Keine besonderen Hinweise.</span>';
-    return;
-  }
-  const labels = { 'mobbing-hinweis': '⚠️ Ein Gespräch deutete auf Mobbing/Ausgrenzung hin' };
-  container.innerHTML = notices.slice().reverse().map(n => {
-    const d = new Date(n.date);
-    const dateStr = d.toLocaleDateString('de-DE') + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    return '<div style="padding:6px 0; border-bottom:1px solid #eee;">' + (labels[n.category] || n.category) + '<br><span style="color:#888;">' + dateStr + '</span></div>';
-  }).join('') + '<button class="cancel" style="margin-top:8px;" onclick="clearParentNotices()">Hinweise löschen</button>';
-}
-
-function clearParentNotices() {
-  localStorage.removeItem('Lio_notices');
-  renderParentNotices();
+  $('rateSlider').value = speechRate;
+  $('rateVal').textContent = speechRate.toFixed(2);
+  $('pitchSlider').value = speechPitch;
+  $('pitchVal').textContent = speechPitch.toFixed(2);
+  $('panelSettings').classList.add('show');
 }
 
 function closeSettings() {
-  document.getElementById('panelSettings').classList.remove('show');
+  $('panelSettings').classList.remove('show');
   renderLessonCards();
-  
-  const robot = document.getElementById('robot');
-  if (robot) {
-    const mainActive = document.getElementById('screen-main').classList.contains('active');
-    const ageActive = document.getElementById('screen-age').classList.contains('active');
-    if (mainActive || ageActive) {
-      robot.style.display = '';
-    }
-  }
+  renderMenuModes();
+}
+$('btnCloseSettings').addEventListener('click', closeSettings);
+
+$('voiceSel').addEventListener('change', onVoiceChange);
+$('rateSlider').addEventListener('input', onRateChange);
+$('pitchSlider').addEventListener('input', onPitchChange);
+$('btnTestVoice').addEventListener('click', testVoice);
+
+function toggleLock(mode, value) {
+  parentLocks[mode] = value;
+  localStorage.setItem('lio_locks', JSON.stringify(parentLocks));
 }
 
 function renderLockToggles() {
-  const container = document.getElementById('lockToggles');
-  if(!container) return;
-  container.innerHTML = '';
-  const allModes = { ...MODES, karaoke: { icon: '🎤', title: 'Karaoke' } };
-  Object.entries(allModes).forEach(([key, m]) => {
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex; align-items:center; gap:10px; padding:5px 0;';
-    const checked = parentLocks[key] ? 'checked' : '';
-    div.innerHTML = '<input type="checkbox" id="lock-' + key + '" ' + checked + ' onchange="toggleLock(\'' + key + '\')" style="width:18px; height:18px; cursor:pointer;">' +
-                    '<label for="lock-' + key + '" style="margin:0; font-weight:normal; cursor:pointer;">' +
-                    m.icon + ' ' + m.title + ' sperren</label>';
-    container.appendChild(div);
+  const box = $('lockToggles');
+  box.innerHTML = '';
+  const all = Object.entries(MODES).concat([['karaoke', { icon:'🎤', title:'Karaoke' }]]);
+  all.forEach(([key, m]) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:6px 0;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.id = 'lock-' + key;
+    cb.checked = !!parentLocks[key];
+    cb.style.cssText = 'width:20px; height:20px; cursor:pointer;';
+    cb.addEventListener('change', () => toggleLock(key, cb.checked));
+    const label = document.createElement('label');
+    label.setAttribute('for', 'lock-' + key);
+    label.style.cssText = 'margin:0; font-weight:normal; cursor:pointer;';
+    label.textContent = m.icon + ' ' + m.title + ' sperren';
+    row.append(cb, label);
+    box.appendChild(row);
   });
 }
 
-function toggleLock(mode) {
-  parentLocks[mode] = !parentLocks[mode];
-  localStorage.setItem('Lio_locks', JSON.stringify(parentLocks));
+function clearParentNotices() {
+  localStorage.removeItem('lio_notices');
+  renderParentNotices();
 }
 
-function changePin() {
-  const newPin = document.getElementById('newPinInput').value;
-  if (!/^\d{4,6}$/.test(newPin)) { alert('PIN muss 4-6 Ziffern haben.'); return; }
-  parentPin = newPin;
-  localStorage.setItem('Lio_pin', newPin);
-  document.getElementById('newPinInput').value = '';
-  alert('✓ PIN wurde geändert.');
+function renderParentNotices() {
+  const box = $('parentNotices');
+  let notices = [];
+  try { notices = JSON.parse(localStorage.getItem('lio_notices') || '[]'); } catch (e) {}
+  box.innerHTML = '';
+
+  if (!notices.length) {
+    box.textContent = 'Keine besonderen Hinweise.';
+    box.style.color = 'rgba(234,251,245,0.38)';
+    return;
+  }
+  box.style.color = '';
+
+  const labels = {
+    self_harm: '⚠️ Ein Gespräch deutete auf große Traurigkeit oder Hoffnungslosigkeit hin',
+    abuse:     '⚠️ Ein Gespräch deutete darauf hin, dass jemand dem Kind wehtut',
+    bullying:  '⚠️ Ein Gespräch deutete auf Mobbing oder Ausgrenzung hin',
+    emergency: '⚠️ Das Kind hat von einer Notsituation gesprochen',
+    'inhalt-blockiert': 'ℹ️ Ein Inhalt wurde blockiert',
+  };
+
+  notices.slice().reverse().forEach(n => {
+    const d = new Date(n.date);
+    const div = document.createElement('div');
+    div.className = 'note-row';
+    div.textContent = labels[n.category] || n.category;
+    const time = document.createElement('div');
+    time.className = 'note-time';
+    time.textContent = d.toLocaleDateString('de-DE') + ', ' + d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+    div.appendChild(time);
+    box.appendChild(div);
+  });
+
+  const clear = document.createElement('button');
+  clear.className = 'cancel';
+  clear.textContent = 'Hinweise löschen';
+  clear.addEventListener('click', clearParentNotices);
+  box.appendChild(clear);
 }
 
-// ════════════════════════════════════════
-// INIT (Angepasst für DSGVO / Parent Gate)
-// ════════════════════════════════════════
-const savedAge = localStorage.getItem('Lio_age');
-const savedName = localStorage.getItem('Lio_name');
+async function changePin() {
+  const pin = $('newPinInput').value.trim();
+  if (!/^\d{4,6}$/.test(pin)) { alert('Die PIN muss 4–6 Ziffern haben.'); return; }
+  localStorage.setItem('lio_pin', await hashPin(pin));
+  $('newPinInput').value = '';
+  alert('PIN geändert.');
+}
+$('btnChangePin').addEventListener('click', changePin);
 
-// Die neue Start-Logik:
-if (!savedName) {
-  showScreen('parent-gate');
-} else if (savedAge && AGE_GROUPS[savedAge]) {
-  currentAge = savedAge;
-  speechRate = AGE_GROUPS[savedAge].rate;
-  speechPitch = AGE_GROUPS[savedAge].pitch;
-  showScreen('main');
-  initMain();
-} else {
-  showScreen('age');
+$('btnWipe').addEventListener('click', () => {
+  if (!confirm('Wirklich alle Daten von diesem Gerät löschen?')) return;
+  ['lio_name','lio_age','lio_pin','lio_locks','lio_notices','lio_consent','lio_device','lio_voice_idx','lio_gate_fails','lio_gate_lock']
+    .forEach(k => localStorage.removeItem(k));
+  location.reload();
+});
+
+/* ══════════════════════════════════════════════════════════
+   START — genau EIN Einstiegspunkt.
+   Vorher gab es zwei konkurrierende Init-Blöcke: einer schickte
+   gespeicherte Nutzer auf den Hauptbildschirm, der load-Handler
+   danach wieder zurück zur Altersauswahl.
+══════════════════════════════════════════════════════════ */
+function buildClouds() {
+  const box = $('clouds');
+  for (let i = 0; i < 5; i++) {
+    const c = document.createElement('div');
+    c.className = 'cloud';
+    const size = 80 + Math.random() * 140;
+    c.style.cssText = 'width:' + size + 'px;height:' + (size * 0.55) + 'px;top:' +
+                      (Math.random() * 70) + '%;animation-duration:' + (35 + Math.random() * 35) +
+                      's;animation-delay:-' + (Math.random() * 30) + 's';
+    box.appendChild(c);
+  }
 }
 
-// ════════════════════════════════════════
-// PWA — Service Worker Registration
-// ════════════════════════════════════════
+function boot() {
+  newMathChallenge();
+  updateGateLockUI();
+  buildClouds();
+  renderMenuModes();
+  loadVoices();
+
+  const savedAge  = localStorage.getItem('lio_age');
+  const savedName = localStorage.getItem('lio_name');
+
+  if (!savedName || !localStorage.getItem('lio_consent')) {
+    showScreen('parent-gate');
+  } else if (savedAge && AGE_GROUPS[savedAge]) {
+    childName = savedName;
+    currentAge = savedAge;
+    speechRate = AGE_GROUPS[savedAge].rate;
+    speechPitch = AGE_GROUPS[savedAge].pitch;
+    showScreen('main');
+    initMain();
+  } else {
+    showScreen('age');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+
+/* Service Worker nur registrieren, wenn es ihn wirklich gibt. */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('Lio SW registered'))
-      .catch(err => console.log('SW error:', err));
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
 
-// ════════════════════════════════════════
-// GLOBALER ERROR HANDLER - Fehler abfangen
-// ════════════════════════════════════════
-window.onerror = function(msg, url, lineNo, columnNo, error) {
-  console.error('[Global Error]', msg);
-  return false; 
+/* ══════════════════════════════════════════════════════════
+   GLOBALE FEHLERBEHANDLUNG
+══════════════════════════════════════════════════════════ */
+window.onerror = function (msg, url, line) {
+  console.error('[Fehler]', msg, 'Zeile', line);
+  return false;
 };
+window.addEventListener('unhandledrejection', (e) => console.warn('[promise]', e.reason));
 
-window.addEventListener('unhandledrejection', event => {
-  console.error('[Unhandled Promise]', event.reason);
-});
 </script>
+</body>
+</html>
