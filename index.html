@@ -1988,9 +1988,8 @@ async function sendMessage(userText) {
 
     setBubble(reply);
     setHint('Tipp das Mikro und sprich!');
-
-    await speakSigned({ text: reply });
-    else speakLocal(reply);
+// ✅ RICHTIG: Nur noch dieser eine Befehl
+await speakSigned({ text: reply });
 
     /* Sicherheitsmeldungen des Servers auswerten */
     if (flags.crisis || flags.blocked) {
