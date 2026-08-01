@@ -1989,7 +1989,7 @@ async function sendMessage(userText) {
     setBubble(reply);
     setHint('Tipp das Mikro und sprich!');
 
-    if (lastSpeech) await speakSigned(lastSpeech);
+    await speakSigned({ text: reply });
     else speakLocal(reply);
 
     /* Sicherheitsmeldungen des Servers auswerten */
