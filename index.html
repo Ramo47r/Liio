@@ -1336,9 +1336,6 @@ function goToAgeSelect() {
 /* ══════════════════════════════════════════════════════════
    HAUPTBILDSCHIRM
 ══════════════════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════════════════
-   HAUPTBILDSCHIRM
-══════════════════════════════════════════════════════════ */
 function initMain(customText) {
   messages = [];
   activeTopic = null;
@@ -1349,7 +1346,7 @@ function initMain(customText) {
   const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
   setBubble(text);
   lastLioText = text;
-  speakSigned({ text: text }); // ✅ KORREKTUR 1: Begrüßung mit ElevenLabs-Stimme
+  speakLocal(text);            // Begrüßung mit Gerätestimme — spart TTS-Kosten
 }
 
 function resetChat() {
@@ -1417,7 +1414,7 @@ function switchMode(mode) {
   const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
   setBubble(welcome);
   lastLioText = welcome;
-  speakSigned({ text: welcome }); // ✅ KORREKTUR 2: Modus-Wechsel mit ElevenLabs-Stimme
+  speakLocal(welcome);
 }
 
 /* ── Fach-Auswahl ── */
@@ -1459,7 +1456,7 @@ function selectSubject(subject) {
   const welcome = welcomes[subject.key] || welcomes.sonstiges;
   setBubble(welcome);
   lastLioText = welcome;
-  speakSigned({ text: welcome }); // ✅ KORREKTUR 3: Fach-Auswahl mit ElevenLabs-Stimme
+  speakLocal(welcome);
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
 }
 
@@ -1522,7 +1519,7 @@ function reactToMood(mood) {
     excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
   };
   const text = reactions[mood];
-  if (text) { setBubble(text); lastLioText = text; speakSigned({ text: text }); } // ✅ KORREKTUR 4: Gefühle mit ElevenLabs-Stimme
+  if (text) { setBubble(text); lastLioText = text; speakLocal(text); }
 
   if (mood === 'excited' || mood === 'happy') setLioEmotion('excited');
   else if (mood === 'sad' || mood === 'scared') setLioEmotion('sad');
@@ -1718,31 +1715,15 @@ if ('speechSynthesis' in window) {
 }
 
 /* ══════════════════════════════════════════════════════════
- /* ══════════════════════════════════════════════════════════
-   SPRACHAUSGABE (Mit Anti-Echo-Sperre / Speech-ID)
+   SPRACHAUSGABE
+   /api/speak akzeptiert nur noch signierte Texte aus /api/chat.
+   Fällt der Dienst aus (503), übernimmt die Gerätestimme.
 ══════════════════════════════════════════════════════════ */
-let currentAudio = null;
-let localQueue = [];
-let currentSpeechId = 0; // 🛡️ Verhindert jedes Echo & Überlappen!
-
 function stopSpeaking() {
-  currentSpeechId++; // Entwertet alle laufenden oder verspäteten Ladevorgänge
-  
-  if (currentAudio) {
-    try {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-    } catch (e) {}
-    currentAudio = null;
-  }
-  
-  if ('speechSynthesis' in window) {
-    try { window.speechSynthesis.cancel(); } catch (e) {}
-  }
-  
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   isLioSpeaking = false;
   localQueue = [];
-  
   const robot = $('robot');
   if (robot) robot.classList.remove('talking');
   const micBtn = $('micBtn');
@@ -1753,13 +1734,8 @@ $('robot').addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); 
 
 async function speakSigned(speech) {
   if (!speech || !speech.text) return;
-  
-  // 1. Alles Vorherige sofort hart stoppen
   stopSpeaking();
-  
-  // 2. Diesem Sprachauftrag eine eindeutige ID geben
-  const thisSpeechId = currentSpeechId;
-  
+
   isLioSpeaking = true;
   const robot = $('robot');
   const micBtn = $('micBtn');
@@ -1769,60 +1745,46 @@ async function speakSigned(speech) {
   try {
     const res = await apiFetch('/api/speak', speech);
 
-    // Wurde Lio in den 1-2 Sekunden Wartezeit schon wieder gestoppt? -> Abbrechen!
-    if (thisSpeechId !== currentSpeechId) return;
-
     if (!res.ok) {
       let data = {};
       try { data = await res.json(); } catch (e) {}
-      if (res.status === 503 || data.fallback === 'device_tts') {
-        speakLocal(speech.text);
-        return;
-      }
-      throw new Error('ElevenLabs API Fehler: ' + res.status);
+      if (res.status === 503 || data.fallback === 'device_tts') { speakLocal(speech.text); return; }
+      throw new Error('speak failed');
     }
 
     const url = URL.createObjectURL(await res.blob());
-    
-    // Erneuter Sicherheits-Check vor dem Abspielen
-    if (thisSpeechId !== currentSpeechId) {
-      URL.revokeObjectURL(url);
-      return;
-    }
-
     const audio = new Audio(url);
+
+    // Tempo leicht an die Stimmung anpassen. Bewusst gedeckelt —
+    // starke Änderungen lassen die KI-Stimme blechern klingen.
     const profile = getMoodVoiceProfile();
     audio.playbackRate = profile ? Math.min(1.15, Math.max(0.9, profile.rate)) : 1.0;
 
     currentAudio = audio;
 
     const done = () => {
-      if (thisSpeechId === currentSpeechId) {
-        isLioSpeaking = false;
-        if (robot) robot.classList.remove('talking');
-        if (micBtn) micBtn.style.opacity = '1';
-      }
+      isLioSpeaking = false;
+      if (robot) robot.classList.remove('talking');
+      if (micBtn) micBtn.style.opacity = '1';
       URL.revokeObjectURL(url);
       currentAudio = null;
     };
-    
     audio.onended = done;
     audio.onerror = done;
-    
     await audio.play();
   } catch (err) {
-    console.warn('[speakSigned Fehler - Wechsle zu Gerätestimme]:', err.message);
-    if (thisSpeechId === currentSpeechId) {
-      speakLocal(speech.text);
-    }
+    console.warn('[speak]', err.message);
+    speakLocal(speech.text);
   }
 }
 
-/* Gerätestimme — greift nur noch ein, wenn ElevenLabs wirklich offline ist */
+/* Gerätestimme — kostenlos, offline, und unser Sicherheitsnetz.
+   Spricht satzweise über parseForSpeech, damit lange Geschichten
+   nicht mittendrin abbrechen. */
+let localQueue = [];
+
 function speakLocal(text) {
   if (!('speechSynthesis' in window) || !text) { isLioSpeaking = false; return; }
-  
-  const thisSpeechId = currentSpeechId;
   window.speechSynthesis.cancel();
 
   const clean = stripEmoji(text);
@@ -1839,20 +1801,15 @@ function speakLocal(text) {
   if (micBtn) micBtn.style.opacity = '0.5';
 
   const finish = () => {
-    if (thisSpeechId === currentSpeechId) {
-      isLioSpeaking = false;
-      if (robot) robot.classList.remove('talking');
-      if (micBtn) micBtn.style.opacity = '1';
-    }
+    isLioSpeaking = false;
+    if (robot) robot.classList.remove('talking');
+    if (micBtn) micBtn.style.opacity = '1';
   };
 
   localQueue = parseForSpeech(clean);
 
   const speakNext = () => {
-    if (!isLioSpeaking || localQueue.length === 0 || thisSpeechId !== currentSpeechId) {
-      finish();
-      return;
-    }
+    if (!isLioSpeaking || localQueue.length === 0) { finish(); return; }
     const chunk = localQueue.shift();
     const u = new SpeechSynthesisUtterance(chunk);
     if (selectedVoice) u.voice = selectedVoice;
@@ -1864,13 +1821,12 @@ function speakLocal(text) {
     u.onerror = finish;
     window.speechSynthesis.speak(u);
   };
-  
   speakNext();
 }
 
 function repeatLast() {
   if (lastSpeech) speakSigned(lastSpeech);
-  else if (lastLioText) speakSigned({ text: lastLioText });
+  else if (lastLioText) speakLocal(lastLioText);
 }
 $('btnRepeat').addEventListener('click', repeatLast);
 
@@ -2033,7 +1989,8 @@ async function sendMessage(userText) {
     setBubble(reply);
     setHint('Tipp das Mikro und sprich!');
 
-    await speakSigned({ text: reply });
+    if (lastSpeech) await speakSigned(lastSpeech);
+    else speakLocal(reply);
 
     /* Sicherheitsmeldungen des Servers auswerten */
     if (flags.crisis || flags.blocked) {
