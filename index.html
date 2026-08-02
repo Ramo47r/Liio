@@ -1022,7 +1022,6 @@ let lastLioText = '';
 let isLioSpeaking = false;
 let isListening = false;
 let isKaraoke = false;
-let currentAudio = null;
 let childName = localStorage.getItem('lio_name') || '';
 
 /* Stimm-Einstellungen (Gerätestimme) */
@@ -1159,8 +1158,10 @@ let mathSolution = 0;
 let gateFails = parseInt(localStorage.getItem('lio_gate_fails') || '0', 10);
 
 function newMathChallenge() {
-  const a = 12 + Math.floor(Math.random() * 78);  // 12–89
-  const b = 12 + Math.floor(Math.random() * 78);  // 12–89
+  // Zahlen von 5 bis 10. Für Erwachsene trivial, für kleine Kinder
+  // noch nicht sicher im Kopf — zusammen mit dem Halten-Schritt reicht das.
+  const a = 5 + Math.floor(Math.random() * 6);   // 5–10
+  const b = 5 + Math.floor(Math.random() * 6);   // 5–10
   mathSolution = a * b;
   $('mathQuestion').textContent = a + ' × ' + b + ' = ?';
 }
@@ -1346,7 +1347,7 @@ function initMain(customText) {
   const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
   setBubble(text);
   lastLioText = text;
-  speakLocal(text);            // Begrüßung mit Gerätestimme — spart TTS-Kosten
+  speak(text);
 }
 
 function resetChat() {
@@ -1397,7 +1398,12 @@ function renderMenuModes() {
 
 function switchMode(mode) {
   if (isLioSpeaking) stopSpeaking();
-  if (parentLocks[mode]) { setBubble('🔒 Das haben deine Eltern gesperrt.'); return; }
+  if (parentLocks[mode]) {
+    const locked = 'Das haben deine Eltern gesperrt.';
+    setBubble('🔒 ' + locked);
+    speak(locked);
+    return;
+  }
 
   closeMenu();
   clearQuickReplies();
@@ -1414,7 +1420,7 @@ function switchMode(mode) {
   const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
   setBubble(welcome);
   lastLioText = welcome;
-  speakLocal(welcome);
+  speak(welcome);
 }
 
 /* ── Fach-Auswahl ── */
@@ -1456,7 +1462,7 @@ function selectSubject(subject) {
   const welcome = welcomes[subject.key] || welcomes.sonstiges;
   setBubble(welcome);
   lastLioText = welcome;
-  speakLocal(welcome);
+  speak(welcome);
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
 }
 
@@ -1519,7 +1525,7 @@ function reactToMood(mood) {
     excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
   };
   const text = reactions[mood];
-  if (text) { setBubble(text); lastLioText = text; speakLocal(text); }
+  if (text) { setBubble(text); lastLioText = text; speak(text); }
 
   if (mood === 'excited' || mood === 'happy') setLioEmotion('excited');
   else if (mood === 'sad' || mood === 'scared') setLioEmotion('sad');
@@ -1704,7 +1710,7 @@ function onPitchChange() {
   speechPitch = parseFloat($('pitchSlider').value);
   $('pitchVal').textContent = speechPitch.toFixed(2);
 }
-function testVoice() { speakLocal('Hallo! Ich bin Lio, dein Roboter-Freund!'); }
+function testVoice() { speak('Hallo! Ich bin Lio, dein Roboter-Freund!'); }
 
 if ('speechSynthesis' in window) {
   if (window.speechSynthesis.onvoiceschanged !== undefined) {
@@ -1715,12 +1721,77 @@ if ('speechSynthesis' in window) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   SPRACHAUSGABE
-   /api/speak akzeptiert nur noch signierte Texte aus /api/chat.
-   Fällt der Dienst aus (503), übernimmt die Gerätestimme.
+   SPRACHAUSGABE — ElevenLabs ist die Stimme, nicht die Ausnahme
+
+   Drei Dinge haben vorher dazu geführt, dass doch die Gerätestimme kam:
+
+   1. Browser erlauben Audio erst nach einer Nutzergeste. Die Begrüßung
+      läuft aber direkt nach dem Laden — play() warf eine Ausnahme und
+      der Code fiel sofort zurück. Jetzt wird das Audio bei der ersten
+      Berührung freigeschaltet und wartende Sätze werden nachgeholt.
+   2. Zwei Netzwerkrunden pro Satz (erst Signatur, dann Audio). Auf einem
+      schlafenden Render-Server dauerte das mehrere Sekunden.
+      Jetzt liefert /api/speak-ui das Audio direkt.
+   3. Jedes new Audio() war ein neues Element und musste einzeln
+      freigeschaltet werden. Jetzt gibt es genau einen Player.
+
+   Die Gerätestimme ist nur noch das Sicherheitsnetz: sie kommt, wenn der
+   Server wirklich nicht kann. Lio bleibt dann hörbar statt stumm.
 ══════════════════════════════════════════════════════════ */
+
+/* Genau EIN Audio-Element für die ganze App. Einmal freigeschaltet,
+   bleibt es freigeschaltet — bei jedem neuen Element ginge das von vorn los. */
+const player = new Audio();
+player.preload = 'auto';
+
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
+let audioUnlocked = false;
+let pendingSpeech = null;        // Satz, der vor der Freischaltung kam
+let voiceOutageUntil = 0;        // bei hartem Ausfall kurz nicht erneut versuchen
+
+/* Wird bei der ersten Berührung ausgelöst. Ab dann darf die App Ton abspielen. */
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+
+  try {
+    player.src = SILENT_WAV;
+    const p = player.play();
+    if (p && p.then) p.then(() => player.pause()).catch(() => {});
+  } catch (e) {}
+
+  // Auch die Gerätestimme braucht diese Geste, falls wir sie später brauchen
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.resume(); } catch (e) {}
+  }
+
+  if (pendingSpeech) {
+    const p = pendingSpeech;
+    pendingSpeech = null;
+    speak(p.text, p.signed);
+  }
+}
+['pointerdown', 'touchstart', 'keydown'].forEach(ev => {
+  document.addEventListener(ev, unlockAudio, { once: true, passive: true });
+});
+
+/* Fertige Audios im Speicher behalten. Oberflächentexte wiederholen sich
+   ständig — beim zweiten Mal spielt der Satz ohne jede Wartezeit. */
+const voiceCache = new Map();    // Text -> Blob-URL
+const VOICE_CACHE_MAX = 30;
+
+function cacheVoice(text, url) {
+  if (voiceCache.size >= VOICE_CACHE_MAX) {
+    const oldestKey = voiceCache.keys().next().value;
+    URL.revokeObjectURL(voiceCache.get(oldestKey));
+    voiceCache.delete(oldestKey);
+  }
+  voiceCache.set(text, url);
+}
+
 function stopSpeaking() {
-  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; }
+  try { player.pause(); player.currentTime = 0; } catch (e) {}
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   isLioSpeaking = false;
   localQueue = [];
@@ -1732,84 +1803,131 @@ function stopSpeaking() {
 
 $('robot').addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); });
 
-async function speakSigned(speech) {
-  if (!speech || !speech.text) return;
-  stopSpeaking();
-
+function speakingOn() {
   isLioSpeaking = true;
   const robot = $('robot');
   const micBtn = $('micBtn');
   if (robot) robot.classList.add('talking');
   if (micBtn) micBtn.style.opacity = '0.5';
+}
+function speakingOff() {
+  isLioSpeaking = false;
+  const robot = $('robot');
+  const micBtn = $('micBtn');
+  if (robot) robot.classList.remove('talking');
+  if (micBtn) micBtn.style.opacity = '1';
+}
+
+/* Holt das Audio vom Server. Eine Runde, nicht zwei.
+   signed = {text, exp, sig} aus /api/chat, sonst wird /api/speak-ui benutzt. */
+async function fetchVoice(text, signed) {
+  const cached = voiceCache.get(text);
+  if (cached) return cached;
+
+  const res = signed
+    ? await apiFetch('/api/speak', signed)
+    : await apiFetch('/api/speak-ui', { text });
+
+  if (!res.ok) {
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    if (res.status === 503 || data.fallback === 'device_tts') {
+      voiceOutageUntil = Date.now() + 60000;   // eine Minute Ruhe
+      throw new Error('Stimme gerade nicht verfügbar');
+    }
+    throw new Error('Server antwortet nicht (' + res.status + ')');
+  }
+
+  const url = URL.createObjectURL(await res.blob());
+  cacheVoice(text, url);
+  return url;
+}
+
+function playVoice(url) {
+  return new Promise((resolve) => {
+    const profile = getMoodVoiceProfile();
+    // Tempo nur leicht anpassen — starke Änderungen klingen blechern.
+    player.playbackRate = profile ? Math.min(1.15, Math.max(0.9, profile.rate)) : 1.0;
+    player.src = url;
+
+    let settled = false;
+    const done = (ok) => { if (settled) return; settled = true; resolve(ok); };
+
+    player.onended = () => done(true);
+    player.onerror = () => done(false);
+
+    const p = player.play();
+    if (p && p.catch) p.catch(() => done(false));
+  });
+}
+
+/* ── Der eine Einstiegspunkt für alles, was Lio sagt ──
+   text   = was gesprochen werden soll
+   signed = optionale Signatur aus /api/chat */
+async function speak(text, signed) {
+  if (!text) return;
+  const clean = stripEmoji(text);
+  if (!clean) return;
+
+  lastLioText = text;
+  lastSpeech = signed || null;
+
+  // Vor der ersten Berührung darf noch nichts klingen — Satz merken.
+  // Das Audio holen wir aber schon jetzt, damit es beim ersten Tippen
+  // sofort losgeht statt erst zu laden.
+  if (!audioUnlocked) {
+    pendingSpeech = { text, signed };
+    prefetchVoice(clean, signed);
+    return;
+  }
+
+  stopSpeaking();
+  speakingOn();
+
+  // Nach einem Ausfall kurz gar nicht erst fragen
+  if (Date.now() < voiceOutageUntil) { speakLocal(text); return; }
 
   try {
-    const res = await apiFetch('/api/speak', speech);
-
-    if (!res.ok) {
-      let data = {};
-      try { data = await res.json(); } catch (e) {}
-      if (res.status === 503 || data.fallback === 'device_tts') { speakLocal(speech.text); return; }
-      throw new Error('speak failed');
-    }
-
-    const url = URL.createObjectURL(await res.blob());
-    const audio = new Audio(url);
-
-    // Tempo leicht an die Stimmung anpassen. Bewusst gedeckelt —
-    // starke Änderungen lassen die KI-Stimme blechern klingen.
-    const profile = getMoodVoiceProfile();
-    audio.playbackRate = profile ? Math.min(1.15, Math.max(0.9, profile.rate)) : 1.0;
-
-    currentAudio = audio;
-
-    const done = () => {
-      isLioSpeaking = false;
-      if (robot) robot.classList.remove('talking');
-      if (micBtn) micBtn.style.opacity = '1';
-      URL.revokeObjectURL(url);
-      currentAudio = null;
-    };
-    audio.onended = done;
-    audio.onerror = done;
-    await audio.play();
+    const url = await fetchVoice(clean, signed);
+    const ok = await playVoice(url);
+    if (!ok) throw new Error('Wiedergabe fehlgeschlagen');
+    speakingOff();
   } catch (err) {
-    console.warn('[speak]', err.message);
-    speakLocal(speech.text);
+    console.warn('[speak] Gerätestimme, weil:', err.message);
+    speakLocal(text);
   }
 }
 
-/* Gerätestimme — kostenlos, offline, und unser Sicherheitsnetz.
+/* Lädt Audio im Hintergrund vor, ohne es abzuspielen.
+   Damit ist die Begrüßung sofort da, wenn das Kind den Bildschirm berührt. */
+function prefetchVoice(text, signed) {
+  if (!text) return;
+  const clean = stripEmoji(text);
+  if (!clean || voiceCache.has(clean) || Date.now() < voiceOutageUntil) return;
+  fetchVoice(clean, signed).catch(() => {});
+}
+
+/* ── Gerätestimme: nur noch Sicherheitsnetz ──
    Spricht satzweise über parseForSpeech, damit lange Geschichten
    nicht mittendrin abbrechen. */
 let localQueue = [];
 
 function speakLocal(text) {
-  if (!('speechSynthesis' in window) || !text) { isLioSpeaking = false; return; }
+  if (!('speechSynthesis' in window) || !text) { speakingOff(); return; }
   window.speechSynthesis.cancel();
 
   const clean = stripEmoji(text);
-  if (!clean) { isLioSpeaking = false; return; }
+  if (!clean) { speakingOff(); return; }
 
   const profile = getMoodVoiceProfile();
   const rate  = profile ? profile.rate  : speechRate;
   const pitch = profile ? profile.pitch : speechPitch;
 
-  const robot = $('robot');
-  const micBtn = $('micBtn');
-  isLioSpeaking = true;
-  if (robot) robot.classList.add('talking');
-  if (micBtn) micBtn.style.opacity = '0.5';
-
-  const finish = () => {
-    isLioSpeaking = false;
-    if (robot) robot.classList.remove('talking');
-    if (micBtn) micBtn.style.opacity = '1';
-  };
-
+  speakingOn();
   localQueue = parseForSpeech(clean);
 
   const speakNext = () => {
-    if (!isLioSpeaking || localQueue.length === 0) { finish(); return; }
+    if (!isLioSpeaking || localQueue.length === 0) { speakingOff(); return; }
     const chunk = localQueue.shift();
     const u = new SpeechSynthesisUtterance(chunk);
     if (selectedVoice) u.voice = selectedVoice;
@@ -1818,15 +1936,14 @@ function speakLocal(text) {
     u.pitch = pitch;
     u.volume = 1.0;
     u.onend = speakNext;
-    u.onerror = finish;
+    u.onerror = () => speakingOff();
     window.speechSynthesis.speak(u);
   };
   speakNext();
 }
 
 function repeatLast() {
-  if (lastSpeech) speakSigned(lastSpeech);
-  else if (lastLioText) speakLocal(lastLioText);
+  if (lastLioText) speak(lastLioText, lastSpeech);
 }
 $('btnRepeat').addEventListener('click', repeatLast);
 
@@ -1989,8 +2106,7 @@ async function sendMessage(userText) {
     setBubble(reply);
     setHint('Tipp das Mikro und sprich!');
 
-    if (lastSpeech) await speakSigned(lastSpeech);
-    else speakLocal(reply);
+    await speak(reply, data.speech || null);
 
     /* Sicherheitsmeldungen des Servers auswerten */
     if (flags.crisis || flags.blocked) {
@@ -2011,8 +2127,7 @@ async function sendMessage(userText) {
     // Statt einer nackten Fehlermeldung eine Antwort, die zum Gefühl passt
     const fallback = generateLioGreeting(userEmotion);
     setBubble(fallback);
-    lastLioText = fallback;
-    speakLocal(fallback);
+    speak(fallback);
     setHint('Nochmal versuchen?');
     messages.pop();
 
@@ -2093,24 +2208,22 @@ function renderSongList() {
   });
 }
 
-function playSong(song) {
-  if (!('speechSynthesis' in window) || !song) return;
+async function playSong(song) {
+  if (!song) return;
   isKaraoke = true;
   $('stopSongBtn').style.display = 'inline-flex';
   $('songList').style.opacity = '0.5';
+  stopSpeaking();
 
-  let i = 0;
-  const next = () => {
-    if (!isKaraoke || i >= song.lyrics.length) { stopKaraoke(); return; }
-    const u = new SpeechSynthesisUtterance(song.lyrics[i]);
-    if (selectedVoice) u.voice = selectedVoice;
-    u.lang = 'de-DE'; u.rate = 0.9; u.pitch = 1.05;
-    u.onend = () => { i++; setTimeout(next, 400); };
-    u.onerror = stopKaraoke;
-    window.speechSynthesis.speak(u);
-  };
-  window.speechSynthesis.cancel();
-  setTimeout(next, 200);
+  // Liedzeilen wiederholen sich bei jedem Abspielen — nach dem ersten Mal
+  // liegen sie im Cache und kommen ohne Wartezeit.
+  for (let i = 0; i < song.lyrics.length; i++) {
+    if (!isKaraoke) return;
+    await speak(song.lyrics[i]);
+    if (!isKaraoke) return;
+    await new Promise(r => setTimeout(r, 350));
+  }
+  stopKaraoke();
 }
 
 function stopKaraoke() {
