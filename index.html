@@ -1159,8 +1159,10 @@ let mathSolution = 0;
 let gateFails = parseInt(localStorage.getItem('lio_gate_fails') || '0', 10);
 
 function newMathChallenge() {
-  const a = 12 + Math.floor(Math.random() * 78);  // 12–89
-  const b = 12 + Math.floor(Math.random() * 78);  // 12–89
+  // Zahlen von 5 bis 10. Für Erwachsene trivial, für kleine Kinder
+  // noch nicht sicher im Kopf — zusammen mit dem Halten-Schritt reicht das.
+  const a = 5 + Math.floor(Math.random() * 6);   // 5–10
+  const b = 5 + Math.floor(Math.random() * 6);   // 5–10
   mathSolution = a * b;
   $('mathQuestion').textContent = a + ' × ' + b + ' = ?';
 }
@@ -1346,7 +1348,7 @@ function initMain(customText) {
   const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
   setBubble(text);
   lastLioText = text;
-  speakLocal(text);            // Begrüßung mit Gerätestimme — spart TTS-Kosten
+  speakUI(text);
 }
 
 function resetChat() {
@@ -1397,7 +1399,12 @@ function renderMenuModes() {
 
 function switchMode(mode) {
   if (isLioSpeaking) stopSpeaking();
-  if (parentLocks[mode]) { setBubble('🔒 Das haben deine Eltern gesperrt.'); return; }
+  if (parentLocks[mode]) {
+    const locked = 'Das haben deine Eltern gesperrt.';
+    setBubble('🔒 ' + locked);
+    speakUI(locked);
+    return;
+  }
 
   closeMenu();
   clearQuickReplies();
@@ -1414,7 +1421,7 @@ function switchMode(mode) {
   const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
   setBubble(welcome);
   lastLioText = welcome;
-  speakLocal(welcome);
+  speakUI(welcome);
 }
 
 /* ── Fach-Auswahl ── */
@@ -1456,7 +1463,7 @@ function selectSubject(subject) {
   const welcome = welcomes[subject.key] || welcomes.sonstiges;
   setBubble(welcome);
   lastLioText = welcome;
-  speakLocal(welcome);
+  speakUI(welcome);
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
 }
 
@@ -1519,7 +1526,7 @@ function reactToMood(mood) {
     excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
   };
   const text = reactions[mood];
-  if (text) { setBubble(text); lastLioText = text; speakLocal(text); }
+  if (text) { setBubble(text); lastLioText = text; speakUI(text); }
 
   if (mood === 'excited' || mood === 'happy') setLioEmotion('excited');
   else if (mood === 'sad' || mood === 'scared') setLioEmotion('sad');
@@ -1824,6 +1831,55 @@ function speakLocal(text) {
   speakNext();
 }
 
+/* ══════════════════════════════════════════════════════════
+   SPRACHAUSGABE FÜR OBERFLÄCHENTEXTE
+   Begrüßungen, Modus-Wechsel, Stimmungs-Reaktionen und Fach-Auswahl
+   sollen mit derselben Stimme klingen wie Lios Antworten.
+
+   Diese Texte entstehen im Frontend und haben keine Signatur.
+   /api/speak nimmt aber nur signierte Texte an. Deshalb holen wir
+   uns die Signatur vorher über /api/speak-ui.
+
+   Fällt das aus irgendeinem Grund aus (Server offline, Budget
+   erschöpft, Endpunkt fehlt), spricht die Gerätestimme.
+   Lio bleibt also immer hörbar.
+══════════════════════════════════════════════════════════ */
+const uiSpeechCache = new Map();   // Text -> {text, exp, sig}
+
+async function speakUI(text) {
+  if (!text) return;
+  const clean = stripEmoji(text);
+  if (!clean) return;
+
+  // Signatur wiederverwenden, solange sie noch mind. 10 s gültig ist
+  const cached = uiSpeechCache.get(clean);
+  if (cached && cached.exp * 1000 > Date.now() + 10000) {
+    lastSpeech = cached;
+    lastLioText = text;
+    await speakSigned(cached);
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/speak-ui', { text: clean });
+    if (!res.ok) throw new Error('Signatur nicht erhalten');
+    const speech = await res.json();
+    if (!speech || !speech.sig) throw new Error('Antwort unvollständig');
+
+    uiSpeechCache.set(clean, speech);
+    if (uiSpeechCache.size > 40) uiSpeechCache.delete(uiSpeechCache.keys().next().value);
+
+    lastSpeech = speech;
+    lastLioText = text;
+    await speakSigned(speech);
+  } catch (err) {
+    console.warn('[speakUI] Gerätestimme:', err.message);
+    lastSpeech = null;
+    lastLioText = text;
+    speakLocal(text);
+  }
+}
+
 function repeatLast() {
   if (lastSpeech) speakSigned(lastSpeech);
   else if (lastLioText) speakLocal(lastLioText);
@@ -1988,8 +2044,9 @@ async function sendMessage(userText) {
 
     setBubble(reply);
     setHint('Tipp das Mikro und sprich!');
-// ✅ RICHTIG: Nur noch dieser eine Befehl
-await speakSigned({ text: reply });
+
+    if (lastSpeech) await speakSigned(lastSpeech);
+    else speakLocal(reply);
 
     /* Sicherheitsmeldungen des Servers auswerten */
     if (flags.crisis || flags.blocked) {
