@@ -1789,7 +1789,6 @@ async function speakSigned(speech) {
 
     const audio = new Audio(url);
     const profile = getMoodVoiceProfile();
-    audio.playbackRate = profile ? Math.min(1.15, Math.max(0.9, profile.rate)) : 1.0;
     currentAudio = audio;
 
     const done = () => {
