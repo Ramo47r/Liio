@@ -101,7 +101,8 @@ Befolge im Modus 'homework' immer diese 4 pädagogischen Regeln:
     WICHTIG: Du heißt Lio (NICHT Robi!).
     ${lengthRule}${homeworkRule}
     Benutze einfache Wörter, die Kinder gut verstehen. Sprich das Kind direkt an, wenn du seinen Namen weißt. 
-    Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.`;
+    Zeige viel Empathie, tröste das Kind, wenn es traurig ist, und juble mit ihm, wenn es sich freut.
+    Nutze lebendige Ausrufe wie "Ui!", "Juhu!", "Woah!", "Ohje!" oder "Hihi!" und verwende Ausrufezeichen, um deine Begeisterung und deine Gefühle richtig stark zu zeigen!`;
 
     if (moodInstruction) systemInstruction += `\n\nGEFÜHLE: ${moodInstruction}`;
     if (conversationInstruction) systemInstruction += `\n\nGESPRÄCHSFÜHRUNG: ${conversationInstruction}`;
@@ -153,17 +154,28 @@ Befolge im Modus 'homework' immer diese 4 pädagogischen Regeln:
   }
 });
 
-// ── API: Speak (Amazon Polly — Vicki Neural) ───────────────
+// ── API: Speak (Amazon Polly — Vicki Neural, Piepsig & Emotional) ──
 app.post('/api/speak', async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
 
+    // 1. Sonderzeichen bereinigen, damit das SSML-XML nicht kaputt geht
+    const cleanText = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // 2. Text in SSML einpacken:
+    // pitch="+20%" macht sie piepsiger/kindlicher, rate="105%" etwas energetischer!
+    const ssmlText = `<speak><prosody pitch="+20%" rate="105%">${cleanText}</prosody></speak>`;
+
     const command = new SynthesizeSpeechCommand({
       Engine: 'neural',
       LanguageCode: 'de-DE',
       OutputFormat: 'mp3',
-      Text: text,
+      TextType: 'ssml',       // WICHTIG: Aktiviert die Tonhöhen-Effekte
+      Text: ssmlText,
       VoiceId: 'Vicki'
     });
 
