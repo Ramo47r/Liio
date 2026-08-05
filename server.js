@@ -1,5 +1,5 @@
 // ============================================================
-// Lio Backend — Groq (Llama 3) als Gehirn & Amazon Polly als Stimme
+// Lio Backend — Groq (Llama 3.3) als Gehirn & OpenAI TTS als Stimme
 // ============================================================
 import express from 'express';
 import cors from 'cors';
@@ -7,7 +7,7 @@ import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import 'dotenv/config';
-import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
+import OpenAI from 'openai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -17,24 +17,20 @@ const PORT = process.env.PORT || 3000;
 // ── Render Proxy-Fix (Behebt die X-Forwarded-For Warnung) ──
 app.set('trust proxy', 1);
 
-// ── API Key check ──────────────────────────────────────────
+// ── API Key checks ─────────────────────────────────────────
 if (!process.env.GROQ_API_KEY) {
   console.error('\n❌  GROQ_API_KEY fehlt! Bitte in Render unter Environment eintragen.');
   process.exit(1);
 }
 
-if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-  console.error('\n❌  AWS Schlüssel fehlen! Bitte AWS_ACCESS_KEY_ID und AWS_SECRET_ACCESS_KEY in Render eintragen.\n');
+if (!process.env.OPENAI_API_KEY) {
+  console.error('\n❌  OPENAI_API_KEY fehlt! Bitte in Render unter Environment eintragen.\n');
   process.exit(1);
 }
 
-// ── Amazon Polly Client initialisieren ─────────────────────
-const polly = new PollyClient({
-  region: process.env.AWS_REGION || 'eu-north-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  }
+// ── OpenAI Client initialisieren ───────────────────────────
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 // ── Middleware ─────────────────────────────────────────────
@@ -154,48 +150,30 @@ Befolge im Modus 'homework' immer diese 4 pädagogischen Regeln:
   }
 });
 
-// ── API: Speak (Amazon Polly — Vicki Neural, lebendig & kindgerecht) ──
+// ── API: Speak (OpenAI TTS — Stimme: Fable / Onyx) ─────────
 app.post('/api/speak', async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
 
-    // 1. Sonderzeichen bereinigen, damit das SSML-XML sauber bleibt
-    const cleanText = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-    // 2. WICHTIG: Neural-Stimmen erlauben kein "pitch", aber "rate"!
-    // rate="108%" macht die Stimme etwas flotter, energiegeladener und jünger:
-    const ssmlText = `<speak><prosody rate="108%">${cleanText}</prosody></speak>`;
-
-    const command = new SynthesizeSpeechCommand({
-      Engine: 'neural',
-      LanguageCode: 'de-DE',
-      OutputFormat: 'mp3',
-      TextType: 'ssml',
-      Text: ssmlText,
-      VoiceId: 'Vicki'
+    // Tipp: Ersetze 'fable' durch 'onyx', wenn du eine tiefere,
+    // wärmere Stimme möchtest, die "Manni" von ElevenLabs näher kommt!
+    const mp3 = await openai.audio.speech.create({
+      model: 'tts-1',
+      voice: 'fable',
+      input: text,
     });
 
-    const response = await polly.send(command);
-
-    // Audio-Stream in Buffer umwandeln
-    const chunks = [];
-    for await (const chunk of response.AudioStream) {
-      chunks.push(chunk);
-    }
-    const audioBuffer = Buffer.concat(chunks);
+    const buffer = Buffer.from(await mp3.arrayBuffer());
 
     res.set({
       'Content-Type': 'audio/mpeg',
-      'Content-Length': audioBuffer.length
+      'Content-Length': buffer.length
     });
-    res.send(audioBuffer);
+    res.send(buffer);
 
   } catch (error) {
-    console.error('Amazon Polly Fehler:', error);
+    console.error('OpenAI TTS Fehler:', error);
     res.status(500).json({ error: 'Lios Stimme konnte nicht geladen werden.' });
   }
 });
