@@ -193,8 +193,10 @@ app.post('/api/speak', async (req, res) => {
       }
     });
 
-    // 5. Audio-Stream in Buffer umwandeln und im Cache speichern
-    const buffer = Buffer.from(await output.arrayBuffer());
+    // 5. Audio-Datei von der Replicate-URL herunterladen & im Cache speichern
+    const audioUrl = output.url ? output.url() : output;
+    const audioResponse = await fetch(audioUrl);
+    const buffer = Buffer.from(await audioResponse.arrayBuffer());
     fs.writeFileSync(cachePath, buffer);
 
     res.set({ 'Content-Type': 'audio/wav', 'Content-Length': buffer.length });
