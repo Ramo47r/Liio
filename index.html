@@ -1293,7 +1293,7 @@ function speakOnAge(text, onDone) {
 
   const clean = stripEmoji(text);
 
-  if (!('speechSynthesis' in window) || !clean) {
+ if (!('speechSynthesis' in window) || !clean) {
     if (ageRobot) ageRobot.classList.remove('talking');
     setTimeout(finish, 400);
     return;
@@ -1572,7 +1572,7 @@ const lioEmotionalResponses = {
   anxious:    { greeting:'Ich merke, dass dich etwas beunruhigt.',        follow:'Das ist ganz normal. Gleich reden wir in Ruhe darüber.' },
   frustrated: { greeting:'Ich spüre, dass dich etwas ärgert.',            follow:'Das darf auch mal sein. Gleich sortieren wir das zusammen.' },
   tired:      { greeting:'Du klingst müde.',                              follow:'Ruh dich ruhig kurz aus, ich warte auf dich.' },
-  normal:     { greeting:'Ich konnte dich gerade nicht hören.',           follow:'Probier es gleich nochmal!' },
+  normal:     { greeting:'Ich konnte dich gerade nicht hören.',            follow:'Probier es gleich nochmal!' },
 };
 
 function generateLioGreeting(emotion) {
@@ -1648,8 +1648,6 @@ function validateGenderNeutralLanguage(text) {
     if (hits) { console.warn('[Sprachprüfung]', hits.join(', '), '→', m.hint); clean = false; }
   });
   return clean;
-
-   
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1725,7 +1723,7 @@ if ('speechSynthesis' in window) {
   [0, 120, 350, 700, 1500, 2500].forEach(ms => setTimeout(loadVoices, ms));
 }
 
-/* /* ══════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
    SPRACHAUSGABE (Sauber, stabil & mit Anti-Echo-Schutz)
 ══════════════════════════════════════════════════════════ */
 let currentAudio = null;
@@ -1754,7 +1752,7 @@ function stopSpeaking() {
 
 $('robot').addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); });
 
-/* Haupt-Sprachfunktion: Nutzt zuverlässig ElevenLabs */
+/* Haupt-Sprachfunktion: Nutzt ausschließlich den Server und wartet immer auf die echte Stimme */
 async function speakSigned(speech) {
   if (!speech || !speech.text) return;
   stopSpeaking();
@@ -1772,13 +1770,7 @@ async function speakSigned(speech) {
     if (thisSpeechId !== currentSpeechId) return;
 
     if (!res.ok) {
-      let data = {};
-      try { data = await res.json(); } catch (e) {}
-      if (res.status === 503 || data.fallback === 'device_tts') {
-        speakLocal(speech.text);
-        return;
-      }
-      throw new Error('ElevenLabs API Fehler: ' + res.status);
+      throw new Error('Server API Fehler: ' + res.status);
     }
 
     const url = URL.createObjectURL(await res.blob());
@@ -1788,7 +1780,6 @@ async function speakSigned(speech) {
     }
 
     const audio = new Audio(url);
-    const profile = getMoodVoiceProfile();
     currentAudio = audio;
 
     const done = () => {
@@ -1805,14 +1796,16 @@ async function speakSigned(speech) {
     audio.onerror = done;
     await audio.play();
   } catch (err) {
-    console.warn('[speakSigned] Wechsle zu Gerätestimme:', err.message);
+    console.error('[speakSigned] Sprachfehler:', err.message);
     if (thisSpeechId === currentSpeechId) {
-      speakLocal(speech.text);
+      isLioSpeaking = false;
+      if (robot) robot.classList.remove('talking');
+      if (micBtn) micBtn.style.opacity = '1';
     }
   }
 }
 
-/* Gerätestimme: Nur als Notfall-Sicherheitsnetz */
+/* Gerätestimme: Nur für Karaoke */
 function speakLocal(text) {
   if (!('speechSynthesis' in window) || !text) { isLioSpeaking = false; return; }
   const thisSpeechId = currentSpeechId;
@@ -1956,7 +1949,7 @@ $('btnCloseText').addEventListener('click', closeTextInput);
 $('btnSendText').addEventListener('click', sendText);
 $('textInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendText(); });
 
-/* Optimiertes lioSay: Sofortige Antwort mit ElevenLabs ohne Wartezeit */
+/* Optimierte Sprachausgabe: Wartet verlässlich auf Lios eigene Stimme */
 async function lioSay(hiddenPrompt, fallbackText) {
   setBubble(fallbackText);
   lastLioText = fallbackText;
