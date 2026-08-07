@@ -1,13 +1,15 @@
 // ============================================================
-// Lio Backend — Groq (Llama 3.3) als Gehirn & OpenAI TTS als Stimme
+// Lio Backend — Groq (Llama 3.3) als Gehirn & Gemini TTS als Stimme
 // ============================================================
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
 import 'dotenv/config';
-import OpenAI from 'openai';
+import Replicate from 'replicate';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -17,20 +19,26 @@ const PORT = process.env.PORT || 3000;
 // ── Render Proxy-Fix (Behebt die X-Forwarded-For Warnung) ──
 app.set('trust proxy', 1);
 
-// ── API Key checks ─────────────────────────────────────────
+// ── Cache-Ordner für Audio-Dateien anlegen ─────────────────
+const CACHE_DIR = path.join(__dirname, 'audio_cache');
+if (!fs.existsSync(CACHE_DIR)) {
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
+}
+
+// ── API Key Checks ─────────────────────────────────────────
 if (!process.env.GROQ_API_KEY) {
   console.error('\n❌  GROQ_API_KEY fehlt! Bitte in Render unter Environment eintragen.');
   process.exit(1);
 }
 
-if (!process.env.OPENAI_API_KEY) {
-  console.error('\n❌  OPENAI_API_KEY fehlt! Bitte in Render unter Environment eintragen.\n');
+if (!process.env.REPLICATE_API_TOKEN) {
+  console.error('\n❌  REPLICATE_API_TOKEN fehlt! Bitte in Render unter Environment eintragen.\n');
   process.exit(1);
 }
 
-// ── OpenAI Client initialisieren ───────────────────────────
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+// ── Replicate Client initialisieren ────────────────────────
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
 });
 
 // ── Middleware ─────────────────────────────────────────────
@@ -150,30 +158,50 @@ Befolge im Modus 'homework' immer diese 4 pädagogischen Regeln:
   }
 });
 
-// ── API: Speak (OpenAI TTS — Stimme: Fable / Onyx) ─────────
+// ── API: Speak (Gemini 3.1 TTS via Replicate + SHA-256 Cache) ──
 app.post('/api/speak', async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
 
-    // Tipp: Ersetze 'fable' durch 'onyx', wenn du eine tiefere,
-    // wärmere Stimme möchtest, die "Manni" von ElevenLabs näher kommt!
-    const mp3 = await openai.audio.speech.create({
-      model: 'tts-1',
-      voice: 'fable',
-      input: text,
+    // 1. Lios Charakter & Regieanweisung (Manni-Stil)
+    const voice = 'Algenib';
+    const prompt = "AUDIO PROFILE: Lio, ein superfreundlicher, empathischer Begleiter für Kinder. DIRECTOR'S NOTES: Eine warme, sanfte und etwas höhere deutsche Männerstimme – wie ein liebevoller großer Bruder. Ruhiges Tempo, fröhlich und mit einem deutlichen Lächeln in der Stimme.";
+
+    // 2. SHA-256 Hash aus Stimme und Text erzeugen
+    const hash = crypto
+      .createHash('sha256')
+      .update(`${voice}_${text.trim()}`)
+      .digest('hex');
+    
+    const cachePath = path.join(CACHE_DIR, `${hash}.wav`);
+
+    // 3. Cache-Prüfung: Bereits vorhandenes Audio direkt ausliefern (0 € Kosten!)
+    if (fs.existsSync(cachePath)) {
+      const cachedBuffer = fs.readFileSync(cachePath);
+      res.set({ 'Content-Type': 'audio/wav', 'Content-Length': cachedBuffer.length });
+      return res.send(cachedBuffer);
+    }
+
+    // 4. Neu generieren über Replicate (google/gemini-3.1-flash-tts)
+    const output = await replicate.run("google/gemini-3.1-flash-tts", {
+      input: {
+        text: text,
+        voice: voice,
+        prompt: prompt,
+        language_code: "de-DE"
+      }
     });
 
-    const buffer = Buffer.from(await mp3.arrayBuffer());
+    // 5. Audio-Stream in Buffer umwandeln und im Cache speichern
+    const buffer = Buffer.from(await output.arrayBuffer());
+    fs.writeFileSync(cachePath, buffer);
 
-    res.set({
-      'Content-Type': 'audio/mpeg',
-      'Content-Length': buffer.length
-    });
+    res.set({ 'Content-Type': 'audio/wav', 'Content-Length': buffer.length });
     res.send(buffer);
 
   } catch (error) {
-    console.error('OpenAI TTS Fehler:', error);
+    console.error('TTS Fehler:', error);
     res.status(500).json({ error: 'Lios Stimme konnte nicht geladen werden.' });
   }
 });
