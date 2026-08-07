@@ -164,9 +164,9 @@ app.post('/api/speak', async (req, res) => {
     const { text } = req.body;
     if (!text) return res.status(400).json({ error: 'Kein Text zum Vorlesen.' });
 
-    // 1. Lios Charakter & Regieanweisung (Manni-Stil)
-    const voice = 'Algenib';
-    const prompt = "AUDIO PROFILE: Lio, ein superfreundlicher, empathischer Begleiter für Kinder. DIRECTOR'S NOTES: Eine warme, sanfte und etwas höhere deutsche Männerstimme – wie ein liebevoller großer Bruder. Ruhiges Tempo, fröhlich und mit einem deutlichen Lächeln in der Stimme.";
+    // 1. Lios Charakter & Regieanweisung (Neutral, weich & kinderfreundlich)
+    const voice = 'Puck';
+    const prompt = "AUDIO PROFILE: Lio, ein superfreundlicher, empathischer Roboter-Begleiter für Kinder. DIRECTOR'S NOTES: Eine sanfte, helle und geschlechtsneutrale (androgyne) Stimme – wie ein warmherziges, junges Zeichentrick-Wesen. Weder eindeutig männlich noch weiblich, sondern liebevoll, kindgerecht und mit einem fröhlichen Lächeln in der Stimme. Ruhiges und klares Tempo.";
 
     // 2. SHA-256 Hash aus Stimme und Text erzeugen
     const hash = crypto
