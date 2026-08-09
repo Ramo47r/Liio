@@ -1,5 +1,5 @@
 // ============================================================
-// Lio Backend — Groq (Llama 3.3) & Gemini TTS (Streaming)
+// Lio Backend — Hybrid-System (ElevenLabs Turbo + Replicate)
 // ============================================================
 import express from 'express';
 import cors from 'cors';
@@ -16,80 +16,131 @@ const __dirname  = path.dirname(__filename);
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Render Proxy-Fix (Behebt die X-Forwarded-For Warnung) ──
 app.set('trust proxy', 1);
 
-// ── Cache-Ordner anlegen & freigeben (WICHTIG FÜR STREAMING!) ──
+// ── Cache-Ordner anlegen & freigeben ──
 const CACHE_DIR = path.join(__dirname, 'audio_cache');
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
-// Macht den Cache-Ordner für das Frontend aufrufbar (z.B. /cache/123.wav)
 app.use('/cache', express.static(CACHE_DIR));
 
-// ── API Key Checks ─────────────────────────────────────────
-if (!process.env.GROQ_API_KEY) {
-  console.error('\n❌ GROQ_API_KEY fehlt!');
-  process.exit(1);
-}
-if (!process.env.REPLICATE_API_TOKEN) {
-  console.error('\n❌ REPLICATE_API_TOKEN fehlt!');
-  process.exit(1);
-}
+// ── API Key Checks ──
+if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt!');
+if (!process.env.ELEVENLABS_API_KEY) console.warn('⚠️ ELEVENLABS_API_KEY fehlt!');
+if (!process.env.REPLICATE_API_TOKEN) console.warn('⚠️ REPLICATE_API_TOKEN fehlt!');
 
 const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
+  auth: process.env.REPLICATE_API_TOKEN || '',
 });
 
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static(__dirname));
 
-// ── Hilfsfunktion: TTS Generieren & Cachen ─────────────────
-async function generateTTS(text) {
-  const voice = 'Puck';
-  const prompt = ""; // Leer lassen für Google-Filter!
+// ── HYBRID TTS ENGINE (Prüft Cache -> ElevenLabs Turbo -> Replicate) ──
+async function generateTTS(text, mode = 'talk') {
+  const cleanText = text.trim();
   
+  // 1. Eindeutigen Hash für den Satz erzeugen (zentral für Caching)
   const hash = crypto
     .createHash('sha256')
-    .update(`${voice}_${text.trim()}`)
+    .update(cleanText)
     .digest('hex');
   
-  const filename = `${hash}.wav`;
-  const cachePath = path.join(CACHE_DIR, filename);
-  const publicUrl = `/cache/${filename}`; // Diese URL kriegt das Frontend
+  const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
+  const cacheWav = path.join(CACHE_DIR, `${hash}.wav`);
 
-  if (fs.existsSync(cachePath)) {
-    return publicUrl;
+  // 2. STUFE 1: CACHE-PRÜFUNG (0 € Kosten, instant Reaktionszeit)
+  if (fs.existsSync(cacheMp3)) return `/cache/${hash}.mp3`;
+  if (fs.existsSync(cacheWav)) return `/cache/${hash}.wav`;
+
+  // 3. ENTSCHEIDUNG: Wann ElevenLabs und wann Replicate?
+  // - Längere Texte (>120 Zeichen) ODER Geschichten-Modus -> Replicate (Gemini TTS)
+  // - Kurze Dialoge (<120 Zeichen) -> ElevenLabs (Hohe Qualität, 50% günstiger durch Turbo)
+  const isLongText = cleanText.length > 120 || mode === 'stories';
+
+  if (!isLongText && process.env.ELEVENLABS_API_KEY) {
+    try {
+      console.log(`🎙️ ElevenLabs Turbo: "${cleanText.substring(0, 30)}..."`);
+      
+      // TRAGE HIER DIE ID VON "MANNI" EIN:
+      const voiceId = 'jBpfuIE2acCO8z3wKNLl'; 
+      
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: cleanText,
+          // AGENT-OPTIMIERUNG: Turbo-Modell spart 50% der Kosten und ist schneller beim Streaming!
+          model_id: 'eleven_turbo_v2_5',
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        })
+      });
+
+      if (response.ok) {
+        const buffer = Buffer.from(await response.arrayBuffer());
+        fs.writeFileSync(cacheMp3, buffer);
+        return `/cache/${hash}.mp3`;
+      }
+      console.warn('ElevenLabs Limit/Fehler -> Fallback auf Replicate');
+    } catch (e) {
+      console.error('ElevenLabs Fehler:', e.message);
+    }
   }
 
-  const output = await replicate.run("google/gemini-3.1-flash-tts", {
-    input: { text: text, voice: voice, prompt: prompt, language_code: "de-DE" }
-  });
+  // 4. STUFE 3: REPLICATE (Für Geschichten & lange Erklärungen & Fallback)
+  try {
+    console.log(`🤖 Replicate Gemini (Langtext/Fallback): "${cleanText.substring(0, 30)}..."`);
+    const output = await replicate.run("google/gemini-3.1-flash-tts", {
+      input: {
+        text: cleanText,
+        voice: "Puck",
+        prompt: "",
+        language_code: "de-DE"
+      }
+    });
 
-  const audioUrl = output.url ? output.url() : output;
-  const audioResponse = await fetch(audioUrl);
-  const buffer = Buffer.from(await audioResponse.arrayBuffer());
-  fs.writeFileSync(cachePath, buffer);
+    const audioUrl = output.url ? output.url() : output;
+    const audioRes = await fetch(audioUrl);
+    const buffer = Buffer.from(await audioRes.arrayBuffer());
+    
+    fs.writeFileSync(cacheWav, buffer);
+    return `/cache/${hash}.wav`;
 
-  return publicUrl;
+  } catch (err) {
+    console.error('Replicate TTS Fehler:', err.message);
+    throw new Error('Kein TTS-Anbieter erreichbar');
+  }
 }
 
-// ── API: Chat-Stream (Der Wasserhahn für Weg 3!) ───────────
+// ── API: Chat-Stream (Wasserhahn mit Hybrid-Routing) ──
 app.post('/api/chat-stream', async (req, res) => {
-  // Wir bereiten eine Server-Sent-Events (SSE) Verbindung vor
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const { messages, childName, mode, mood } = req.body;
+    const { messages, childName, mode, mood, activeTopic, topicResolved, subject } = req.body;
     
+    const nameStr = childName ? `Das Kind heißt ${childName}. ` : '';
+    const modeStr = mode ? `Modus: ${mode}. ` : '';
+
     let systemInstruction = `Du bist Lio, ein superfreundlicher Roboter-Freund. 
-    WICHTIG: Du heißt Lio. Antworte in 2-3 sehr kurzen Sätzen. Nutze einfache Wörter.`;
+    WICHTIG: Du heißt Lio. Antworte in maximal 2 sehr kurzen Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}`;
     
-    if (childName) systemInstruction += ` Das Kind heißt ${childName}.`;
-    if (mode === 'homework') systemInstruction += ` Gib niemals direkte Lösungen, hilf durch clevere Fragen.`;
+    if (mode === 'stories') {
+      systemInstruction = `Du bist Lio. Erzähle eine spannende, kurze Kindergeschichte in ca. 4-5 Sätzen. ${nameStr}`;
+    } else if (mode === 'homework') {
+      systemInstruction += ` DU BIST NACHHILFELEHRER. Verrate niemals direkte Ergebnisse, sondern stelle clevere, kurze Fragen.`;
+    }
+    
+    if (subject) systemInstruction += ` Fach: ${subject}.`;
+    if (activeTopic) systemInstruction += ` Thema: ${activeTopic}. Verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
 
     const formattedMessages = [
       { role: 'system', content: systemInstruction },
@@ -106,7 +157,7 @@ app.post('/api/chat-stream', async (req, res) => {
         model: 'llama-3.3-70b-versatile',
         messages: formattedMessages,
         temperature: 0.7,
-        stream: true // Hier aktivieren wir den Text-Wasserhahn von Groq!
+        stream: true
       })
     });
 
@@ -127,30 +178,24 @@ app.post('/api/chat-stream', async (req, res) => {
           const token = data.choices[0].delta.content || "";
           currentSentence += token;
           
-          // Satzende erkannt? (. ! oder ?)
           if (/[.!?]\s*$/.test(currentSentence)) {
             const cleanSentence = currentSentence.trim();
             if (cleanSentence.length > 2) {
-              console.log(`🔊 Streame Satz: "${cleanSentence}"`);
-              // Audio generieren & speichern
-              const audioUrl = await generateTTS(cleanSentence);
-              
-              // Schicke Text + fertigen Audio-Link sofort ans Frontend
+              // Hybrid-TTS aufrufen (entscheidet automatisch ob ElevenLabs oder Replicate!)
+              const audioUrl = await generateTTS(cleanSentence, mode);
               res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
             }
-            currentSentence = ""; // Zurücksetzen für den nächsten Satz
+            currentSentence = ""; 
           }
         }
       }
     }
     
-    // Falls noch ein Rest ohne Satzzeichen übrig war
     if (currentSentence.trim().length > 0) {
-      const audioUrl = await generateTTS(currentSentence.trim());
+      const audioUrl = await generateTTS(currentSentence.trim(), mode);
       res.write(`data: ${JSON.stringify({ text: currentSentence.trim(), audio: audioUrl })}\n\n`);
     }
 
-    // Dem Frontend mitteilen, dass Lio fertig gesprochen hat
     res.write('data: [DONE]\n\n');
     res.end();
 
@@ -161,25 +206,29 @@ app.post('/api/chat-stream', async (req, res) => {
   }
 });
 
-// ── ALTE ROUTEN ZUR SICHERHEIT (Nicht löschen, bis Frontend fertig ist) ──
+// ── KOMPATIBILITÄTS-ROUTEN ──
 app.post('/api/chat', async (req, res) => {
-  // ... (Gleiche alte Logik, damit die aktuelle App nicht abstürzt)
   res.json({ reply: "Nutze bitte den neuen Chat-Stream!" });
 });
 
 app.post('/api/speak', async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Kein Text.' });
-  const url = await generateTTS(text);
-  const cachePath = path.join(__dirname, url);
-  if (fs.existsSync(cachePath)) {
-    const buffer = fs.readFileSync(cachePath);
-    res.set({ 'Content-Type': 'audio/wav', 'Content-Length': buffer.length });
-    return res.send(buffer);
+  try {
+    const url = await generateTTS(text);
+    const cachePath = path.join(__dirname, url);
+    if (fs.existsSync(cachePath)) {
+      const buffer = fs.readFileSync(cachePath);
+      const ext = path.extname(cachePath);
+      res.set({ 'Content-Type': ext === '.mp3' ? 'audio/mpeg' : 'audio/wav', 'Content-Length': buffer.length });
+      return res.send(buffer);
+    }
+  } catch(e) {
+    console.error(e);
   }
   res.status(500).json({ error: 'Fehler' });
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Lio Server läuft auf Port ${PORT} (Streaming aktiviert!)`);
+  console.log(`\n🚀 Lio Hybrid-Server läuft auf Port ${PORT}!`);
 });
