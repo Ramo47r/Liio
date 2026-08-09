@@ -1938,18 +1938,106 @@ function closeTextInput() {
   $('textOverlay').classList.remove('show');
   $('textInput').value = '';
 }
-function sendText() {
-  const val = $('textInput').value.trim();
-  if (!val) return;
-  closeTextInput();
-  sendMessage(val);
-}
-$('btnKeyboard').addEventListener('click', openTextInput);
-$('btnCloseText').addEventListener('click', closeTextInput);
-$('btnSendText').addEventListener('click', sendText);
-$('textInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendText(); });
+/* ══════════════════════════════════════════════════════════
+   STREAMING AUDIO PLAYER & SPRACHAUSGABE
+══════════════════════════════════════════════════════════ */
+let currentAudio = null;
+let streamAudioQueue = [];
+let isPlayingQueue = false;
+let currentSpeechId = 0; // Verhindert Echos beim Abbrechen
 
-/* Optimierte Sprachausgabe: Wartet verlässlich auf Lios eigene Stimme */
+function stopSpeaking() {
+  currentSpeechId++;
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    } catch (e) {}
+    currentAudio = null;
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  isLioSpeaking = false;
+  streamAudioQueue = [];
+  isPlayingQueue = false;
+  
+  const robot = $('robot');
+  if (robot) robot.classList.remove('talking');
+  const micBtn = $('micBtn');
+  if (micBtn) micBtn.style.opacity = '1';
+}
+
+$('robot').addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); });
+
+/* Arbeitet die Audio-Häppchen nacheinander ab */
+async function playNextInQueue(speechId) {
+  if (speechId !== currentSpeechId || streamAudioQueue.length === 0) {
+    isPlayingQueue = false;
+    // Wenn die Warteschlange leer ist und das Gespräch vorbei ist, Animation stoppen
+    if (!isLioSpeaking) {
+      const robot = $('robot');
+      if (robot) robot.classList.remove('talking');
+    }
+    return;
+  }
+
+  isPlayingQueue = true;
+  const audioUrl = streamAudioQueue.shift();
+  
+  currentAudio = new Audio(audioUrl);
+  
+  currentAudio.onended = () => {
+    currentAudio = null;
+    playNextInQueue(speechId); // Nächsten Satz abspielen
+  };
+  
+  currentAudio.onerror = () => {
+    console.warn('[Audio] Fehler beim Abspielen eines Satzes.');
+    currentAudio = null;
+    playNextInQueue(speechId); // Überspringen und weiter
+  };
+
+  await currentAudio.play().catch(err => {
+    console.warn('[Audio] Autoplay blockiert:', err);
+    currentAudio = null;
+    playNextInQueue(speechId);
+  });
+}
+
+/* Einfaches Vorlesen für feste Sätze (z.B. Menü-Erklärungen) */
+async function speakSigned(speech) {
+  if (!speech || !speech.text) return;
+  stopSpeaking();
+  const thisSpeechId = currentSpeechId;
+  isLioSpeaking = true;
+  
+  $('robot').classList.add('talking');
+  $('micBtn').style.opacity = '0.5';
+
+  try {
+    const res = await apiFetch('/api/speak', { text: speech.text });
+    if (thisSpeechId !== currentSpeechId || !res.ok) throw new Error('API Fehler');
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    streamAudioQueue.push(url);
+    
+    // Nach dem Abspielen den Speicher wieder freigeben
+    const originalPlayNext = playNextInQueue;
+    playNextInQueue = async (id) => {
+      await originalPlayNext(id);
+      if (streamAudioQueue.length === 0) URL.revokeObjectURL(url);
+    };
+
+    isLioSpeaking = false; // Wird vom Queue-Player gesteuert
+    playNextInQueue(thisSpeechId);
+  } catch (err) {
+    console.error('Sprachfehler:', err);
+    stopSpeaking();
+  }
+}
+
 async function lioSay(hiddenPrompt, fallbackText) {
   setBubble(fallbackText);
   lastLioText = fallbackText;
@@ -1957,11 +2045,24 @@ async function lioSay(hiddenPrompt, fallbackText) {
   await speakSigned({ text: fallbackText });
 }
 
+function repeatLast() {
+  if (lastSpeech) speakSigned(lastSpeech);
+  else if (lastLioText) speakSigned({ text: lastLioText });
+}
+$('btnRepeat').addEventListener('click', repeatLast);
+
+/* ══════════════════════════════════════════════════════════
+   STREAMING NACHRICHT SENDEN (Der Wasserhahn)
+══════════════════════════════════════════════════════════ */
 async function sendMessage(userText) {
   if (!userText || !userText.trim()) return;
   userText = userText.trim().slice(0, 500);
+  
   clearQuickReplies();
-  stopSpeaking();
+  stopSpeaking(); // Bricht alles Vorherige ab
+
+  const thisSpeechId = currentSpeechId;
+  isLioSpeaking = true; // Sperrt neue Eingaben, während der Stream läuft
 
   const bullyingSignal = detectBullyingSignal(userText);
   if (bullyingSignal) logParentNotice('bullying');
@@ -1973,75 +2074,107 @@ async function sendMessage(userText) {
     activeTopic = userText.slice(0, 60);
     topicResolved = false;
   }
-  if (/verstanden|kapiert|alles klar|check(e|t)? das/i.test(userText)) {
-    topicResolved = true;
-    activeTopic = null;
-  }
 
   setBubble('Du: „' + userText + '"');
   setHint('Lio denkt nach… 🤔');
-  setTimeout(setBubbleLoading, 700);
+  $('robot').classList.add('talking');
+  $('micBtn').disabled = true;
 
   messages.push({ role: 'user', content: userText });
   if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
 
-  $('micBtn').disabled = true;
-
   try {
-    const res = await apiFetch('/api/chat', {
-      messages,
-      mode: currentMode,
-      mood: currentMood || undefined,
-      age: currentAge || undefined,
-      emotion: userEmotion !== 'normal' ? userEmotion : undefined,
-      subject: currentMode === 'homework' ? currentSubject || undefined : undefined,
-      childName,
-      topic: (!topicResolved && activeTopic) ? activeTopic : undefined,
+    // Wir nutzen natives fetch() für den ReadableStream
+    const res = await fetch('/api/chat-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        mode: currentMode,
+        mood: currentMood || undefined,
+        age: currentAge || undefined,
+        emotion: userEmotion !== 'normal' ? userEmotion : undefined,
+        subject: currentMode === 'homework' ? currentSubject || undefined : undefined,
+        childName,
+        topic: (!topicResolved && activeTopic) ? activeTopic : undefined,
+      })
     });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Server-Fehler');
+    if (!res.ok) throw new Error('Server-Fehler beim Streaming');
 
-    const reply = data.reply || 'Hmm, mir fällt gerade nichts ein!';
-    const flags = data.flags || {};
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    
+    let fullReply = "";
+    setBubble(""); // Sprechblase leeren für den Text-Aufbau
 
-    validateGenderNeutralLanguage(reply);
+    while (true) {
+      if (thisSpeechId !== currentSpeechId) break; // Abgebrochen durch Nutzer
+      
+      const { done, value } = await reader.read();
+      if (done) break;
 
-    messages.push({ role: 'assistant', content: reply });
-    lastSpeech = { text: reply };
-    lastLioText = reply;
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
 
-    setBubble(reply);
-    setHint('Tipp das Mikro und sprich!');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.replace('data: ', '').trim();
+          
+          if (dataStr === '[DONE]') continue;
+          
+          if (dataStr) {
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.error) throw new Error(parsed.error);
 
-    await speakSigned({ text: reply });
+              // 1. Text an die Blase anhängen
+              fullReply += parsed.text + " ";
+              setBubble(fullReply.trim());
 
-    if (flags.crisis || flags.blocked) {
-      logParentNotice(flags.crisis || 'inhalt-blockiert');
-      if (flags.helpline || flags.emergency) setTimeout(openHelpPanel, 900);
-      return;
+              // 2. Audio-URL in die Warteschlange packen
+              streamAudioQueue.push(parsed.audio);
+              
+              // 3. Playback starten, falls es nicht schon läuft
+              if (!isPlayingQueue) {
+                playNextInQueue(thisSpeechId);
+              }
+              
+            } catch (e) {
+              console.error('[Streaming] Daten-Fehler:', e);
+            }
+          }
+        }
+      }
     }
 
-    if (bullyingSignal) { setTimeout(openHelpPanel, 900); return; }
-
+    // Stream ist komplett fertig geladen
+    isLioSpeaking = false; // Erlaubt den Roboter-Stop, wenn Audio fertig ist
+    
+    const cleanReply = fullReply.trim();
+    if (cleanReply) {
+      messages.push({ role: 'assistant', content: cleanReply });
+      lastSpeech = { text: cleanReply };
+      lastLioText = cleanReply;
+    }
+    
+    setHint('Tipp das Mikro und sprich!');
     maybeCelebrate(userText);
-
+    
     if (currentMode === 'homework') renderQuickReplies(HOMEWORK_FOLLOWUPS, 'followup');
+    if (bullyingSignal) setTimeout(openHelpPanel, 900);
 
   } catch (err) {
-    console.error('[sendMessage]', err.message);
+    console.error('[sendMessage Streaming]', err.message);
     const fallback = generateLioGreeting(userEmotion);
     setBubble(fallback);
     await speakSigned({ text: fallback });
     setHint('Nochmal versuchen?');
     messages.pop();
-
-    if (bullyingSignal) setTimeout(openHelpPanel, 900);
   } finally {
     $('micBtn').disabled = false;
   }
 }
-
 function maybeCelebrate(userText) {
   if (['sad','angry','scared','tired'].includes(currentMood)) return;
   const success = /verstanden|kapiert|alles klar|geschafft|richtig/i.test(userText);
