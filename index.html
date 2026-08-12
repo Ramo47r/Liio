@@ -15,37 +15,16 @@
 <style>
 /* ══════════════════════════════════════════════════════════
    SCHRIFTEN
-   Kein @import von fonts.googleapis.com — das lädt bei jedem
-   Start Daten von Google-Servern und ist in Deutschland
-   abgemahnt worden (LG München I, 3 O 17493/20).
-   → Dateien nach /assets/fonts/ legen und aktivieren.
-══════════════════════════════════════════════════════════ */
-/*
-@font-face { font-family:'Baloo 2'; src:url('/assets/fonts/baloo2.woff2') format('woff2');
-             font-weight:600 800; font-display:swap; }
-@font-face { font-family:'Nunito'; src:url('/assets/fonts/nunito.woff2') format('woff2');
-             font-weight:600 900; font-display:swap; }
-*/
-
-/* ══════════════════════════════════════════════════════════
-   DESIGN TOKENS — "Lio Nightglow"
-   Tiefes Nachtblau-Schwarz, Mint→Lime als Signaturverlauf,
-   Glasflächen statt Vollfarben.
 ══════════════════════════════════════════════════════════ */
 :root {
-  /* Untergrund */
   --bg-0:      #04070B;
   --bg-1:      #0A1017;
   --bg-2:      #0E1620;
-
-  /* Glas */
   --glass:     rgba(255,255,255,0.055);
   --glass-2:   rgba(255,255,255,0.09);
   --glass-3:   rgba(255,255,255,0.14);
   --stroke:    rgba(255,255,255,0.10);
   --stroke-2:  rgba(255,255,255,0.18);
-
-  /* Akzente */
   --mint:      #4FE3C1;
   --mint-deep: #16B48C;
   --lime:      #B8F24A;
@@ -53,24 +32,16 @@
   --cyan:      #38D9F0;
   --violet:    #9D8BFF;
   --coral:     #FF7A8A;
-
-  /* Signaturverlauf */
   --grad:      linear-gradient(135deg, var(--mint) 0%, var(--lime) 100%);
   --grad-soft: linear-gradient(135deg, rgba(79,227,193,.22) 0%, rgba(184,242,74,.18) 100%);
-
-  /* Text */
   --text:      #EAFBF5;
   --text-dim:  rgba(234,251,245,0.60);
   --text-mute: rgba(234,251,245,0.38);
   --on-accent: #04241C;
-
-  /* Glow */
   --glow-mint: rgba(79,227,193,0.45);
   --glow-lime: rgba(184,242,74,0.35);
-
   --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
   --font-body:    'Nunito', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
-
   --r-sm: 14px;
   --r-md: 20px;
   --r-lg: 28px;
@@ -91,7 +62,6 @@ body {
   color: var(--text);
 }
 
-/* Feine Rasterlinien im Hintergrund — nimmt das Technik-Motiv der Vorlage auf */
 body::before {
   content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
   background-image:
@@ -102,8 +72,6 @@ body::before {
   -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 0%, transparent 78%);
 }
 
-/* Die "Wolken" aus dem alten Design sind jetzt schwebende Lichtpunkte.
-   buildClouds() im JS bleibt unverändert. */
 #clouds { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
 .cloud {
   position:absolute; border-radius:50%;
@@ -132,7 +100,6 @@ body::before {
   font-weight:700; font-family:var(--font-display);
   letter-spacing:-0.5px; line-height:1.15; color:#fff;
 }
-/* Akzentwort im Verlauf — die Signatur der Vorlage */
 .age-greeting .accent {
   background: var(--grad);
   -webkit-background-clip:text; background-clip:text;
@@ -148,7 +115,6 @@ body::before {
   position:relative; width:min(300px,75vw); aspect-ratio:1.2/1;
   display:flex; align-items:center; justify-content:center; margin-top:20px;
 }
-/* Glow hinter Lio auf dem Startbildschirm */
 .age-scene::after {
   content:''; position:absolute; left:50%; top:42%;
   width:78%; height:78%; transform:translate(-50%,-50%);
@@ -172,7 +138,6 @@ body::before {
   filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(79,227,193,.35));
   margin-bottom:-40px;
 }
-/* 🕹️ LINKS / RECHTS: höherer Wert = weiter rechts */
 .age-robot-wrap img { display:block; width:100%; height:auto; transform: translateX(280px); }
 .age-robot-wrap.talking { animation: robotFloat 3.6s ease-in-out infinite, robotTalk .4s ease-in-out infinite; }
 
@@ -192,8 +157,6 @@ body::before {
 .age-bottom { width:100%; flex-shrink:0; padding: 12px 0 calc(24px + env(safe-area-inset-bottom, 0px)); }
 .age-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; width:100%; max-width:340px; margin:0 auto; }
 
-/* Glaskarten mit farbigem Rand statt Vollfarbe.
-   Große Trefferfläche bleibt — Kinderhände brauchen sie. */
 .age-card {
   position:relative; border-radius:var(--r-md);
   padding:14px 8px; cursor:pointer;
@@ -273,7 +236,6 @@ body::before {
 .lio-area { position:relative; width:100%; flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:0 16px; z-index:1; }
 .scene { position:relative; width:min(350px,85vw); aspect-ratio:1.1/1; display:flex; align-items:center; justify-content:center; margin:0 auto; }
 
-/* Der Halo ist jetzt das Herzstück der Optik */
 .halo {
   position:absolute; top:38%; left:50%;
   width:104%; height:86%;
@@ -298,7 +260,6 @@ body::before {
 }
 .platform img { display:block; width:100%; height:auto; }
 
-/* 🕹️ HÖHE von Lio über der Plattform */
 .robot-wrap {
   position:absolute; bottom:-15%; left:45%;
   transform: translateX(-50%); width:75%; z-index:3;
@@ -309,7 +270,7 @@ body::before {
 }
 .robot-wrap img { display:block; width:100%; height:auto; pointer-events:none; }
 
-.robot-wrap.talking   { animation: lioTalk   1.1s ease-in-out infinite; }
+.robot-wrap.talking    { animation: lioTalk    1.1s ease-in-out infinite; }
 .robot-wrap.listening { animation: lioListen 2.5s ease-in-out infinite; }
 .robot-wrap.excited   { animation: lioJoy    1.6s ease-in-out infinite; }
 .robot-wrap.sad       { animation: lioSad    3.0s ease-in-out infinite; }
@@ -321,6 +282,24 @@ body::before {
 @keyframes lioJoy    { 0%,100% { transform: translateX(-50%) translateY(0); }    50% { transform: translateX(-50%) translateY(-25px); } }
 @keyframes lioSad    { 0%,100% { transform: translateX(-50%) translateY(10px); } 50% { transform: translateX(-50%) translateY(15px); } }
 @keyframes lioTired  { 0%,100% { transform: translateX(-50%) translateY(5px); }  50% { transform: translateX(-50%) translateY(10px); } }
+
+/* ════════════════════════════════════════
+   BLINZEL-ANIMATION (NEU)
+═══════════════════════════════════════ */
+.robot-container {
+  position: relative;
+}
+.lio-auge-zu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.is-blinking .lio-auge-offen { opacity: 0; }
+.is-blinking .lio-auge-zu { opacity: 1; }
 
 .sparkle { position:absolute; width:8px; height:8px; pointer-events:none; z-index:4; }
 .sparkle::before { content:''; display:block; width:7px; height:7px; border-radius:50%;
@@ -351,9 +330,6 @@ body::before {
   box-shadow: 0 0 22px var(--glow-mint), 0 0 40px var(--glow-lime);
 }
 
-/* Sprechblase als Glasfläche.
-   Bewusst hoher Kontrast: helle Schrift, kräftige Größe — Kinder
-   müssen das auch bei Sonnenlicht lesen können. */
 .speech-bubble {
   background: rgba(14,22,32,0.78);
   -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
@@ -394,7 +370,6 @@ body::before {
 .dots span:nth-child(3) { animation-delay:.4s; }
 @keyframes dotPulse { 0%,80%,100% { opacity:.3; transform:scale(.8); } 40% { opacity:1; transform:scale(1.25); } }
 
-/* Untere Leiste als schwebendes Glas-Dock */
 .bottom-area {
   width:calc(100% - 20px); margin:0 10px;
   z-index:5; flex-shrink:0;
@@ -440,7 +415,6 @@ body::before {
 
 .mic-row { display:flex; align-items:center; justify-content:center; gap:14px; padding:6px 14px 0; }
 
-/* Das Mikro ist der Held der Oberfläche */
 .big-mic {
   position:relative; flex-shrink:0;
   width:clamp(88px,23vw,106px); height:clamp(88px,23vw,106px);
@@ -653,7 +627,6 @@ body::before {
 .consent-row { display:flex; gap:11px; align-items:flex-start; text-align:left; font-size:13px; font-weight:600; color: var(--text-dim); margin-bottom:16px; line-height:1.45; }
 .consent-row input { width:22px; height:22px; margin:1px 0 0; flex-shrink:0; accent-color: var(--mint); }
 
-/* Halte-Knopf des Eltern-Gates */
 .hold-btn {
   position:relative; overflow:hidden;
   background: var(--grad) !important; color: var(--on-accent) !important;
@@ -702,7 +675,6 @@ body::before {
 .note-row { padding:9px 0; border-bottom:1px solid var(--stroke); }
 .note-time { color: var(--text-mute); font-size:12px; margin-top:2px; }
 
-/* Barrierefreiheit */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
 }
@@ -737,8 +709,6 @@ body::before {
     </div>
 
     <div id="setupForm" style="display:none;">
-      <!-- Dieser Text muss stimmen. Falsche Angaben zur Datenverarbeitung
-           gegenüber Eltern sind bei einer Kinder-App ein echtes Risiko. -->
       <p class="privacy-note">
         <b>Was passiert mit den Daten?</b><br>
         Der Spitzname wird auf diesem Gerät gespeichert <b>und bei jeder Frage an
@@ -781,7 +751,13 @@ body::before {
     <div class="age-scene">
       <div class="age-bubble" id="ageBubble"></div>
       <div class="age-platform"><img src="assets/plattform.png" alt=""></div>
-      <div class="age-robot-wrap" id="ageRobot"><img src="assets/lio.png" alt="Lio, ein freundlicher Roboter"></div>
+      
+      <!-- HIER BLINZELT LIO JETZT AUCH! -->
+      <div class="age-robot-wrap robot-container" id="ageRobot">
+        <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
+        <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
+      </div>
+      
     </div>
   </div>
 
@@ -805,9 +781,6 @@ body::before {
 
 <!-- ════════════════════════════════════════
      HAUPTBILDSCHIRM
-     Wichtig: ALLES bis zum schließenden </div> gehört in diesen Screen.
-     Vorher standen Sprechblase, Lernkarten und Mikro außerhalb — deshalb
-     waren sie auf jedem Bildschirm sichtbar.
 ═══════════════════════════════════════ -->
 <div class="screen" id="screen-main">
   <div class="top-bar">
@@ -822,9 +795,13 @@ body::before {
       <div class="sparkle sp1"></div><div class="sparkle sp2"></div>
       <div class="sparkle sp3"></div><div class="sparkle sp4"></div>
       <div class="platform"><img src="assets/plattform.png" alt=""></div>
-      <div class="robot-wrap" id="robot" title="Antippen, um Lio zu stoppen">
-        <img src="assets/lio.png" alt="Lio, ein freundlicher Roboter">
+      
+      <!-- HIER IST DER NEUE HAUPT-BLINZEL-CONTAINER -->
+      <div class="robot-wrap robot-container" id="robot" title="Antippen, um Lio zu stoppen">
+        <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
+        <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
       </div>
+      
     </div>
 
     <div class="mood-side" id="moods">
@@ -972,10 +949,6 @@ body::before {
 
 /* ══════════════════════════════════════════════════════════
    KONFIGURATION
-   APP_TOKEN muss zum APP_TOKEN im Backend passen.
-   Hinweis: In einer ausgelieferten App ist dieser Wert auslesbar.
-   Er hält Gelegenheits-Missbrauch ab, ersetzt aber keine
-   App Attest / Play Integrity Prüfung.
 ══════════════════════════════════════════════════════════ */
 const CFG = Object.assign({
   apiBase: '',
@@ -984,7 +957,6 @@ const CFG = Object.assign({
 
 const $ = (id) => document.getElementById(id);
 
-/* ── Geräte-ID: zufällig, kein Login, kein Tracking ── */
 function getDeviceId() {
   let id = localStorage.getItem('lio_device');
   if (!id) {
@@ -1009,22 +981,21 @@ async function apiFetch(path, body) {
 /* ══════════════════════════════════════════════════════════
    ZUSTAND
 ══════════════════════════════════════════════════════════ */
-const MAX_HISTORY = 12;          // muss ≤ MAX_HISTORY_MESSAGES im Backend sein
+const MAX_HISTORY = 12;
 let messages = [];
 let currentMood = null;
 let currentMode = 'talk';
 let currentAge = null;
 let currentSubject = null;
 let activeTopic = null;
-let topicResolved = true;        // false = Lio bleibt beim laufenden Thema
-let lastSpeech = null;           // {text, exp, sig} von /api/chat
+let topicResolved = true;
+let lastSpeech = null;
 let lastLioText = '';
 let isLioSpeaking = false;
 let isListening = false;
 let isKaraoke = false;
 let childName = localStorage.getItem('lio_name') || '';
 
-/* Stimm-Einstellungen (Gerätestimme) */
 let voices = [];
 let selectedVoice = null;
 let speechRate = 1.0;
@@ -1043,7 +1014,6 @@ const AGE_GROUPS = {
   '12+':  { label: '🎮 12+ Jahre',  rate: 1.05, pitch: 1.05, greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
 };
 
-/* Diese Schlüssel müssen exakt den MODES im Backend entsprechen. */
 const MODES = {
   talk:     { icon:'💬', title:'Chat',        welcome:{ '3-5':'Hallo {name}! Du kannst mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
   homework: { icon:'📚', title:'Hausaufgaben',welcome:{ '3-5':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
@@ -1083,9 +1053,6 @@ const HOMEWORK_FOLLOWUPS = [
   { label:'📝 Anderes Beispiel',   prompt:'Zeig mir noch ein anderes Beispiel dazu.' },
 ];
 
-/* Nur gemeinfreie Volks- und Kinderlieder (Hoffmann von Fallersleben,
-   Claudius u. a. — Schutzfrist abgelaufen).
-   Moderne Lieder brauchen eine GEMA-Lizenz — bitte nichts einfach ergänzen. */
 const ALL_SONGS = [
   { icon:'🐭', title:'Alle meine Entchen', ages:['3-5','5-8','8-12','12+'], lyrics:[
       'Alle meine Entchen schwimmen auf dem See.',
@@ -1115,10 +1082,6 @@ const ALL_SONGS = [
       'dass ihm auch nicht eines fehlet an der ganzen großen Zahl.' ]},
 ];
 
-/* ══════════════════════════════════════════════════════════
-   STIMMPROFILE NACH GEFÜHL
-   Lios Sprechweise passt sich an, welches Emoji das Kind gewählt hat.
-══════════════════════════════════════════════════════════ */
 const MOOD_VOICE_PROFILES = {
   happy:   { rate: 1.12, pitch: 1.28 },
   excited: { rate: 1.18, pitch: 1.34 },
@@ -1132,9 +1095,6 @@ function getMoodVoiceProfile() {
   return (currentMood && MOOD_VOICE_PROFILES[currentMood]) ? MOOD_VOICE_PROFILES[currentMood] : null;
 }
 
-/* ══════════════════════════════════════════════════════════
-   BILDSCHIRME
-══════════════════════════════════════════════════════════ */
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = $('screen-' + name);
@@ -1143,25 +1103,17 @@ function showScreen(name) {
 
 function setBubble(text)   { const b = $('bubble'); if (b) b.textContent = text; }
 function setBubbleLoading(){ const b = $('bubble'); if (b) b.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>'; }
-function setHint(text)     { const h = $('hint');   if (h) h.textContent = text; }
+function setHint(text)     { const h = $('hint');  if (h) h.textContent = text; }
 
 /* ══════════════════════════════════════════════════════════
    ELTERN-GATE
-   Zwei Stufen, damit ein neugieriges Kind nicht durch Zufall oder
-   schnelles Tippen durchkommt:
-   1. Zweistellige Multiplikation, für kleine Kinder nicht im Kopf lösbar.
-   2. 3 Sekunden gedrückt halten — das schafft kein Zufallstreffer.
-   Nach 3 falschen Rechenversuchen sperrt das Gate für 30 Sekunden.
-   Die Sperre wird in localStorage gemerkt, damit ein Neuladen sie nicht umgeht.
 ══════════════════════════════════════════════════════════ */
 let mathSolution = 0;
 let gateFails = parseInt(localStorage.getItem('lio_gate_fails') || '0', 10);
 
 function newMathChallenge() {
-  // Zahlen von 5 bis 10. Für Erwachsene trivial, für kleine Kinder
-  // noch nicht sicher im Kopf — zusammen mit dem Halten-Schritt reicht das.
-  const a = 5 + Math.floor(Math.random() * 6);   // 5–10
-  const b = 5 + Math.floor(Math.random() * 6);   // 5–10
+  const a = 5 + Math.floor(Math.random() * 6);
+  const b = 5 + Math.floor(Math.random() * 6);
   mathSolution = a * b;
   $('mathQuestion').textContent = a + ' × ' + b + ' = ?';
 }
@@ -1209,7 +1161,6 @@ function checkParentMath() {
 $('btnMath').addEventListener('click', checkParentMath);
 $('mathAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkParentMath(); });
 
-/* ── Stufe 2: 3 Sekunden gedrückt halten ── */
 const HOLD_MS = 3000;
 let holdRaf = null;
 let holdStart = 0;
@@ -1244,7 +1195,6 @@ holdBtn.addEventListener('pointerup', holdEndHandler);
 holdBtn.addEventListener('pointerleave', holdEndHandler);
 holdBtn.addEventListener('pointercancel', holdEndHandler);
 
-/* PIN wird gehasht gespeichert, nicht im Klartext. */
 async function hashPin(pin) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('lio:' + pin));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -1282,8 +1232,6 @@ function showAgeBubble(text) {
   showAgeBubble._t = setTimeout(() => bubble.classList.remove('show'), 4500);
 }
 
-/* Spricht die Begrüßung auf dem Altersbildschirm und ruft danach onDone auf.
-   Der Timeout ist das Sicherheitsnetz: manche Browser feuern onend nicht. */
 function speakOnAge(text, onDone) {
   let done = false;
   const finish = () => { if (done) return; done = true; if (onDone) onDone(); };
@@ -1459,7 +1407,6 @@ function selectSubject(subject) {
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
 }
 
-/* ── Schnellantworten ── */
 function renderQuickReplies(items, kind) {
   const row = $('quickReplies');
   if (!row) return;
@@ -1543,7 +1490,6 @@ function setLioEmotion(emotion) {
 
 /* ══════════════════════════════════════════════════════════
    GEFÜHLSERKENNUNG IM TEXT
-   Steuert Lios Animation und wird als Hinweis ans Backend geschickt.
 ══════════════════════════════════════════════════════════ */
 const EMOTION_KEYWORDS = {
   happy:      ['freut','glücklich','toll','super','wunderbar','schön','lachen','erleichtert','prima','klasse','cool','mega'],
@@ -1564,8 +1510,6 @@ function detectUserEmotionAdvanced(userText) {
   return best;
 }
 
-/* Wird genutzt, wenn der Server nicht erreichbar ist — dann antwortet
-   Lio wenigstens einfühlsam statt nur mit einer Fehlermeldung. */
 const lioEmotionalResponses = {
   happy:      { greeting:'Das freut mich zu hören!',            follow:'Erzähl mir gleich mehr davon.' },
   sad:        { greeting:'Ich merke, dass es dir gerade nicht gut geht.', follow:'Deine Gefühle sind wichtig. Ich bin gleich wieder für dich da.' },
@@ -1582,8 +1526,6 @@ function generateLioGreeting(emotion) {
 
 /* ══════════════════════════════════════════════════════════
    SICHERHEITSNETZ IM CLIENT
-   Der Server prüft dasselbe gründlicher — aber wenn er gerade nicht
-   erreichbar ist, greift wenigstens das hier.
 ══════════════════════════════════════════════════════════ */
 const BULLYING_PATTERNS = [
   /mobb/i, /gemobbt/i, /gehänselt|hänseln/i, /ausgelacht/i, /ausgeschlossen/i,
@@ -1597,7 +1539,6 @@ function detectBullyingSignal(text) {
   return BULLYING_PATTERNS.some(p => p.test(text));
 }
 
-/* Speichert nur Kategorie + Datum, NIE den Wortlaut (Datenschutz). */
 function logParentNotice(category) {
   try {
     const notices = JSON.parse(localStorage.getItem('lio_notices') || '[]');
@@ -1613,8 +1554,6 @@ function stripEmoji(text) {
   return String(text).replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s{2,}/g, ' ').trim();
 }
 
-/* Zerlegt lange Antworten in sprechbare Häppchen von max. 15 Wörtern.
-   Die Gerätestimme klingt dadurch natürlicher und bricht nicht ab. */
 function parseForSpeech(text) {
   const clean = String(text).replace(/<[^>]*>/g, '').trim();
   const sentences = clean.match(/[^.!?]*[.!?]+/g) || [clean];
@@ -1634,8 +1573,6 @@ function parseForSpeech(text) {
   return chunks;
 }
 
-/* Warnt in der Konsole, wenn die KI Gendersonderzeichen benutzt —
-   die liest jede Sprachausgabe unschön vor. */
 function validateGenderNeutralLanguage(text) {
   const markers = [
     { re: /\w+:innen/g,  hint: 'Doppelpunkt-Form, besser: Lehrkräfte, Mitarbeitende' },
@@ -1727,7 +1664,7 @@ if ('speechSynthesis' in window) {
 let currentAudio = null;
 let streamAudioQueue = [];
 let isPlayingQueue = false;
-let currentSpeechId = 0; // Verhindert Echos beim Abbrechen
+let currentSpeechId = 0; 
 
 function stopSpeaking() {
   currentSpeechId++;
@@ -1745,22 +1682,20 @@ function stopSpeaking() {
   streamAudioQueue = [];
   isPlayingQueue = false;
   
-  const robot = $('robot');
-  if (robot) robot.classList.remove('talking');
+  document.querySelectorAll('.robot-container').forEach(r => r.classList.remove('talking'));
   const micBtn = $('micBtn');
   if (micBtn) micBtn.style.opacity = '1';
 }
 
-$('robot').addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); });
+document.querySelectorAll('.robot-container').forEach(r => {
+  r.addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); });
+});
 
-/* Arbeitet die Audio-Häppchen nacheinander ab */
 async function playNextInQueue(speechId) {
   if (speechId !== currentSpeechId || streamAudioQueue.length === 0) {
     isPlayingQueue = false;
-    // Wenn die Warteschlange leer ist und das Gespräch vorbei ist, Animation stoppen
     if (!isLioSpeaking) {
-      const robot = $('robot');
-      if (robot) robot.classList.remove('talking');
+      document.querySelectorAll('.robot-container').forEach(r => r.classList.remove('talking'));
     }
     return;
   }
@@ -1772,13 +1707,13 @@ async function playNextInQueue(speechId) {
   
   currentAudio.onended = () => {
     currentAudio = null;
-    playNextInQueue(speechId); // Nächsten Satz abspielen
+    playNextInQueue(speechId); 
   };
   
   currentAudio.onerror = () => {
     console.warn('[Audio] Fehler beim Abspielen eines Satzes.');
     currentAudio = null;
-    playNextInQueue(speechId); // Überspringen und weiter
+    playNextInQueue(speechId);
   };
 
   await currentAudio.play().catch(err => {
@@ -1788,14 +1723,13 @@ async function playNextInQueue(speechId) {
   });
 }
 
-/* Einfaches Vorlesen für feste Sätze (z.B. Menü-Erklärungen) */
 async function speakSigned(speech) {
   if (!speech || !speech.text) return;
   stopSpeaking();
   const thisSpeechId = currentSpeechId;
   isLioSpeaking = true;
   
-  $('robot').classList.add('talking');
+  document.querySelectorAll('.robot-container').forEach(r => r.classList.add('talking'));
   $('micBtn').style.opacity = '0.5';
 
   try {
@@ -1806,14 +1740,13 @@ async function speakSigned(speech) {
     const url = URL.createObjectURL(blob);
     streamAudioQueue.push(url);
     
-    // Nach dem Abspielen den Speicher wieder freigeben
     const originalPlayNext = playNextInQueue;
     playNextInQueue = async (id) => {
       await originalPlayNext(id);
       if (streamAudioQueue.length === 0) URL.revokeObjectURL(url);
     };
 
-    isLioSpeaking = false; // Wird vom Queue-Player gesteuert
+    isLioSpeaking = false;
     playNextInQueue(thisSpeechId);
   } catch (err) {
     console.error('Sprachfehler:', err);
@@ -1932,10 +1865,10 @@ async function sendMessage(userText) {
   userText = userText.trim().slice(0, 500);
   
   clearQuickReplies();
-  stopSpeaking(); // Bricht alles Vorherige ab
+  stopSpeaking();
 
   const thisSpeechId = currentSpeechId;
-  isLioSpeaking = true; // Sperrt neue Eingaben, während der Stream läuft
+  isLioSpeaking = true; 
 
   const bullyingSignal = detectBullyingSignal(userText);
   if (bullyingSignal) logParentNotice('bullying');
@@ -1950,14 +1883,14 @@ async function sendMessage(userText) {
 
   setBubble('Du: „' + userText + '"');
   setHint('Lio denkt nach… 🤔');
-  $('robot').classList.add('talking');
+  
+  document.querySelectorAll('.robot-container').forEach(r => r.classList.add('talking'));
   $('micBtn').disabled = true;
 
   messages.push({ role: 'user', content: userText });
   if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
 
   try {
-    // Wir nutzen natives fetch() für den ReadableStream an den neuen /api/chat-stream Endpunkt
     const res = await fetch('/api/chat-stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1979,10 +1912,10 @@ async function sendMessage(userText) {
     const decoder = new TextDecoder("utf-8");
     
     let fullReply = "";
-    setBubble(""); // Sprechblase leeren für den Text-Aufbau
+    setBubble(""); 
 
     while (true) {
-      if (thisSpeechId !== currentSpeechId) break; // Abgebrochen durch Nutzer
+      if (thisSpeechId !== currentSpeechId) break; 
       
       const { done, value } = await reader.read();
       if (done) break;
@@ -2001,14 +1934,11 @@ async function sendMessage(userText) {
               const parsed = JSON.parse(dataStr);
               if (parsed.error) throw new Error(parsed.error);
 
-              // 1. Text an die Blase anhängen
               fullReply += parsed.text + " ";
               setBubble(fullReply.trim());
 
-              // 2. Audio-URL in die Warteschlange packen
               streamAudioQueue.push(parsed.audio);
               
-              // 3. Playback starten, falls es nicht schon läuft
               if (!isPlayingQueue) {
                 playNextInQueue(thisSpeechId);
               }
@@ -2021,8 +1951,7 @@ async function sendMessage(userText) {
       }
     }
 
-    // Stream ist komplett fertig geladen
-    isLioSpeaking = false; // Erlaubt den Roboter-Stop, wenn Audio fertig ist
+    isLioSpeaking = false; 
     
     const cleanReply = fullReply.trim();
     if (cleanReply) {
@@ -2295,6 +2224,30 @@ $('btnWipe').addEventListener('click', () => {
 });
 
 /* ══════════════════════════════════════════════════════════
+   LIO BLINZEL-LOGIK (NATÜRLICHER ZUFALL)
+══════════════════════════════════════════════════════════ */
+function startNaturalBlinking() {
+  function blink() {
+    // Schließt die Augen bei allen Lios auf der Seite
+    const containers = document.querySelectorAll('.robot-container');
+    containers.forEach(c => c.classList.add('is-blinking'));
+    
+    // Nach 150 Millisekunden wieder aufwecken
+    setTimeout(() => {
+      containers.forEach(c => c.classList.remove('is-blinking'));
+      
+      // Nächster Blinzler in 2 bis 6 Sekunden
+      const nextBlinkIn = 2000 + Math.random() * 4000;
+      setTimeout(blink, nextBlinkIn);
+    }, 150); 
+  }
+  
+  // Den allerersten Blinzler nach 3 Sekunden starten
+  setTimeout(blink, 3000);
+}
+
+
+/* ══════════════════════════════════════════════════════════
    START
 ══════════════════════════════════════════════════════════ */
 function buildClouds() {
@@ -2311,6 +2264,7 @@ function buildClouds() {
 }
 
 function boot() {
+  startNaturalBlinking(); // <--- HIER STARTET DAS BLINZELN!
   newMathChallenge();
   updateGateLockUI();
   buildClouds();
@@ -2342,9 +2296,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-/* ══════════════════════════════════════════════════════════
-   GLOBALE FEHLERBEHANDLUNG
-══════════════════════════════════════════════════════════ */
 window.onerror = function (msg, url, line) {
   console.error('[Fehler]', msg, 'Zeile', line);
   return false;
