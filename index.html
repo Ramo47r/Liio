@@ -2231,29 +2231,27 @@ $('btnWipe').addEventListener('click', () => {
 });
 
 /* ══════════════════════════════════════════════════════════
-   LIO BLINZEL-LOGIK (NATÜRLICHER ZUFALL)
+  /* ══════════════════════════════════════════════════════════
+   LIO BLINZEL-LOGIK (LÄNGERE DAUER & NATÜRLICH)
 ══════════════════════════════════════════════════════════ */
 function startNaturalBlinking() {
   function blink() {
-    // Schließt die Augen bei allen Lios auf der Seite
     const containers = document.querySelectorAll('.robot-container');
     containers.forEach(c => c.classList.add('is-blinking'));
     
-    // Nach 150 Millisekunden wieder aufwecken
+    // Augen bleiben jetzt 280ms geschlossen (statt 150ms) -> Deutliches Blinzeln
     setTimeout(() => {
       containers.forEach(c => c.classList.remove('is-blinking'));
       
-      // Nächster Blinzler in 2 bis 6 Sekunden
-      const nextBlinkIn = 2000 + Math.random() * 4000;
+      // Nächster Blinzler in 2,5 bis 5,5 Sekunden
+      const nextBlinkIn = 2500 + Math.random() * 3000;
       setTimeout(blink, nextBlinkIn);
-    }, 150); 
+    }, 280); 
   }
   
-  // Den allerersten Blinzler nach 3 Sekunden starten
-  setTimeout(blink, 3000);
+  // Startet den ersten Blinzler nach 2 Sekunden
+  setTimeout(blink, 2000);
 }
-
-
 /* ══════════════════════════════════════════════════════════
    START
 ══════════════════════════════════════════════════════════ */
