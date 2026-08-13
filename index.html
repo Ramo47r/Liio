@@ -298,12 +298,18 @@ body::before {
 }
 .robot-container img.lio-auge-zu {
   position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
+  /* Bild exakt in der Mitte verankern */
+  top: 50% !important;
+  left: 50% !important;
   width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  opacity: 0 !important; /* Standard: Unsichtbar */
+  height: auto !important;
+  
+  /* 🚨 HIER IST DIE LUPE: 
+     translate(-50%, -50%) hält es genau in der Mitte. 
+     scale(1.2) macht das Bild 20% größer! */
+  transform: translate(-50%, -50%) scale(1.2) !important; 
+  
+  opacity: 0 !important; 
   pointer-events: none;
 }
 
