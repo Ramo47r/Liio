@@ -285,6 +285,7 @@ body::before {
 
 /* ════════════════════════════════════════
 /* ════════════════════════════════════════
+/* ════════════════════════════════════════
    BLINZEL-ANIMATION (PERFEKT ANGEPASST)
 ═══════════════════════════════════════ */
 .robot-container {
@@ -302,11 +303,17 @@ body::before {
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;
-  opacity: 0;
+  opacity: 0 !important; /* Standard: Unsichtbar */
   pointer-events: none;
 }
-.is-blinking .lio-auge-offen { opacity: 0; }
-.is-blinking .lio-auge-zu { opacity: 1; }
+
+/* 🚨 DIE LÖSUNG: Diese Befehle sind jetzt die absoluten Chefs! */
+.robot-container.is-blinking img.lio-auge-offen { 
+  opacity: 0 !important; 
+}
+.robot-container.is-blinking img.lio-auge-zu { 
+  opacity: 1 !important; 
+}
 
 .sparkle { position:absolute; width:8px; height:8px; pointer-events:none; z-index:4; }
 .sparkle::before { content:''; display:block; width:7px; height:7px; border-radius:50%;
