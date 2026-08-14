@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
 <style>
 /* ══════════════════════════════════════════════════════════
-   SCHRIFTEN
+   SCHRIFTEN & FARBEN
 ══════════════════════════════════════════════════════════ */
 :root {
   --bg-0:      #04070B;
@@ -138,8 +138,8 @@ body::before {
   filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(79,227,193,.35));
   margin-bottom:-40px;
 }
-.age-robot-wrap img { display:block; width:100%; height:auto; transform: translateX(280px); }
-.age-robot-wrap.talking { animation: robotFloat 3.6s ease-in-out infinite, robotTalk .4s ease-in-out infinite; }
+/* WICHTIG: Kein transform auf den Bildern selbst, um Konflikte zu vermeiden! */
+.age-robot-wrap img { display:block; width:100%; height:auto; }
 
 .age-bubble {
   position:absolute; top:-40px; left:50%; transform:translateX(-50%);
@@ -246,11 +246,11 @@ body::before {
   filter: blur(20px); pointer-events:none; z-index:1; border-radius:50%;
   animation: haloPulse 4s ease-in-out infinite;
 }
-.halo.happy   { background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.46) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(79,227,193,.34) 0%, transparent 66%); }
-.halo.sad     { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(90,140,255,.38) 0%, transparent 66%); }
-.halo.angry   { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(255,122,138,.40) 0%, transparent 66%); }
+.halo.happy    { background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.46) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(79,227,193,.34) 0%, transparent 66%); }
+.halo.sad      { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(90,140,255,.38) 0%, transparent 66%); }
+.halo.angry    { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(255,122,138,.40) 0%, transparent 66%); }
 .halo.scared  { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(157,139,255,.38) 0%, transparent 66%); }
-.halo.tired   { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(120,140,170,.26) 0%, transparent 66%); }
+.halo.tired    { background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(120,140,170,.26) 0%, transparent 66%); }
 .halo.excited { background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.55) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(56,217,240,.44) 0%, transparent 66%); }
 
 .platform {
@@ -283,13 +283,13 @@ body::before {
 @keyframes lioSad    { 0%,100% { transform: translateX(-50%) translateY(10px); } 50% { transform: translateX(-50%) translateY(15px); } }
 @keyframes lioTired  { 0%,100% { transform: translateX(-50%) translateY(5px); }  50% { transform: translateX(-50%) translateY(10px); } }
 
+
 /* ════════════════════════════════════════
-/* ════════════════════════════════════════
-/* ════════════════════════════════════════
-   BLINZEL-ANIMATION (PERFEKT ANGEPASST)
+   BLINZEL-ANIMATION (PERFEKT UND RESPONSIVE)
 ═══════════════════════════════════════ */
 .robot-container {
   position: relative;
+  width: 100%;
 }
 .robot-container img.lio-auge-offen {
   display: block;
@@ -298,28 +298,23 @@ body::before {
 }
 .robot-container img.lio-auge-zu {
   position: absolute !important;
-  /* Bild exakt in der Mitte verankern */
   top: 50% !important;
-  left: 55% !important;
-  width: 100% !important;
-  height: auto !important;
+  left: 50% !important;
   
-  /* 🚨 HIER IST DIE LUPE: 
-     translate(-50%, -50%) hält es genau in der Mitte. 
-     scale(1.2) macht das Bild 20% größer! */
-  transform: translate(-50%, -50%) scale(1.93) !important; 
+  /* WICHTIG: width streckt das Bild, height auto verhindert die Verzerrung! */
+  width: 125% !important; 
+  height: auto !important; 
   
-  opacity: 0 !important; 
+  /* Schiebt das Bild exakt in die Mitte */
+  transform: translate(-50%, -50%) !important; 
+  
+  object-fit: contain !important;
+  opacity: 0 !important;
   pointer-events: none;
 }
+.robot-container.is-blinking img.lio-auge-offen { opacity: 0 !important; }
+.robot-container.is-blinking img.lio-auge-zu { opacity: 1 !important; }
 
-/* 🚨 DIE LÖSUNG: Diese Befehle sind jetzt die absoluten Chefs! */
-.robot-container.is-blinking img.lio-auge-offen { 
-  opacity: 0 !important; 
-}
-.robot-container.is-blinking img.lio-auge-zu { 
-  opacity: 1 !important; 
-}
 
 .sparkle { position:absolute; width:8px; height:8px; pointer-events:none; z-index:4; }
 .sparkle::before { content:''; display:block; width:7px; height:7px; border-radius:50%;
@@ -772,10 +767,12 @@ body::before {
       <div class="age-bubble" id="ageBubble"></div>
       <div class="age-platform"><img src="assets/plattform.png" alt=""></div>
       
-      <!-- HIER BLINZELT LIO JETZT AUCH! -->
-      <div class="age-robot-wrap robot-container" id="ageRobot">
-        <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
-        <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
+      <!-- HIER BLINZELT LIO JETZT IM STARTMENÜ (OHNE KONFLIKT) -->
+      <div class="age-robot-wrap" id="ageRobot">
+        <div class="robot-container" style="transform: translateX(280px);">
+          <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
+          <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
+        </div>
       </div>
       
     </div>
@@ -816,7 +813,7 @@ body::before {
       <div class="sparkle sp3"></div><div class="sparkle sp4"></div>
       <div class="platform"><img src="assets/plattform.png" alt=""></div>
       
-      <!-- HIER IST DER NEUE HAUPT-BLINZEL-CONTAINER -->
+      <!-- HIER IST DER HAUPT-BLINZEL-CONTAINER -->
       <div class="robot-wrap robot-container" id="robot" title="Antippen, um Lio zu stoppen">
         <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
         <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
@@ -2244,7 +2241,6 @@ $('btnWipe').addEventListener('click', () => {
 });
 
 /* ══════════════════════════════════════════════════════════
-  /* ══════════════════════════════════════════════════════════
    LIO BLINZEL-LOGIK (LÄNGERE DAUER & NATÜRLICH)
 ══════════════════════════════════════════════════════════ */
 function startNaturalBlinking() {
@@ -2252,7 +2248,7 @@ function startNaturalBlinking() {
     const containers = document.querySelectorAll('.robot-container');
     containers.forEach(c => c.classList.add('is-blinking'));
     
-    // Augen bleiben jetzt 280ms geschlossen (statt 150ms) -> Deutliches Blinzeln
+    // Lio schließt die Augen für deutliche 280 Millisekunden
     setTimeout(() => {
       containers.forEach(c => c.classList.remove('is-blinking'));
       
@@ -2262,9 +2258,11 @@ function startNaturalBlinking() {
     }, 280); 
   }
   
-  // Startet den ersten Blinzler nach 2 Sekunden
+  // Startet den allerersten Blinzler
   setTimeout(blink, 2000);
 }
+
+
 /* ══════════════════════════════════════════════════════════
    START
 ══════════════════════════════════════════════════════════ */
@@ -2282,7 +2280,7 @@ function buildClouds() {
 }
 
 function boot() {
-  startNaturalBlinking(); // <--- HIER STARTET DAS BLINZELN!
+  startNaturalBlinking();
   newMathChallenge();
   updateGateLockUI();
   buildClouds();
