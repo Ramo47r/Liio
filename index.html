@@ -295,6 +295,12 @@ body::before {
   display: block;
   width: 100%;
   height: auto;
+  
+  /* 🚨 HIER IST DEIN JOYSTICK FÜR DAS OFFENE AUGE: 
+     translate(X, Y) schiebt das Bild. 
+     Der erste Wert (z.B. 8%) schiebt es nach rechts (Minus-Werte nach links).
+     Der zweite Wert (0%) schiebt es nach unten (Minus-Werte nach oben). */
+  transform: translate(8%, 0%) scale(1.0) !important;
 }
 .robot-container img.lio-auge-zu {
   position: absolute !important;
