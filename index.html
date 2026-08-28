@@ -122,8 +122,11 @@ body::before {
   filter: blur(26px); z-index:1; pointer-events:none;
   animation: haloPulse 4.5s ease-in-out infinite;
 }
+
 .age-platform {
-  position:absolute; bottom:-10%; left:50%;
+  position:absolute; 
+  bottom:-10%; /* Hier Plattform verschieben */
+  left:50%;
   transform:translateX(-50%); width:120%;
   pointer-events:none; z-index:2;
   filter: drop-shadow(0 0 34px rgba(79,227,193,0.55));
@@ -132,13 +135,13 @@ body::before {
 .age-platform img { display:block; width:100%; height:auto; }
 
 .age-robot-wrap {
-  position:absolute; bottom:35%; left:-50%; width:120%; z-index:3;
-  transform: translateX(-50%);
+  position:absolute; bottom:35%; 
+  left:50%; transform:translateX(-50%); 
+  width:90%; z-index:3;
   animation: robotFloat 3.6s ease-in-out infinite;
   filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(79,227,193,.35));
   margin-bottom:-40px;
 }
-/* WICHTIG: Kein transform auf den Bildern selbst, um Konflikte zu vermeiden! */
 .age-robot-wrap img { display:block; width:100%; height:auto; }
 
 .age-bubble {
@@ -254,15 +257,18 @@ body::before {
 .halo.excited { background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.55) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(56,217,240,.44) 0%, transparent 66%); }
 
 .platform {
-  position:absolute; bottom:-35%; left:50%; transform:translateX(-50%);
+  position:absolute; 
+  bottom:-35%; /* Hier Plattform verschieben */
+  left:50%; transform:translateX(-50%);
   width:110%; pointer-events:none; z-index:2;
   filter: drop-shadow(0 0 40px rgba(79,227,193,.55));
 }
 .platform img { display:block; width:100%; height:auto; }
 
 .robot-wrap {
-  position:absolute; bottom:-15%; left:75%;
-  transform: translateX(-50%); width:75%; z-index:3;
+  position:absolute; bottom:-15%; 
+  left:50%; transform: translateX(-50%); 
+  width:85%; z-index:3;
   filter: drop-shadow(0 16px 38px rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(79,227,193,.30));
   will-change: transform;
   animation: lioFloat 3.6s ease-in-out infinite;
@@ -291,9 +297,10 @@ body::before {
   position: relative;
   width: 100%;
   
-  /* 🚨 JOYSTICK 1: LIO KOMPLETT VERSCHIEBEN */
-  /* Schiebt BEIDE Bilder zusammen. Perfekt, um Lio genau über die Plattform zu stellen. */
-  transform: translate(5%, 0%); 
+  /* 🚨 DER HANDY-SICHERE JOYSTICK: LIO KOMPLETT VERSCHIEBEN */
+  /* Ein positiver Wert (z.B. 5%) schiebt ihn nach rechts.
+     Ein negativer Wert (z.B. -5%) schiebt ihn nach links. */
+  margin-left: 5%; 
 }
 
 .robot-container img.lio-auge-offen {
@@ -779,11 +786,12 @@ body::before {
   <div class="age-middle">
     <div class="age-scene">
       <div class="age-bubble" id="ageBubble"></div>
+      
       <div class="age-platform"><img src="assets/plattform.png" alt=""></div>
       
       <!-- HIER BLINZELT LIO JETZT IM STARTMENÜ (OHNE KONFLIKT) -->
       <div class="age-robot-wrap" id="ageRobot">
-        <div class="robot-container" style="transform: translateX(280px);">
+        <div class="robot-container">
           <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
           <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
         </div>
@@ -825,12 +833,15 @@ body::before {
       <div class="halo" id="halo"></div>
       <div class="sparkle sp1"></div><div class="sparkle sp2"></div>
       <div class="sparkle sp3"></div><div class="sparkle sp4"></div>
+      
       <div class="platform"><img src="assets/plattform.png" alt=""></div>
       
       <!-- HIER IST DER HAUPT-BLINZEL-CONTAINER -->
-      <div class="robot-wrap robot-container" id="robot" title="Antippen, um Lio zu stoppen">
-        <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
-        <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
+      <div class="robot-wrap" id="robot" title="Antippen, um Lio zu stoppen">
+        <div class="robot-container">
+          <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
+          <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
+        </div>
       </div>
       
     </div>
