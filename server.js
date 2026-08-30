@@ -184,7 +184,11 @@ app.post('/api/speak', async (req, res) => {
   if (!text) return res.status(400).json({ error: 'Kein Text.' });
   try {
     const url = await generateTTS(text);
-    const cachePath = path.join(__dirname, url);
+    
+    // 🚨 REPARATUR: Den Dateinamen aus der URL filtern und im richtigen Ordner suchen!
+    const fileName = url.replace('/cache/', ''); 
+    const cachePath = path.join(CACHE_DIR, fileName);
+    
     if (fs.existsSync(cachePath)) {
       const buffer = fs.readFileSync(cachePath);
       res.set({ 'Content-Type': 'audio/mpeg', 'Content-Length': buffer.length });
