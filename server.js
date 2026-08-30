@@ -54,8 +54,7 @@ async function generateTTS(text) {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
     // 🚨 WICHTIG: TRAGE HIER DIE EXAKTE ID VON "MANNI" EIN! 🚨
-    // (Aktuell ist hier als Platzhalter noch "Gigi" drin)
-    const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
+    const voiceId = 'jBpfuIE2acCO8z3wKNLl'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
@@ -132,33 +131,42 @@ app.post('/api/chat-stream', async (req, res) => {
 
     const reader = groqResponse.body.getReader();
     const decoder = new TextDecoder("utf-8");
-    let currentSentence = "";
     
+    let currentSentence = "";
+    let bufferStr = ""; // 🚨 DER NEUE PUFFER FÜR ABGESCHNITTENE HÄPPCHEN
+
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      bufferStr += decoder.decode(value, { stream: true });
+      const lines = bufferStr.split('\n');
+      bufferStr = lines.pop(); // Das letzte, unfertige Häppchen aufheben!
       
       for (const line of lines) {
-        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-          const data = JSON.parse(line.slice(6));
-          const token = data.choices[0].delta.content || "";
-          currentSentence += token;
-          
-          if (/[.!?]\s*$/.test(currentSentence)) {
-            const cleanSentence = currentSentence.trim();
-            if (cleanSentence.length > 2) {
-              const audioUrl = await generateTTS(cleanSentence);
-              res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            const token = data.choices[0]?.delta?.content || "";
+            currentSentence += token;
+            
+            if (/[.!?]\s*$/.test(currentSentence)) {
+              const cleanSentence = currentSentence.trim();
+              if (cleanSentence.length > 2) {
+                const audioUrl = await generateTTS(cleanSentence);
+                res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
+              }
+              currentSentence = ""; 
             }
-            currentSentence = ""; 
+          } catch (e) {
+            // Ignoriert unfertige JSON-Teile sicher und stürzt nicht mehr ab!
           }
         }
       }
     }
     
+    // Den allerletzten Satz am Ende rausschicken, falls noch einer übrig ist
     if (currentSentence.trim().length > 0) {
       const audioUrl = await generateTTS(currentSentence.trim());
       res.write(`data: ${JSON.stringify({ text: currentSentence.trim(), audio: audioUrl })}\n\n`);
@@ -185,7 +193,6 @@ app.post('/api/speak', async (req, res) => {
   try {
     const url = await generateTTS(text);
     
-    // 🚨 REPARATUR: Den Dateinamen aus der URL filtern und im richtigen Ordner suchen!
     const fileName = url.replace('/cache/', ''); 
     const cachePath = path.join(CACHE_DIR, fileName);
     
