@@ -55,7 +55,7 @@ async function generateTTS(text) {
     
     // 🚨 WICHTIG: TRAGE HIER DIE EXAKTE ID VON "MANNI" EIN! 🚨
     // (Aktuell ist hier als Platzhalter noch "Gigi" drin)
-    const voiceId = 'jBpfuIE2acCO8z3wKNLl'; 
+    const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
