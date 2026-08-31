@@ -114,8 +114,8 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // 🚨 HIER IST DAS KORRIGIERTE GEHIRN (MODELL): 🚨
-        model: 'llama3-70b-8192', 
+        // 🚨 HIER IST DAS NEUE, AKTUELLE GEHIRN: 🚨
+        model: 'llama-3.1-8b-instant', 
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
