@@ -1,4 +1,3 @@
-
 // ============================================================
 // Lio Backend — Premium TTS (ElevenLabs Turbo + Smart Cache)
 // ============================================================
@@ -47,8 +46,8 @@ async function generateTTS(text) {
   try {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
-    // 🚨 HIER BITTE MANNIS ECHTE VOICE-ID REINKOPIEREN: 🚨
-    const voiceId = 'HIER_MANNIS_VOICE_ID_EINTRAGEN'; 
+    // Mannis (oder Gigis) Voice ID
+    const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
@@ -115,14 +114,14 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // 🚨 HIER IST DAS KORRIGIERTE GEHIRN (MODELL): 🚨
-        model: 'llama3-70b-8192', 
+        model: 'llama-3.3-70b-versatile',
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
       })
     });
 
+    // 🚨 HIER IST DER NEUE DETEKTOR 🚨
     if (!groqResponse.ok) {
       const errText = await groqResponse.text();
       console.error('\n❌ GROQ FEHLER (Lios Gehirn blockiert):', groqResponse.status, errText, '\n');
