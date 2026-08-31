@@ -54,7 +54,7 @@ async function generateTTS(text) {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
     // 🚨 WICHTIG: TRAGE HIER DIE EXAKTE ID VON "MANNI" EIN! 🚨
-    const voiceId = 'jBpfuIE2acCO8z3wKNLl'; 
+    const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
