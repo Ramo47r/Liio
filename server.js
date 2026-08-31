@@ -114,8 +114,7 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // 🚨 HIER IST DAS NEUE, AKTUELLE GEHIRN: 🚨
-        model: 'openai/gpt-oss-20b', 
+        model: 'llama-3.3-70b-versatile', 
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
@@ -132,26 +131,41 @@ app.post('/api/chat-stream', async (req, res) => {
     const decoder = new TextDecoder("utf-8");
     let currentSentence = "";
     
+    // 🚨 HIER IST DER NEUE PUFFER, DER DIE ABSTÜRZE VERHINDERT: 🚨
+    let streamBuffer = "";
+
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      streamBuffer += decoder.decode(value, { stream: true });
+      const lines = streamBuffer.split('\n');
+      
+      // Die letzte (vielleicht unfertige) Zeile wieder in den Puffer packen!
+      streamBuffer = lines.pop();
       
       for (const line of lines) {
-        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-          const data = JSON.parse(line.slice(6));
-          const token = data.choices[0].delta.content || "";
-          currentSentence += token;
-          
-          if (/[.!?]\s*$/.test(currentSentence)) {
-            const cleanSentence = currentSentence.trim();
-            if (cleanSentence.length > 2) {
-              const audioUrl = await generateTTS(cleanSentence);
-              res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+          const dataStr = trimmedLine.slice(6).trim();
+          if (!dataStr) continue;
+
+          try {
+            const data = JSON.parse(dataStr);
+            const token = data.choices[0]?.delta?.content || "";
+            currentSentence += token;
+            
+            if (/[.!?]\s*$/.test(currentSentence)) {
+              const cleanSentence = currentSentence.trim();
+              if (cleanSentence.length > 2) {
+                const audioUrl = await generateTTS(cleanSentence);
+                res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
+              }
+              currentSentence = ""; 
             }
-            currentSentence = ""; 
+          } catch (e) {
+            // Überspringt zerstörte Pakete einfach leise, statt den ganzen Server abstürzen zu lassen
+            console.error('[Puffer] Beschädigtes Paket übersprungen.');
           }
         }
       }
