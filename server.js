@@ -114,7 +114,8 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile', 
+        // 🚨 KORRIGIERTES, ZUVERLÄSSIGES GEHIRN: 🚨
+        model: 'llama3-8b-8192', 
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
@@ -131,7 +132,7 @@ app.post('/api/chat-stream', async (req, res) => {
     const decoder = new TextDecoder("utf-8");
     let currentSentence = "";
     
-    // 🚨 HIER IST DER NEUE PUFFER, DER DIE ABSTÜRZE VERHINDERT: 🚨
+    // 🚨 HIER IST DER PUFFER-KLEBER GEGEN DIE ABSTÜRZE: 🚨
     let streamBuffer = "";
 
     while (true) {
@@ -141,7 +142,7 @@ app.post('/api/chat-stream', async (req, res) => {
       streamBuffer += decoder.decode(value, { stream: true });
       const lines = streamBuffer.split('\n');
       
-      // Die letzte (vielleicht unfertige) Zeile wieder in den Puffer packen!
+      // Die letzte (unfertige) Zeile wieder in den Puffer packen!
       streamBuffer = lines.pop();
       
       for (const line of lines) {
@@ -164,7 +165,7 @@ app.post('/api/chat-stream', async (req, res) => {
               currentSentence = ""; 
             }
           } catch (e) {
-            // Überspringt zerstörte Pakete einfach leise, statt den ganzen Server abstürzen zu lassen
+            // Überspringt zerstörte Pakete einfach leise, statt abzustürzen
             console.error('[Puffer] Beschädigtes Paket übersprungen.');
           }
         }
