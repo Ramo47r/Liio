@@ -46,7 +46,7 @@ async function generateTTS(text) {
   try {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
-    // Mannis (oder Gigis) Voice ID
+    // 🚨 HIER BITTE MANNIS ECHTE VOICE-ID REINKOPIEREN: 🚨
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -114,14 +114,14 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        // 🚨 HIER IST DAS KORRIGIERTE GEHIRN (MODELL): 🚨
+        model: 'llama3-70b-8192', 
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
       })
     });
 
-    // 🚨 HIER IST DER NEUE DETEKTOR 🚨
     if (!groqResponse.ok) {
       const errText = await groqResponse.text();
       console.error('\n❌ GROQ FEHLER (Lios Gehirn blockiert):', groqResponse.status, errText, '\n');
