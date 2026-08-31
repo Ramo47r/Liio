@@ -115,7 +115,7 @@ app.post('/api/chat-stream', async (req, res) => {
       },
       body: JSON.stringify({
         // 🚨 HIER IST DAS NEUE, AKTUELLE GEHIRN: 🚨
-        model: 'llama-3.1-8b-instant', 
+        model: 'openai/gpt-oss-20b', 
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
