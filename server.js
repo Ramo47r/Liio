@@ -114,8 +114,8 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // 🚨 KORRIGIERTES, ZUVERLÄSSIGES GEHIRN: 🚨
-        model: 'llama3-8b-8192', 
+        // 🚨 KORRIGIERTES, ZUVERLÄSSIGES GEHIRN (Mixtral): 🚨
+        model: 'mixtral-8x7b-32768', 
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
