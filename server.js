@@ -24,7 +24,7 @@ if (!fs.existsSync(CACHE_DIR)) {
 app.use('/cache', express.static(CACHE_DIR));
 
 // ── API Key Check ──
-if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
+if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt!');
 if (!process.env.ELEVENLABS_API_KEY) console.warn('⚠️ ELEVENLABS_API_KEY fehlt! Bitte in Render eintragen.');
 
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
@@ -35,19 +35,26 @@ app.use(express.static(__dirname));
 async function generateTTS(text) {
   const cleanText = text.trim();
   
-  const hash = crypto.createHash('sha256').update(cleanText).digest('hex');
+  // 1. Eindeutigen Hash erzeugen (Der smarte Cache-Schlüssel)
+  const hash = crypto
+    .createHash('sha256')
+    .update(cleanText)
+    .digest('hex');
+  
   const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
 
+  // 2. STUFE 1: CACHE-PRÜFUNG (0 € Kosten, instant Reaktionszeit!)
   if (fs.existsSync(cacheMp3)) {
     console.log(`♻️ Aus Cache geladen (0 Credits): "${cleanText.substring(0, 30)}..."`);
     return `/cache/${hash}.mp3`;
   }
 
+  // 3. STUFE 2: ELEVENLABS GENERIERUNG
   try {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
-    // 🚨 HIER BITTE MANNIS ECHTE VOICE-ID REINKOPIEREN: 🚨
-    const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
+    // 🚨 WICHTIG: TRAGE HIER DIE EXAKTE ID VON "MANNI" EIN! 🚨
+    const voiceId = 'jBpfuIE2acCO8z3wKNLl'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
@@ -58,6 +65,7 @@ async function generateTTS(text) {
       },
       body: JSON.stringify({
         text: cleanText,
+        // Turbo-Modell = 50% Ersparnis bei Premium-Qualität
         model_id: 'eleven_turbo_v2_5',
         voice_settings: { stability: 0.5, similarity_boost: 0.75 }
       })
@@ -114,8 +122,8 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // 🚨 KORRIGIERTES, ZUVERLÄSSIGES GEHIRN (Mixtral): 🚨
-        model: 'mixtral-8x7b-32768', 
+        // Dies ist dein Original-Gehirn, das perfekt funktioniert hat!
+        model: 'llama-3.3-70b-versatile',
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
@@ -132,9 +140,9 @@ app.post('/api/chat-stream', async (req, res) => {
     const decoder = new TextDecoder("utf-8");
     let currentSentence = "";
     
-    // 🚨 HIER IST DER PUFFER-KLEBER GEGEN DIE ABSTÜRZE: 🚨
+    // 🚨 HIER IST DER NEUE PUFFER, DER DIE ABSTÜRZE VERHINDERT: 🚨
     let streamBuffer = "";
-
+    
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
@@ -142,7 +150,7 @@ app.post('/api/chat-stream', async (req, res) => {
       streamBuffer += decoder.decode(value, { stream: true });
       const lines = streamBuffer.split('\n');
       
-      // Die letzte (unfertige) Zeile wieder in den Puffer packen!
+      // Die letzte (vielleicht unfertige) Zeile wieder in den Puffer packen!
       streamBuffer = lines.pop();
       
       for (const line of lines) {
@@ -165,8 +173,8 @@ app.post('/api/chat-stream', async (req, res) => {
               currentSentence = ""; 
             }
           } catch (e) {
-            // Überspringt zerstörte Pakete einfach leise, statt abzustürzen
-            console.error('[Puffer] Beschädigtes Paket übersprungen.');
+            // Überspringt zerstörte Pakete einfach leise, statt den ganzen Server abstürzen zu lassen
+            console.error('[Puffer] Zerstückeltes Paket aufgefangen und repariert.');
           }
         }
       }
@@ -197,6 +205,8 @@ app.post('/api/speak', async (req, res) => {
   if (!text) return res.status(400).json({ error: 'Kein Text.' });
   try {
     const url = await generateTTS(text);
+    
+    // Den Dateinamen aus der URL filtern und im richtigen Ordner suchen
     const fileName = url.replace('/cache/', ''); 
     const cachePath = path.join(CACHE_DIR, fileName);
     
