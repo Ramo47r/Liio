@@ -53,7 +53,7 @@ async function generateTTS(text) {
   try {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
-    // 🚨 WICHTIG: TRAGE HIER DIE EXAKTE ID VON "MANNI" EIN! 🚨
+    // 🚨 WICHTIG: TRAGE HIER DIE EXAKTE ID VON MANNI EIN! 🚨
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -122,8 +122,8 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // Dies ist dein Original-Gehirn, das perfekt funktioniert hat!
-        model: 'llama-3.3-70b-versatile',
+        // 🚨 HIER IST DAS NEUE, DAUERHAFT VERFÜGBARE GEHIRN: 🚨
+        model: 'mixtral-8x7b-32768',
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
