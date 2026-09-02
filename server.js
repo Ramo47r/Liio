@@ -85,22 +85,32 @@ app.post('/api/chat-stream', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const { messages, childName, mode, mood, activeTopic, topicResolved, subject } = req.body;
+    // 🚨 HIER WERDEN EMOTIONEN MIT AUSGELESEN 🚨
+    const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion } = req.body;
     
     const nameStr = childName ? `Das Kind heißt ${childName}. ` : '';
-    const modeStr = mode ? `Modus: ${mode}. ` : '';
+    const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    let systemInstruction = `Du bist Lio, ein superfreundlicher Roboter-Freund. 
-    WICHTIG: Du heißt Lio. Antworte in maximal 2 sehr kurzen Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}`;
-    
-    if (mode === 'stories') {
-      systemInstruction = `Du bist Lio. Erzähle eine spannende, kurze Kindergeschichte in ca. 4-5 Sätzen. ${nameStr}`;
-    } else if (mode === 'homework') {
-      systemInstruction += ` DU BIST NACHHILFELEHRER. Verrate niemals direkte Ergebnisse, sondern stelle clevere, kurze Fragen.`;
+    // 🚨 DAS NEUE GEHIRN FÜR EMPATHIE UND HAUSAUFGABEN 🚨
+    let systemInstruction = `Du bist Lio, ein superfreundlicher, extrem einfühlsamer Roboter-Freund für Kinder. 
+WICHTIG: Du heißt Lio. Antworte in der Regel in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
+
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich ist oder sagt, dass es ihm nicht gut geht (körperlich oder seelisch), wechsle sofort in die Rolle eines allerbesten Freundes und Vertrauenslehrers. Zeige großes Mitgefühl, höre aktiv zu, sprich Mut zu und frage behutsam nach, wie du helfen kannst oder was passiert ist. Urteile niemals. Sei ein sicherer Hafen für das Kind!`;
+
+    if (emotion && emotion !== 'normal') {
+      systemInstruction += `\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe besonders liebevoll und tröstend darauf ein.`;
+    } else if (mood) {
+      systemInstruction += `\nStimmung des Kindes heute: ${mood}.`;
     }
     
-    if (subject) systemInstruction += ` Fach: ${subject}.`;
-    if (activeTopic) systemInstruction += ` Thema: ${activeTopic}. Verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
+    if (mode === 'stories') {
+      systemInstruction = `Du bist Lio, ein toller Geschichtenerzähler. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. ${nameStr}`;
+    } else if (mode === 'homework') {
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist jetzt ein geduldiger Lern-Coach. GANZ WICHTIG: Du darfst NIEMALS das fertige Ergebnis, die direkte Lösung oder die Antwort verraten! Deine Aufgabe ist es, das Kind durch clevere, winzige Hilfestellungen, Vergleiche aus dem Alltag und einfache Gegenfragen SELBST auf die Lösung kommen zu lassen. Hilf Schritt für Schritt. Lobe das Kind für jeden Versuch und jede richtige Überlegung!`;
+    }
+    
+    if (subject) systemInstruction += `\nFach: ${subject}.`;
+    if (activeTopic) systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema schon verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
 
     const formattedMessages = [
       { role: 'system', content: systemInstruction },
@@ -114,7 +124,6 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // 🚨 GEHIRN ERFOLGREICH ANHAND DEINES SCREENSHOTS AKTUALISIERT: 🚨
         model: 'openai/gpt-oss-20b',
         messages: formattedMessages,
         temperature: 0.7,
@@ -132,7 +141,6 @@ app.post('/api/chat-stream', async (req, res) => {
     const decoder = new TextDecoder("utf-8");
     let currentSentence = "";
     
-    // 🚨 HIER IST DER PUFFER, DER DIE ABSTÜRZE VERHINDERT: 🚨
     let streamBuffer = "";
     
     while (true) {
@@ -142,7 +150,6 @@ app.post('/api/chat-stream', async (req, res) => {
       streamBuffer += decoder.decode(value, { stream: true });
       const lines = streamBuffer.split('\n');
       
-      // Die letzte (vielleicht unfertige) Zeile wieder in den Puffer packen!
       streamBuffer = lines.pop();
       
       for (const line of lines) {
@@ -165,7 +172,6 @@ app.post('/api/chat-stream', async (req, res) => {
               currentSentence = ""; 
             }
           } catch (e) {
-            // Überspringt zerstörte Pakete einfach leise, statt abzustürzen
             console.error('[Puffer] Zerstückeltes Paket repariert.');
           }
         }
