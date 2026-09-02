@@ -122,8 +122,8 @@ app.post('/api/chat-stream', async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // 🚨 HIER IST DAS NEUE, DAUERHAFT VERFÜGBARE GEHIRN: 🚨
-        model: 'mixtral-8x7b-32768',
+        // 🚨 HIER IST DAS NEUE, OFFIZIELLE GEHIRN (Gemma 2): 🚨
+        model: 'gemma2-9b-it',
         messages: formattedMessages,
         temperature: 0.7,
         stream: true
