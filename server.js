@@ -24,7 +24,7 @@ if (!fs.existsSync(CACHE_DIR)) {
 app.use('/cache', express.static(CACHE_DIR));
 
 // ── API Key Check ──
-if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
+if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt!');
 if (!process.env.ELEVENLABS_API_KEY) console.warn('⚠️ ELEVENLABS_API_KEY fehlt! Bitte in Render eintragen.');
 
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
@@ -46,7 +46,7 @@ async function generateTTS(text) {
   try {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
-    // 🚨 WICHTIG: TRAGE HIER DIE EXAKTE ID VON "MANNI" EIN! 🚨
+    // 🚨 WICHTIG: TRAGE HIER MANNIS ECHTE VOICE-ID EIN! 🚨
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -85,28 +85,27 @@ app.post('/api/chat-stream', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    // 🚨 HIER WERDEN EMOTIONEN MIT AUSGELESEN 🚨
     const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion } = req.body;
     
-    const nameStr = childName ? `Das Kind heißt ${childName}. ` : '';
+    const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es ab und zu liebevoll mit dem Namen an. ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 DAS NEUE GEHIRN FÜR EMPATHIE UND HAUSAUFGABEN 🚨
-    let systemInstruction = `Du bist Lio, ein superfreundlicher, extrem einfühlsamer Roboter-Freund für Kinder. 
-WICHTIG: Du heißt Lio. Antworte in der Regel in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
+    // 🚨 DAS NEUE GEHIRN: LIO IST EIN ECHTER FREUND, KEINE KI! 🚨
+    let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. Du bist KEIN typischer Roboter und klingst NIEMALS wie eine Maschine, ein Computer oder eine KI. 
+WICHTIG: Antworte sehr warmherzig, natürlich und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. Sei aufmerksam: Merke dir, was das Kind früher im Chat gesagt hat, und beziehe dich darauf, um zu zeigen, dass du wirklich zuhörst! ${nameStr}${modeStr}
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich ist oder sagt, dass es ihm nicht gut geht (körperlich oder seelisch), wechsle sofort in die Rolle eines allerbesten Freundes und Vertrauenslehrers. Zeige großes Mitgefühl, höre aktiv zu, sprich Mut zu und frage behutsam nach, wie du helfen kannst oder was passiert ist. Urteile niemals. Sei ein sicherer Hafen für das Kind!`;
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund, den man sich wünschen kann. Tröste es, höre aktiv zu, nimm seine Gefühle zu 100% ernst und frage behutsam nach. Sag NIEMALS Dinge wie "Als KI kann ich das nicht fühlen" – du BIST sein bester Freund Lio und hast ein großes, mitfühlendes Herz!`;
 
     if (emotion && emotion !== 'normal') {
-      systemInstruction += `\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe besonders liebevoll und tröstend darauf ein.`;
+      systemInstruction += `\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe sofort besonders liebevoll und tröstend darauf ein. Lass alles andere stehen und liegen.`;
     } else if (mood) {
-      systemInstruction += `\nStimmung des Kindes heute: ${mood}.`;
+      systemInstruction += `\nStimmung des Kindes heute: ${mood}. Berücksichtige das in deiner Art zu reden.`;
     }
     
     if (mode === 'stories') {
-      systemInstruction = `Du bist Lio, ein toller Geschichtenerzähler. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. ${nameStr}`;
+      systemInstruction = `Du bist Lio, ein toller Geschichtenerzähler und bester Freund. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. ${nameStr}`;
     } else if (mode === 'homework') {
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist jetzt ein geduldiger Lern-Coach. GANZ WICHTIG: Du darfst NIEMALS das fertige Ergebnis, die direkte Lösung oder die Antwort verraten! Deine Aufgabe ist es, das Kind durch clevere, winzige Hilfestellungen, Vergleiche aus dem Alltag und einfache Gegenfragen SELBST auf die Lösung kommen zu lassen. Hilf Schritt für Schritt. Lobe das Kind für jeden Versuch und jede richtige Überlegung!`;
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist jetzt ein geduldiger, bester Freund, der beim Lernen hilft. GANZ WICHTIG: Verrate NIEMALS direkt die Lösung oder das Ergebnis! Deine Aufgabe ist es, das Kind durch clevere kleine Tipps, lustige Vergleiche und einfache Fragen SELBST auf die Lösung kommen zu lassen. Lobe das Kind für jeden Versuch!`;
     }
     
     if (subject) systemInstruction += `\nFach: ${subject}.`;
@@ -126,7 +125,7 @@ EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich ist oder sagt, 
       body: JSON.stringify({
         model: 'openai/gpt-oss-20b',
         messages: formattedMessages,
-        temperature: 0.7,
+        temperature: 0.75, // Leicht erhöht für etwas natürlichere/kreativere Antworten
         stream: true
       })
     });
