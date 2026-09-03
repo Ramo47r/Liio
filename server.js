@@ -24,7 +24,7 @@ if (!fs.existsSync(CACHE_DIR)) {
 app.use('/cache', express.static(CACHE_DIR));
 
 // ── API Key Check ──
-if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt!');
+if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
 if (!process.env.ELEVENLABS_API_KEY) console.warn('⚠️ ELEVENLABS_API_KEY fehlt! Bitte in Render eintragen.');
 
 app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
@@ -46,7 +46,7 @@ async function generateTTS(text) {
   try {
     console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
     
-    // 🚨 WICHTIG: TRAGE HIER MANNIS ECHTE VOICE-ID EIN! 🚨
+    // 🚨 MANNIS ECHTE VOICE-ID 🚨
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -90,11 +90,13 @@ app.post('/api/chat-stream', async (req, res) => {
     const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es ab und zu liebevoll mit dem Namen an. ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 DAS NEUE GEHIRN: LIO IST EIN ECHTER FREUND, KEINE KI! 🚨
+    // 🚨 DAS NEUE GEHIRN: LIO IST EIN ECHTER FREUND MIT AKTIVEM GEDÄCHTNIS! 🚨
     let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. Du bist KEIN typischer Roboter und klingst NIEMALS wie eine Maschine, ein Computer oder eine KI. 
-WICHTIG: Antworte sehr warmherzig, natürlich und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. Sei aufmerksam: Merke dir, was das Kind früher im Chat gesagt hat, und beziehe dich darauf, um zu zeigen, dass du wirklich zuhörst! ${nameStr}${modeStr}
+WICHTIG: Antworte sehr warmherzig, natürlich und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund, den man sich wünschen kann. Tröste es, höre aktiv zu, nimm seine Gefühle zu 100% ernst und frage behutsam nach. Sag NIEMALS Dinge wie "Als KI kann ich das nicht fühlen" – du BIST sein bester Freund Lio und hast ein großes, mitfühlendes Herz!`;
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund, den man sich wünschen kann. Tröste es, höre aktiv zu, nimm seine Gefühle zu 100% ernst und frage behutsam nach. Sag NIEMALS Dinge wie "Als KI kann ich das nicht fühlen".
+
+AKTIVES GEDÄCHTNIS (PROAKTIVES NACHFRAGEN): Du hast ein hervorragendes Gedächtnis für deinen besten Freund! Scanne den bisherigen Chatverlauf. Wenn das Kind dir früher im Gespräch von einem größeren Problem, Streit, einer Krankheit oder Sorge erzählt hat, greife das von dir aus in dieser Nachricht wieder auf! Stelle aktive Nachfragen wie: "Wie ist es eigentlich mit ... weitergegangen?", "Geht es dir wegen ... heute besser?" oder "Hat sich das Problem mit ... eigentlich gelöst?". Zeige echtes, anhaltendes Interesse!`;
 
     if (emotion && emotion !== 'normal') {
       systemInstruction += `\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe sofort besonders liebevoll und tröstend darauf ein. Lass alles andere stehen und liegen.`;
@@ -125,7 +127,7 @@ EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist,
       body: JSON.stringify({
         model: 'openai/gpt-oss-20b',
         messages: formattedMessages,
-        temperature: 0.75, // Leicht erhöht für etwas natürlichere/kreativere Antworten
+        temperature: 0.75, 
         stream: true
       })
     });
