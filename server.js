@@ -87,18 +87,19 @@ app.post('/api/chat-stream', async (req, res) => {
   try {
     const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion } = req.body;
     
-    // 🚨 NAMEN-SPERRE: Nutze den Namen extrem selten! 🚨
+    // 🚨 NAMEN-SPERRE 🚨
     const nameStr = childName ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
+    // 🚨 NEUES GEHIRN: ZAHLEN ALS ZIFFERN ERLAUBT 🚨
     let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
 WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-SPRACHE & ZAHLEN (STRIKT!): Sprich IMMER und AUSSCHLIESSLICH auf Deutsch! Niemals auf Englisch antworten. Schreibe ALLE Zahlen im Text zwingend als echte Wörter aus (z.B. "fünf" statt "5", "zwanzig" statt "20", "hundert" statt "100"), damit sie kindgerecht, langsam und deutlich vorgelesen werden können.
+SPRACHE: Sprich IMMER und AUSSCHLIESSLICH auf Deutsch! Keine englischen Wörter. Schreibe Zahlen als ganz normale Ziffern (1, 2, 3), damit das Kind sie gut lesen kann. 
 
 EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu und nimm seine Gefühle ernst. 
 
-AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorge erzählt hat, frage später von dir aus liebevoll nach ("Wie ist es eigentlich mit ... weitergegangen?").`;
+AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorge erzählt hat, frage später von dir aus liebevoll nach.`;
 
     if (emotion && emotion !== 'normal') {
       systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade ${emotion}. Gehe sofort liebevoll darauf ein und tröste es.`;
@@ -109,8 +110,8 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
     if (mode === 'stories') {
       systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen. Keine Bilder, nur Text.`;
     } else if (mode === 'homework') {
-      // 🚨 HAUSAUFGABEN-UPDATE: Keine Endlos-Schleifen mehr! 🚨
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Hilf dem Kind durch kleine Gedankenexperimente (z.B. Gummibärchen verteilen). Stelle clevere Fragen, damit das Kind mitdenkt! WICHTIGE AUSNAHME: Wenn das Kind mehrfach nach der Lösung fragt, ratlos oder frustriert ist, dann verrate ihm die richtige Lösung direkt und erkläre sie liebevoll! Lass das Kind niemals verzweifeln.`;
+      // 🚨 HAUSAUFGABEN: ABSOLUTES LÖSUNGS-VERBOT 🚨
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Coach. GANZ WICHTIGE REGEL: Verrate NIEMALS die Lösung oder das Endergebnis! ABSOLUT NIEMALS! Egal wie oft das Kind danach fragt. Führe das Kind mit kleinen Gedankenexperimenten (Gummibärchen, Äpfel) und einfachen Zwischenfragen Schritt für Schritt zur Lösung. Lass das Kind immer selbst rechnen!`;
     }
     
     if (subject) systemInstruction += `\nFach: ${subject}.`;
@@ -169,6 +170,7 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
             
             if (/[.!?]\s*$/.test(currentSentence)) {
               
+              // 1. Text für den Bildschirm (Mit Ziffern, ohne Klammern)
               let cleanSentence = currentSentence.trim()
                 .replace(/\[.*?\]/g, '')  
                 .replace(/\*.*?\*/g, '')  
@@ -176,7 +178,20 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
                 .trim();
 
               if (cleanSentence.length > 2) {
-                const audioUrl = await generateTTS(cleanSentence);
+                
+                // 🚨 2. Übersetzer NUR für die Sprachausgabe (TTS) 🚨
+                // Zwingt die Stimme zu Mini-Pausen bei Zahlen und spricht Zeichen aus.
+                let ttsText = cleanSentence
+                  .replace(/([0-9]+)/g, ' $1 ') 
+                  .replace(/\+/g, ' plus ')
+                  .replace(/\=/g, ' ist gleich ')
+                  .replace(/\*/g, ' mal ')
+                  .replace(/\s+/g, ' ')
+                  .trim();
+
+                const audioUrl = await generateTTS(ttsText);
+                
+                // Wir senden "cleanSentence" an die Sprechblase, aber "audioUrl" enthält die langsame Sprachdatei!
                 res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
               }
               currentSentence = ""; 
@@ -196,7 +211,15 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
         .trim();
         
       if (cleanSentence.length > 2) {
-        const audioUrl = await generateTTS(cleanSentence);
+        let ttsText = cleanSentence
+          .replace(/([0-9]+)/g, ' $1 ') 
+          .replace(/\+/g, ' plus ')
+          .replace(/\=/g, ' ist gleich ')
+          .replace(/\*/g, ' mal ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const audioUrl = await generateTTS(ttsText);
         res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
       }
     }
