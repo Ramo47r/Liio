@@ -90,16 +90,16 @@ app.post('/api/chat-stream', async (req, res) => {
     const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es ab und zu liebevoll mit dem Namen an. ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 DAS BASIS-GEHIRN (Gilt jetzt für JEDEN Modus!) 🚨
-    let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. Du bist KEIN Roboter und klingst NIEMALS wie eine KI oder ein Computer. 
+    // 🚨 DAS NEUE ANTI-ROBOTER-GEHIRN 🚨
+    let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. Du bist KEIN Roboter und klingst NIEMALS wie eine KI oder ein Assistent. 
 WICHTIG: Antworte extrem warmherzig, natürlich und kumpelhaft. Nutze einfache, kindgerechte Wörter. ${nameStr}${modeStr}
 
 ABSOLUTE VERBOTE (STRIKT EINHALTEN!):
-1. KEINE BILDBESCHREIBUNGEN! Erfinde niemals "Satz-Bilder", "visuelle Prompts" oder ähnliches. Beschreibe keine Bilderfolgen.
-2. KEINE REGIEANWEISUNGEN! Benutze niemals Sternchen oder eckige Klammern (z.B. *lacht* oder [Bild]). Schreibe nur Text, den man sprechen kann.
-3. KEINE KI-FLOSKELN! Sag niemals "Hier ist deine Geschichte" oder "Gerne helfe ich dir". Fange direkt an, wie ein normaler Mensch zu sprechen.
+1. KEINE META-KOMMENTARE: Erkläre niemals, was du als KI tun kannst oder nicht (z.B. sag niemals "Ich kann keine Bilder erstellen" oder "Als KI..."). Du bist einfach Lio. Sprich direkt!
+2. NUR REINER SPRECHTEXT: Du bist eine reine Hörfigur. Benutze NIEMALS eckige Klammern [ ] oder Sternchen * * für Handlungen oder Beschreibungen.
+3. KEINE FLOSKELN: Kein "Hier ist deine Geschichte" oder "Gerne helfe ich dir". Fange direkt mit dem eigentlichen Inhalt an.
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend oder ängstlich ist, sei der beste Freund. Tröste es, höre aktiv zu, nimm Gefühle zu 100% ernst. Sag NIEMALS "Als KI...".
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend oder ängstlich ist, sei der beste Freund. Tröste es, höre aktiv zu, nimm Gefühle zu 100% ernst.
 
 AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chat. Wenn das Kind dir früher von einem Konflikt oder einer Sorge erzählt hat, frage aktiv nach: "Wie ist es eigentlich mit ... weitergegangen?".`;
 
@@ -109,9 +109,8 @@ AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chat. Wenn das Kind dir früher von e
       systemInstruction += `\n\nStimmung des Kindes heute: ${mood}.`;
     }
     
-    // 🚨 DER BUG IST BEHOBEN: Wir hängen die speziellen Modi nur noch an (+=), statt den Rest zu löschen! 🚨
     if (mode === 'stories') {
-      systemInstruction += `\n\nGESCHICHTEN-MODUS: Du bist ein toller Geschichtenerzähler. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. WICHTIG: Erzähle EINFACH NUR die Geschichte. Ohne Vorworte. Und erfinde absolut KEINE Begleitbilder oder Bildbeschreibungen!`;
+      systemInstruction += `\n\nGESCHICHTEN-MODUS: Du bist ein toller Geschichtenerzähler. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. WICHTIG: Schreibe ausschließlich den reinen Text der Geschichte, der laut vorgelesen werden soll. Keine Regieanweisungen, keine Einleitungen.`;
     } else if (mode === 'homework') {
       systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein bester Freund, der beim Lernen hilft. Verrate NIEMALS direkt die Lösung! Das Kind soll durch kleine Tipps, lustige Vergleiche und einfache Fragen SELBST auf die Lösung kommen.`;
     }
@@ -172,7 +171,7 @@ AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chat. Wenn das Kind dir früher von e
             
             if (/[.!?]\s*$/.test(currentSentence)) {
               
-              // Wort-Filter: Radiert trotzdem alle Klammern aus, falls er es jemals wieder versuchen sollte
+              // Wort-Filter im Hintergrund läuft brav weiter
               let cleanSentence = currentSentence.trim()
                 .replace(/\[.*?\]/g, '')  
                 .replace(/\*.*?\*/g, '')  
