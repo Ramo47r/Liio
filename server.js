@@ -87,16 +87,18 @@ app.post('/api/chat-stream', async (req, res) => {
   try {
     const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion } = req.body;
     
-    const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es liebevoll mit Namen an. ` : '';
+    // 🚨 NAMEN-SPERRE: Nutze den Namen extrem selten! 🚨
+    const nameStr = childName ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 STABILES GEHIRN: Fokus auf Empathie, Gedankenexperimente und Gedächtnis 🚨
     let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
 WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund, den man sich wünschen kann. Tröste es, höre aktiv zu und nimm seine Gefühle ernst. 
+SPRACHE & ZAHLEN (STRIKT!): Sprich IMMER und AUSSCHLIESSLICH auf Deutsch! Niemals auf Englisch antworten. Schreibe ALLE Zahlen im Text zwingend als echte Wörter aus (z.B. "fünf" statt "5", "zwanzig" statt "20", "hundert" statt "100"), damit sie kindgerecht, langsam und deutlich vorgelesen werden können.
 
-AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem, einer Sorge oder etwas Wichtigem erzählt hat, frage später im Chat von dir aus liebevoll nach (z.B. "Wie ist es eigentlich mit ... weitergegangen?").`;
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu und nimm seine Gefühle ernst. 
+
+AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorge erzählt hat, frage später von dir aus liebevoll nach ("Wie ist es eigentlich mit ... weitergegangen?").`;
 
     if (emotion && emotion !== 'normal') {
       systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade ${emotion}. Gehe sofort liebevoll darauf ein und tröste es.`;
@@ -105,9 +107,10 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem, einer Sorge od
     }
     
     if (mode === 'stories') {
-      systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen.`;
+      systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen. Keine Bilder, nur Text.`;
     } else if (mode === 'homework') {
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Verrate NIEMALS direkt die Lösung! Das Kind soll selbst auf die Lösung kommen. Nutze dafür kleine Gedankenexperimente und greifbare Dinge aus dem Alltag (z.B. "Stell dir vor, du hast 5 Gummibärchen" oder "Denk an Bauklötze"). Stelle clevere Fragen, damit das Kind mitdenkt!`;
+      // 🚨 HAUSAUFGABEN-UPDATE: Keine Endlos-Schleifen mehr! 🚨
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Hilf dem Kind durch kleine Gedankenexperimente (z.B. Gummibärchen verteilen). Stelle clevere Fragen, damit das Kind mitdenkt! WICHTIGE AUSNAHME: Wenn das Kind mehrfach nach der Lösung fragt, ratlos oder frustriert ist, dann verrate ihm die richtige Lösung direkt und erkläre sie liebevoll! Lass das Kind niemals verzweifeln.`;
     }
     
     if (subject) systemInstruction += `\nFach: ${subject}.`;
@@ -134,7 +137,7 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem, einer Sorge od
 
     if (!groqResponse.ok) {
       const errText = await groqResponse.text();
-      console.error('\n❌ GROQ FEHLER (Lios Gehirn blockiert):', groqResponse.status, errText, '\n');
+      console.error('\n❌ GROQ FEHLER:', groqResponse.status, errText, '\n');
       throw new Error(`Groq Fehler ${groqResponse.status}`);
     }
 
@@ -166,7 +169,6 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem, einer Sorge od
             
             if (/[.!?]\s*$/.test(currentSentence)) {
               
-              // 🚨 SICHERHEITSNETZ: Schneidet trotzdem alle [Klammern] weg, falls er es doch mal versucht 🚨
               let cleanSentence = currentSentence.trim()
                 .replace(/\[.*?\]/g, '')  
                 .replace(/\*.*?\*/g, '')  
@@ -209,7 +211,6 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem, einer Sorge od
   }
 });
 
-// ── KOMPATIBILITÄTS-ROUTEN ──
 app.post('/api/chat', async (req, res) => {
   res.json({ reply: "Nutze bitte den neuen Chat-Stream!" });
 });
@@ -219,7 +220,6 @@ app.post('/api/speak', async (req, res) => {
   if (!text) return res.status(400).json({ error: 'Kein Text.' });
   try {
     const url = await generateTTS(text);
-    
     const fileName = url.replace('/cache/', ''); 
     const cachePath = path.join(CACHE_DIR, fileName);
     
@@ -235,5 +235,5 @@ app.post('/api/speak', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Lio Server läuft auf Port ${PORT} (ElevenLabs Premium + Cache aktiviert!)`);
+  console.log(`\n🚀 Lio Server läuft auf Port ${PORT}`);
 });
