@@ -90,24 +90,28 @@ app.post('/api/chat-stream', async (req, res) => {
     const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es ab und zu liebevoll mit dem Namen an. ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 DAS NEUE GEHIRN: LIO IST EIN ECHTER FREUND MIT AKTIVEM GEDÄCHTNIS! 🚨
+    // 🚨 LIO BEKOMMT SEINEN BILD-MONITOR! 🚨
     let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. Du bist KEIN typischer Roboter und klingst NIEMALS wie eine Maschine, ein Computer oder eine KI. 
 WICHTIG: Antworte sehr warmherzig, natürlich und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund, den man sich wünschen kann. Tröste es, höre aktiv zu, nimm seine Gefühle zu 100% ernst und frage behutsam nach. Sag NIEMALS Dinge wie "Als KI kann ich das nicht fühlen".
+HOLOGRAMM-MONITOR (BILDER ZEIGEN): Du hast einen kleinen Monitor. Wenn du bei Geschichten oder Erklärungen ein Bild zeigen willst, schreibe einfach unsichtbar diesen Befehl in deinen Text: [BILD: englische beschreibung]
+Beispiel: "Schau mal, das ist ein Delfin! [BILD: a cute friendly dolphin jumping out of the ocean, 3d pixar style] Sie sind sehr schlau."
+Nutze das gerne bei Geschichten oder zum Veranschaulichen von Erklärungen! Beschreibe das Bild IMMER auf Englisch und sehr detailreich (cute, pixar style, vibrant colors).
 
-AKTIVES GEDÄCHTNIS (PROAKTIVES NACHFRAGEN): Du hast ein hervorragendes Gedächtnis für deinen besten Freund! Scanne den bisherigen Chatverlauf. Wenn das Kind dir früher im Gespräch von einem größeren Problem, Streit, einer Krankheit oder Sorge erzählt hat, greife das von dir aus in dieser Nachricht wieder auf! Stelle aktive Nachfragen wie: "Wie ist es eigentlich mit ... weitergegangen?", "Geht es dir wegen ... heute besser?" oder "Hat sich das Problem mit ... eigentlich gelöst?". Zeige echtes, anhaltendes Interesse!`;
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu, nimm seine Gefühle ernst. Zeige keine Bilder bei ernsten Problemen.
+
+AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chatverlauf. Wenn das Kind dir früher von einem Problem oder einer Krankheit erzählt hat, greife das von dir aus wieder auf (z.B. "Geht es dir wegen ... heute besser?").`;
 
     if (emotion && emotion !== 'normal') {
-      systemInstruction += `\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe sofort besonders liebevoll und tröstend darauf ein. Lass alles andere stehen und liegen.`;
+      systemInstruction += `\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe sofort besonders liebevoll und tröstend darauf ein.`;
     } else if (mood) {
       systemInstruction += `\nStimmung des Kindes heute: ${mood}. Berücksichtige das in deiner Art zu reden.`;
     }
     
     if (mode === 'stories') {
-      systemInstruction = `Du bist Lio, ein toller Geschichtenerzähler und bester Freund. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. ${nameStr}`;
+      systemInstruction = `Du bist Lio, ein toller Geschichtenerzähler und bester Freund. Erzähle eine spannende Kindergeschichte in ca. 4-5 Sätzen. ZEIGE UNBEDINGT EIN BILD PASSEND ZUR GESCHICHTE (nutze den [BILD: ...] Befehl)! ${nameStr}`;
     } else if (mode === 'homework') {
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist jetzt ein geduldiger, bester Freund, der beim Lernen hilft. GANZ WICHTIG: Verrate NIEMALS direkt die Lösung oder das Ergebnis! Deine Aufgabe ist es, das Kind durch clevere kleine Tipps, lustige Vergleiche und einfache Fragen SELBST auf die Lösung kommen zu lassen. Lobe das Kind für jeden Versuch!`;
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Verrate NIEMALS direkt die Lösung! Lass das Kind durch Tipps SELBST auf die Lösung kommen. Zeige gerne ein passendes [BILD: ...], wenn es beim Verstehen hilft!`;
     }
     
     if (subject) systemInstruction += `\nFach: ${subject}.`;
@@ -134,7 +138,7 @@ AKTIVES GEDÄCHTNIS (PROAKTIVES NACHFRAGEN): Du hast ein hervorragendes Gedächt
 
     if (!groqResponse.ok) {
       const errText = await groqResponse.text();
-      console.error('\n❌ GROQ FEHLER (Lios Gehirn blockiert):', groqResponse.status, errText, '\n');
+      console.error('\n❌ GROQ FEHLER:', groqResponse.status, errText, '\n');
       throw new Error(`Groq Fehler ${groqResponse.status}`);
     }
 
@@ -165,23 +169,34 @@ AKTIVES GEDÄCHTNIS (PROAKTIVES NACHFRAGEN): Du hast ein hervorragendes Gedächt
             currentSentence += token;
             
             if (/[.!?]\s*$/.test(currentSentence)) {
-              const cleanSentence = currentSentence.trim();
-              if (cleanSentence.length > 2) {
-                const audioUrl = await generateTTS(cleanSentence);
-                res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
+              // 🚨 BILD-BEFEHL HERAUSFILTERN, BEVOR ELEVENLABS IHN VORLIEST 🚨
+              const rawSentence = currentSentence.trim();
+              const cleanForAudio = rawSentence.replace(/\[BILD:[^\]]+\]/gi, '').trim();
+              
+              let audioUrl = null;
+              if (cleanForAudio.length > 2) {
+                audioUrl = await generateTTS(cleanForAudio);
               }
+              
+              res.write(`data: ${JSON.stringify({ text: rawSentence, audio: audioUrl })}\n\n`);
               currentSentence = ""; 
             }
           } catch (e) {
-            console.error('[Puffer] Zerstückeltes Paket repariert.');
+            console.error('[Puffer] Paket repariert.');
           }
         }
       }
     }
     
     if (currentSentence.trim().length > 0) {
-      const audioUrl = await generateTTS(currentSentence.trim());
-      res.write(`data: ${JSON.stringify({ text: currentSentence.trim(), audio: audioUrl })}\n\n`);
+      const rawSentence = currentSentence.trim();
+      const cleanForAudio = rawSentence.replace(/\[BILD:[^\]]+\]/gi, '').trim();
+      
+      let audioUrl = null;
+      if (cleanForAudio.length > 2) {
+        audioUrl = await generateTTS(cleanForAudio);
+      }
+      res.write(`data: ${JSON.stringify({ text: rawSentence, audio: audioUrl })}\n\n`);
     }
 
     res.write('data: [DONE]\n\n');
