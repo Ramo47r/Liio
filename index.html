@@ -554,7 +554,6 @@ body::before {
 .menu-mode-jokes    { --c-line: rgba(255,196,74,.5);  --c-soft: rgba(255,196,74,.13); }
 .menu-mode-creative { --c-line: rgba(157,139,255,.5); --c-soft: rgba(157,139,255,.13); }
 .menu-mode-guess    { --c-line: rgba(255,150,90,.5);  --c-soft: rgba(255,150,90,.13); }
-.menu-mode-iSpy     { --c-line: rgba(120,220,255,.5); --c-soft: rgba(120,220,255,.13); }
 .menu-mode-wouldYou { --c-line: rgba(255,140,200,.5); --c-soft: rgba(255,140,200,.13); }
 .menu-mode-karaoke  { --c-line: rgba(255,120,170,.5); --c-soft: rgba(255,120,170,.13); }
 
@@ -1044,7 +1043,6 @@ const MODES = {
   jokes:    { icon:'😂', title:'Witze',       welcome:{ '3-5':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
   creative: { icon:'🎨', title:'Kreativ',     welcome:{ '3-5':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
   guess:    { icon:'🎯', title:'Raten',       welcome:{ '3-5':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
-  iSpy:     { icon:'👀', title:'Ich seh was', welcome:{ '3-5':'Ich sehe was, was du nicht siehst!', '5-8':'Ich sehe was — bereit?', '8-12':'Ich denke an eine Szene. Du musst raten!', '12+':'Ich beschreibe — finde, was ich meine!' } },
   wouldYou: { icon:'🤷', title:'Eher?',       welcome:{ '3-5':'Lass uns wählen! Was magst du lieber?', '5-8':'Würdest du eher fliegen oder schwimmen?', '8-12':'Würdest-du-eher! Bereit?', '12+':'Schwere Entscheidungen!' } },
 };
 
@@ -1314,8 +1312,10 @@ function initMain(customText) {
   renderLessonCards();
   renderMenuModes();
   const m = MODES[currentMode] || MODES.talk;
-  const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
-  lioSay('Begrüße mich kurz und herzlich mit meinem Namen und frag, was wir machen wollen.', text);
+  // 🚨 HIER: Das UX Onboarding bei Start 🚨
+  const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Tippe unten auf das Mikrofon oder die Tastatur, um mit mir zu sprechen!';
+  lioSay('Begrüße mich...', text);
+  renderQuickReplies();
 }
 
 function resetChat() {
@@ -1367,8 +1367,7 @@ function renderMenuModes() {
 function switchMode(mode) {
   if (isLioSpeaking) stopSpeaking();
   if (parentLocks[mode]) {
-    lioSay('Sag mir bitte freundlich in einem Satz, dass dieser Bereich von meinen Eltern gesperrt wurde.',
-           'Das haben deine Eltern gesperrt.');
+    lioSay('Gesperrt.', 'Das haben deine Eltern gesperrt.');
     return;
   }
 
@@ -1384,8 +1383,10 @@ function switchMode(mode) {
   if (mode === 'homework') { openSubjectPanel(); return; }
 
   const m = MODES[mode];
-  const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName);
-  lioSay('Wir wechseln jetzt zu: ' + m.title + '. Sag in einem kurzen Satz, dass es losgeht, und frag, worauf ich Lust habe.', welcome);
+  // 🚨 HIER: Das UX Onboarding bei Modus-Wechsel 🚨
+  const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Nutze das Mikrofon oder die Tastatur unten, um mit mir zu sprechen!';
+  lioSay('Los gehts...', welcome);
+  renderQuickReplies();
 }
 
 /* ── Fach-Auswahl ── */
@@ -1424,15 +1425,17 @@ function selectSubject(subject) {
     sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir, worum es geht.',
     sonstiges: 'Klar — erzähl mir, bei welcher Aufgabe ich dir helfen soll.',
   };
-  const welcome = welcomes[subject.key] || welcomes.sonstiges;
-  lioSay('Wir machen jetzt Hausaufgaben im Fach ' + subject.label + '. Sag kurz, dass du hilfst, und frag, woran ich gerade arbeite.', welcome);
+  // 🚨 HIER: Das UX Onboarding bei Hausaufgaben-Fach Wahl 🚨
+  const welcome = (welcomes[subject.key] || welcomes.sonstiges) + ' Nutze das Mikrofon oder die Tastatur, um mir zu antworten!';
+  lioSay('Hausaufgaben...', welcome);
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
 }
 
-function renderQuickReplies(items, kind) {
+function renderQuickReplies(items = [], kind = '') {
   const row = $('quickReplies');
   if (!row) return;
   row.innerHTML = '';
+  
   items.forEach(item => {
     const chip = document.createElement('button');
     chip.className = 'quick-chip';
@@ -1450,7 +1453,21 @@ function renderQuickReplies(items, kind) {
     });
     row.appendChild(chip);
   });
+
+  // 🚨 HIER: Immer Standard Ja / Nein Buttons anheften 🚨
+  const btnJa = document.createElement('button');
+  btnJa.className = 'quick-chip';
+  btnJa.textContent = '👍 Ja';
+  btnJa.addEventListener('click', () => { clearQuickReplies(); sendMessage('Ja'); });
+  row.appendChild(btnJa);
+
+  const btnNein = document.createElement('button');
+  btnNein.className = 'quick-chip';
+  btnNein.textContent = '👎 Nein';
+  btnNein.addEventListener('click', () => { clearQuickReplies(); sendMessage('Nein'); });
+  row.appendChild(btnNein);
 }
+
 function clearQuickReplies() { const r = $('quickReplies'); if (r) r.innerHTML = ''; }
 
 /* ══════════════════════════════════════════════════════════
@@ -1487,12 +1504,8 @@ function reactToMood(mood) {
     excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
   };
   const text = reactions[mood];
-  const feelings = {
-    happy: 'fröhlich', sad: 'traurig', angry: 'wütend',
-    scared: 'ängstlich', tired: 'müde', excited: 'aufgeregt',
-  };
   if (text) {
-    lioSay('Ich fühle mich gerade ' + (feelings[mood] || mood) + '. Reagier bitte kurz und einfühlsam darauf.', text);
+    lioSay('Reaktion auf Stimmung', text);
   }
 
   if (mood === 'excited' || mood === 'happy') setLioEmotion('excited');
@@ -1595,20 +1608,6 @@ function parseForSpeech(text) {
   return chunks;
 }
 
-function validateGenderNeutralLanguage(text) {
-  const markers = [
-    { re: /\w+:innen/g,  hint: 'Doppelpunkt-Form, besser: Lehrkräfte, Mitarbeitende' },
-    { re: /\w+\*innen/g, hint: 'Sternchen-Form, besser: Studierende' },
-    { re: /\w+\/-?innen/g, hint: 'Schrägstrich-Form, besser: Lehrpersonen' },
-  ];
-  let clean = true;
-  markers.forEach(m => {
-    const hits = text.match(m.re);
-    if (hits) { console.warn('[Sprachprüfung]', hits.join(', '), '→', m.hint); clean = false; }
-  });
-  return clean;
-}
-
 /* ══════════════════════════════════════════════════════════
    GERÄTESTIMMEN
 ══════════════════════════════════════════════════════════ */
@@ -1669,8 +1668,7 @@ function onPitchChange() {
   $('pitchVal').textContent = speechPitch.toFixed(2);
 }
 function testVoice() {
-  lioSay('Sag einen kurzen Satz zur Begrüßung, damit ich deine Stimme höre.',
-         'Hallo! Ich bin Lio, dein Roboter-Freund!');
+  lioSay('Test', 'Hallo! Ich bin Lio, dein Roboter-Freund!');
 }
 
 if ('speechSynthesis' in window) {
@@ -1986,6 +1984,8 @@ async function sendMessage(userText) {
     maybeCelebrate(userText);
     
     if (currentMode === 'homework') renderQuickReplies(HOMEWORK_FOLLOWUPS, 'followup');
+    else renderQuickReplies();
+    
     if (bullyingSignal) setTimeout(openHelpPanel, 900);
 
   } catch (err) {
@@ -2003,7 +2003,7 @@ async function sendMessage(userText) {
 function maybeCelebrate(userText) {
   if (['sad','angry','scared','tired'].includes(currentMood)) return;
   const success = /verstanden|kapiert|alles klar|geschafft|richtig/i.test(userText);
-  const playful = ['jokes','guess','iSpy','wouldYou'].includes(currentMode);
+  const playful = ['jokes','guess','wouldYou'].includes(currentMode);
   if (success || (playful && Math.random() < 0.35)) triggerConfetti();
 }
 
