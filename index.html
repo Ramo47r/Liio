@@ -125,7 +125,7 @@ body::before {
 
 .age-platform {
   position:absolute; 
-  bottom:-40%; /* Hier Plattform verschieben */
+  bottom:-40%; 
   left:50%;
   transform:translateX(-50%); width:120%;
   pointer-events:none; z-index:2;
@@ -258,7 +258,7 @@ body::before {
 
 .platform {
   position:absolute; 
-  bottom:-45%; /* Hier Plattform verschieben */
+  bottom:-45%; 
   left:50%; transform:translateX(-50%);
   width:110%; pointer-events:none; z-index:2;
   filter: drop-shadow(0 0 40px rgba(79,227,193,.55));
@@ -296,10 +296,6 @@ body::before {
 .robot-container {
   position: relative;
   width: 100%;
-  
-  /* 🚨 DER HANDY-SICHERE JOYSTICK: LIO KOMPLETT VERSCHIEBEN */
-  /* Ein positiver Wert (z.B. 5%) schiebt ihn nach rechts.
-     Ein negativer Wert (z.B. -5%) schiebt ihn nach links. */
   margin-left: 22%; 
 }
 
@@ -307,31 +303,21 @@ body::before {
   display: block;
   width: 100%;
   height: auto;
-  
-  /* 🚨 JOYSTICK 2: NUR OFFENES BILD VERSCHIEBEN */
   transform: translate(0%, 0%) scale(1.0) !important;
 }
 
 .robot-container img.lio-auge-zu {
   position: absolute !important;
-  /* Beide Bilder starten jetzt exakt am selben Punkt */
   top: 0 !important;
   left: 0 !important;
-  
-  /* Das geschlossene Bild passt sich exakt der Box des offenen Bildes an */
   width: 100% !important; 
   height: 100% !important; 
   object-fit: contain !important;
-  
-  /* 🚨 JOYSTICK 3: NUR GESCHLOSSENES BILD VERSCHIEBEN & VERGRÖSSERN */
-  /* Nutze das, um die geschlossenen Augen millimetergenau auf die offenen zu legen */
   transform: translate(0%, 0%) scale(1.0) !important; 
-  
   opacity: 0 !important;
   pointer-events: none;
 }
 
-/* Der Chef-Befehl für das Blinzeln */
 .robot-container.is-blinking img.lio-auge-offen { opacity: 0 !important; }
 .robot-container.is-blinking img.lio-auge-zu { opacity: 1 !important; }
 
@@ -785,7 +771,6 @@ body::before {
       
       <div class="age-platform"><img src="assets/plattform.png" alt=""></div>
       
-      <!-- HIER BLINZELT LIO JETZT IM STARTMENÜ (OHNE KONFLIKT) -->
       <div class="age-robot-wrap" id="ageRobot">
         <div class="robot-container">
           <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
@@ -832,7 +817,6 @@ body::before {
       
       <div class="platform"><img src="assets/plattform.png" alt=""></div>
       
-      <!-- HIER IST DER HAUPT-BLINZEL-CONTAINER -->
       <div class="robot-wrap" id="robot" title="Antippen, um Lio zu stoppen">
         <div class="robot-container">
           <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
@@ -1019,7 +1003,7 @@ async function apiFetch(path, body) {
 /* ══════════════════════════════════════════════════════════
    ZUSTAND
 ══════════════════════════════════════════════════════════ */
-const MAX_HISTORY = 12;
+const MAX_HISTORY = 40;
 let messages = [];
 let currentMood = null;
 let currentMode = 'talk';
