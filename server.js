@@ -90,32 +90,33 @@ app.post('/api/chat-stream', async (req, res) => {
     const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es ab und zu liebevoll mit dem Namen an. ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 LIO BEKOMMT SEINEN BILD-MONITOR! 🚨
+    // 🚨 DAS GEHIRN: MIT STRIKTEM VERBOT FÜR BILDER UND KLAMMERN 🚨
     let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. Du bist KEIN typischer Roboter und klingst NIEMALS wie eine Maschine, ein Computer oder eine KI. 
 WICHTIG: Antworte sehr warmherzig, natürlich und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-HOLOGRAMM-MONITOR (BILDER ZEIGEN): Du hast einen kleinen Monitor. Wenn du bei Geschichten oder Erklärungen ein Bild zeigen willst, schreibe einfach unsichtbar diesen Befehl in deinen Text: [BILD: englische beschreibung]
-Beispiel: "Schau mal, das ist ein Delfin! [BILD: a cute friendly dolphin jumping out of the ocean, 3d pixar style] Sie sind sehr schlau."
-Nutze das gerne bei Geschichten oder zum Veranschaulichen von Erklärungen! Beschreibe das Bild IMMER auf Englisch und sehr detailreich (cute, pixar style, vibrant colors).
+REGELN FÜR DEINE SPRACHE (SEHR WICHTIG):
+- Schreibe AUSSCHLIESSLICH Text, der laut von einer Stimme vorgelesen werden kann.
+- Benutze NIEMALS eckige Klammern für Bildbeschreibungen (z.B. [BILD: ...]).
+- Benutze NIEMALS Sternchen oder Klammern für Handlungen (z.B. *lacht* oder (zwinkert)). Nichts davon!
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu, nimm seine Gefühle ernst. Zeige keine Bilder bei ernsten Problemen.
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu, nimm Gefühle zu 100% ernst. Sag NIEMALS "Als KI kann ich das nicht fühlen".
 
-AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chatverlauf. Wenn das Kind dir früher von einem Problem oder einer Krankheit erzählt hat, greife das von dir aus wieder auf (z.B. "Geht es dir wegen ... heute besser?").`;
+AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chat. Wenn das Kind dir früher von einem Streit, einer Krankheit oder Sorge erzählt hat, frage aktiv nach: "Wie ist es eigentlich mit ... weitergegangen?". Zeige echtes Interesse!`;
 
     if (emotion && emotion !== 'normal') {
       systemInstruction += `\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe sofort besonders liebevoll und tröstend darauf ein.`;
     } else if (mood) {
-      systemInstruction += `\nStimmung des Kindes heute: ${mood}. Berücksichtige das in deiner Art zu reden.`;
+      systemInstruction += `\nStimmung des Kindes heute: ${mood}.`;
     }
     
     if (mode === 'stories') {
-      systemInstruction = `Du bist Lio, ein toller Geschichtenerzähler und bester Freund. Erzähle eine spannende Kindergeschichte in ca. 4-5 Sätzen. ZEIGE UNBEDINGT EIN BILD PASSEND ZUR GESCHICHTE (nutze den [BILD: ...] Befehl)! ${nameStr}`;
+      systemInstruction = `Du bist Lio, ein toller Geschichtenerzähler und bester Freund. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. ${nameStr}`;
     } else if (mode === 'homework') {
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Verrate NIEMALS direkt die Lösung! Lass das Kind durch Tipps SELBST auf die Lösung kommen. Zeige gerne ein passendes [BILD: ...], wenn es beim Verstehen hilft!`;
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein bester Freund, der beim Lernen hilft. Verrate NIEMALS direkt die Lösung! Das Kind soll durch kleine Tipps, lustige Vergleiche und Fragen SELBST auf die Lösung kommen.`;
     }
     
     if (subject) systemInstruction += `\nFach: ${subject}.`;
-    if (activeTopic) systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema schon verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
+    if (activeTopic) systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
 
     const formattedMessages = [
       { role: 'system', content: systemInstruction },
@@ -138,7 +139,7 @@ AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chatverlauf. Wenn das Kind dir frühe
 
     if (!groqResponse.ok) {
       const errText = await groqResponse.text();
-      console.error('\n❌ GROQ FEHLER:', groqResponse.status, errText, '\n');
+      console.error('\n❌ GROQ FEHLER (Lios Gehirn blockiert):', groqResponse.status, errText, '\n');
       throw new Error(`Groq Fehler ${groqResponse.status}`);
     }
 
@@ -169,34 +170,39 @@ AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chatverlauf. Wenn das Kind dir frühe
             currentSentence += token;
             
             if (/[.!?]\s*$/.test(currentSentence)) {
-              // 🚨 BILD-BEFEHL HERAUSFILTERN, BEVOR ELEVENLABS IHN VORLIEST 🚨
-              const rawSentence = currentSentence.trim();
-              const cleanForAudio = rawSentence.replace(/\[BILD:[^\]]+\]/gi, '').trim();
               
-              let audioUrl = null;
-              if (cleanForAudio.length > 2) {
-                audioUrl = await generateTTS(cleanForAudio);
+              // 🚨 HIER IST DER NEUE WORT-FILTER GEGEN [BILD: ...] UND *LACHT* 🚨
+              let cleanSentence = currentSentence.trim()
+                .replace(/\[.*?\]/g, '')  // Entfernt alles in eckigen Klammern
+                .replace(/\*.*?\*/g, '')  // Entfernt alles zwischen Sternchen
+                .replace(/\(.*?\)/g, '')  // Entfernt alles in runden Klammern
+                .trim();
+
+              if (cleanSentence.length > 2) {
+                const audioUrl = await generateTTS(cleanSentence);
+                res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
               }
-              
-              res.write(`data: ${JSON.stringify({ text: rawSentence, audio: audioUrl })}\n\n`);
               currentSentence = ""; 
             }
           } catch (e) {
-            console.error('[Puffer] Paket repariert.');
+            console.error('[Puffer] Zerstückeltes Paket repariert.');
           }
         }
       }
     }
     
     if (currentSentence.trim().length > 0) {
-      const rawSentence = currentSentence.trim();
-      const cleanForAudio = rawSentence.replace(/\[BILD:[^\]]+\]/gi, '').trim();
-      
-      let audioUrl = null;
-      if (cleanForAudio.length > 2) {
-        audioUrl = await generateTTS(cleanForAudio);
+      // Auch den Rest-Satz am Ende filtern!
+      let cleanSentence = currentSentence.trim()
+        .replace(/\[.*?\]/g, '')
+        .replace(/\*.*?\*/g, '')
+        .replace(/\(.*?\)/g, '')
+        .trim();
+        
+      if (cleanSentence.length > 2) {
+        const audioUrl = await generateTTS(cleanSentence);
+        res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
       }
-      res.write(`data: ${JSON.stringify({ text: rawSentence, audio: audioUrl })}\n\n`);
     }
 
     res.write('data: [DONE]\n\n');
