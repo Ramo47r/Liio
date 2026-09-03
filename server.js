@@ -87,15 +87,14 @@ app.post('/api/chat-stream', async (req, res) => {
   try {
     const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion } = req.body;
     
-    // 🚨 NAMEN-SPERRE 🚨
     const nameStr = childName ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 NEUES GEHIRN: ZAHLEN ALS ZIFFERN ERLAUBT 🚨
+    // 🚨 NEUES GEHIRN: KEIN BLINDES LOBEN MEHR! 🚨
     let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
 WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-SPRACHE: Sprich IMMER und AUSSCHLIESSLICH auf Deutsch! Keine englischen Wörter. Schreibe Zahlen als ganz normale Ziffern (1, 2, 3), damit das Kind sie gut lesen kann. 
+SPRACHE: Sprich auf Deutsch! WICHTIGE AUSNAHME: Wenn ihr gerade Englisch lernt, darfst du natürlich die englischen Vokabeln verwenden. Schreibe Zahlen als ganz normale Ziffern (1, 2, 3). 
 
 EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu und nimm seine Gefühle ernst. 
 
@@ -110,11 +109,22 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
     if (mode === 'stories') {
       systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen. Keine Bilder, nur Text.`;
     } else if (mode === 'homework') {
-      // 🚨 HAUSAUFGABEN: ABSOLUTES LÖSUNGS-VERBOT 🚨
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Coach. GANZ WICHTIGE REGEL: Verrate NIEMALS die Lösung oder das Endergebnis! ABSOLUT NIEMALS! Egal wie oft das Kind danach fragt. Führe das Kind mit kleinen Gedankenexperimenten (Gummibärchen, Äpfel) und einfachen Zwischenfragen Schritt für Schritt zur Lösung. Lass das Kind immer selbst rechnen!`;
+      
+      // 🚨 DIE NEUEN, STRENGEN HAUSAUFGABEN-REGELN 🚨
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
+WICHTIGE REGELN:
+1. LÖSUNGS-VERBOT: Verrate NIEMALS direkt die Lösung oder das Endergebnis! Führe das Kind Schritt für Schritt dorthin.
+2. STRENGE PRÜFUNG: Lese die Antworten des Kindes GANZ GENAU. Wenn das Kind Quatsch schreibt, wild rät oder die Vokabel/Aufgabe falsch ist, LOBE ES NICHT! Sag niemals "Gut gemacht" zu einer falschen Antwort! Sage freundlich: "Das stimmt leider noch nicht ganz." und gib einen neuen kleinen Tipp.`;
+
+      // 🚨 FACH-SPEZIFISCHE HILFE 🚨
+      if (subject === 'mathe') {
+        systemInstruction += `\nFACH MATHE: Nutze kleine Gedankenexperimente (Gummibärchen, Äpfel) zum Erklären der Rechenwege.`;
+      } else if (subject === 'englisch') {
+        systemInstruction += `\nFACH ENGLISCH: Achte ganz genau auf die richtige Vokabel und Rechtschreibung! Wenn das englische Wort falsch ist oder Quatsch getippt wurde, korrigiere es nicht sofort, sondern gib als Tipp z.B. den Anfangsbuchstaben.`;
+      }
     }
     
-    if (subject) systemInstruction += `\nFach: ${subject}.`;
+    if (subject && mode !== 'homework') systemInstruction += `\nFach: ${subject}.`;
     if (activeTopic) systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
 
     const formattedMessages = [
@@ -170,7 +180,6 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
             
             if (/[.!?]\s*$/.test(currentSentence)) {
               
-              // 1. Text für den Bildschirm (Mit Ziffern, ohne Klammern)
               let cleanSentence = currentSentence.trim()
                 .replace(/\[.*?\]/g, '')  
                 .replace(/\*.*?\*/g, '')  
@@ -179,8 +188,6 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
 
               if (cleanSentence.length > 2) {
                 
-                // 🚨 2. Übersetzer NUR für die Sprachausgabe (TTS) 🚨
-                // Zwingt die Stimme zu Mini-Pausen bei Zahlen und spricht Zeichen aus.
                 let ttsText = cleanSentence
                   .replace(/([0-9]+)/g, ' $1 ') 
                   .replace(/\+/g, ' plus ')
@@ -190,8 +197,6 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
                   .trim();
 
                 const audioUrl = await generateTTS(ttsText);
-                
-                // Wir senden "cleanSentence" an die Sprechblase, aber "audioUrl" enthält die langsame Sprachdatei!
                 res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
               }
               currentSentence = ""; 
