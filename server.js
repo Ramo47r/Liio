@@ -31,7 +31,7 @@ app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static(__dirname));
 
-// ── ELEVENLABS TURBO TTS (mit 100% Cache-Abdeckung) ──
+// ── ELEVENLABS TURBO TTS ──
 async function generateTTS(text) {
   const cleanText = text.trim();
   
@@ -39,12 +39,12 @@ async function generateTTS(text) {
   const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
 
   if (fs.existsSync(cacheMp3)) {
-    console.log(`♻️ Aus Cache geladen (0 Credits): "${cleanText.substring(0, 30)}..."`);
+    console.log(`♻️ Aus Cache geladen: "${cleanText.substring(0, 30)}..."`);
     return `/cache/${hash}.mp3`;
   }
 
   try {
-    console.log(`🎙️ ElevenLabs Turbo generiert: "${cleanText.substring(0, 30)}..."`);
+    console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..."`);
     
     // 🚨 MANNIS ECHTE VOICE-ID 🚨
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
@@ -87,32 +87,27 @@ app.post('/api/chat-stream', async (req, res) => {
   try {
     const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion } = req.body;
     
-    const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es ab und zu liebevoll mit dem Namen an. ` : '';
+    const nameStr = childName ? `Das Kind heißt ${childName}. Sprich es liebevoll mit Namen an. ` : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
-    // 🚨 DAS NEUE ANTI-ROBOTER-GEHIRN 🚨
-    let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. Du bist KEIN Roboter und klingst NIEMALS wie eine KI oder ein Assistent. 
-WICHTIG: Antworte extrem warmherzig, natürlich und kumpelhaft. Nutze einfache, kindgerechte Wörter. ${nameStr}${modeStr}
+    // 🚨 STABILES GEHIRN: Fokus auf Empathie, Gedankenexperimente und Gedächtnis 🚨
+    let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
+WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-ABSOLUTE VERBOTE (STRIKT EINHALTEN!):
-1. KEINE META-KOMMENTARE: Erkläre niemals, was du als KI tun kannst oder nicht (z.B. sag niemals "Ich kann keine Bilder erstellen" oder "Als KI..."). Du bist einfach Lio. Sprich direkt!
-2. NUR REINER SPRECHTEXT: Du bist eine reine Hörfigur. Benutze NIEMALS eckige Klammern [ ] oder Sternchen * * für Handlungen oder Beschreibungen.
-3. KEINE FLOSKELN: Kein "Hier ist deine Geschichte" oder "Gerne helfe ich dir". Fange direkt mit dem eigentlichen Inhalt an.
+EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund, den man sich wünschen kann. Tröste es, höre aktiv zu und nimm seine Gefühle ernst. 
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend oder ängstlich ist, sei der beste Freund. Tröste es, höre aktiv zu, nimm Gefühle zu 100% ernst.
-
-AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chat. Wenn das Kind dir früher von einem Konflikt oder einer Sorge erzählt hat, frage aktiv nach: "Wie ist es eigentlich mit ... weitergegangen?".`;
+AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem, einer Sorge oder etwas Wichtigem erzählt hat, frage später im Chat von dir aus liebevoll nach (z.B. "Wie ist es eigentlich mit ... weitergegangen?").`;
 
     if (emotion && emotion !== 'normal') {
-      systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade vermutlich ${emotion}. Gehe sofort besonders liebevoll und tröstend darauf ein.`;
+      systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade ${emotion}. Gehe sofort liebevoll darauf ein und tröste es.`;
     } else if (mood) {
       systemInstruction += `\n\nStimmung des Kindes heute: ${mood}.`;
     }
     
     if (mode === 'stories') {
-      systemInstruction += `\n\nGESCHICHTEN-MODUS: Du bist ein toller Geschichtenerzähler. Erzähle eine spannende, einfühlsame Kindergeschichte in ca. 4-5 Sätzen. WICHTIG: Schreibe ausschließlich den reinen Text der Geschichte, der laut vorgelesen werden soll. Keine Regieanweisungen, keine Einleitungen.`;
+      systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen.`;
     } else if (mode === 'homework') {
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein bester Freund, der beim Lernen hilft. Verrate NIEMALS direkt die Lösung! Das Kind soll durch kleine Tipps, lustige Vergleiche und einfache Fragen SELBST auf die Lösung kommen.`;
+      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Verrate NIEMALS direkt die Lösung! Das Kind soll selbst auf die Lösung kommen. Nutze dafür kleine Gedankenexperimente und greifbare Dinge aus dem Alltag (z.B. "Stell dir vor, du hast 5 Gummibärchen" oder "Denk an Bauklötze"). Stelle clevere Fragen, damit das Kind mitdenkt!`;
     }
     
     if (subject) systemInstruction += `\nFach: ${subject}.`;
@@ -171,7 +166,7 @@ AKTIVES GEDÄCHTNIS: Scanne den bisherigen Chat. Wenn das Kind dir früher von e
             
             if (/[.!?]\s*$/.test(currentSentence)) {
               
-              // Wort-Filter im Hintergrund läuft brav weiter
+              // 🚨 SICHERHEITSNETZ: Schneidet trotzdem alle [Klammern] weg, falls er es doch mal versucht 🚨
               let cleanSentence = currentSentence.trim()
                 .replace(/\[.*?\]/g, '')  
                 .replace(/\*.*?\*/g, '')  
