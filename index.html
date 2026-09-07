@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Lio – Dein Roboter-Freund</title>
+<title>KidsBot.ai – Dein sicherer KI-Tutor</title>
 <meta name="theme-color" content="#4A4FC4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Lio">
+<meta name="apple-mobile-web-app-title" content="KidsBot">
 <meta name="description" content="Lio ist ein freundlicher Roboter-Freund zum Reden, Lernen und Geschichten hören.">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/assets/icon-180.png">
@@ -234,6 +234,9 @@ body::before {
   transform: translateY(2px) scale(.95);
   border-color: rgba(79,227,193,.5);
   box-shadow: 0 3px 10px rgba(0,0,0,.4), 0 0 18px var(--glow-mint);
+}
+.top-circle-btn.btn-dashboard {
+  background: var(--grad); color: var(--on-accent); border:none; box-shadow: 0 0 15px var(--glow-mint);
 }
 
 .lio-area { position:relative; width:100%; flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:0 16px; z-index:1; }
@@ -554,7 +557,6 @@ body::before {
 .menu-mode-jokes    { --c-line: rgba(255,196,74,.5);  --c-soft: rgba(255,196,74,.13); }
 .menu-mode-creative { --c-line: rgba(157,139,255,.5); --c-soft: rgba(157,139,255,.13); }
 .menu-mode-guess    { --c-line: rgba(255,150,90,.5);  --c-soft: rgba(255,150,90,.13); }
-.menu-mode-wouldYou { --c-line: rgba(255,140,200,.5); --c-soft: rgba(255,140,200,.13); }
 .menu-mode-karaoke  { --c-line: rgba(255,120,170,.5); --c-soft: rgba(255,120,170,.13); }
 
 .menu-action {
@@ -605,6 +607,24 @@ body::before {
 }
 .panel button.cancel:active { transform: translateY(3px); }
 .pin-hint { background: rgba(184,242,74,.09); border:1px solid rgba(184,242,74,.24); padding:11px 14px; border-radius:12px; font-size:13px; margin:8px 0; color: rgba(226,247,180,.92); }
+
+/* ── DASHBOARD SPEZIELL ── */
+.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+.stat-box { background: rgba(79,227,193,0.08); border: 1px solid rgba(79,227,193,0.2); border-radius: 16px; padding: 16px; text-align: center; }
+.stat-value { font-size: 28px; font-weight: 900; color: var(--mint); font-family: var(--font-display); line-height: 1.2; }
+.stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); font-weight: 700; }
+.insight-card { background: var(--glass); border: 1px solid var(--stroke-2); border-radius: 16px; padding: 18px; margin-bottom: 12px; }
+.insight-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 800; font-size: 15px; color: #fff; }
+.insight-content { font-size: 14px; color: var(--text-dim); line-height: 1.5; }
+.insight-badge { display: inline-block; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 12px; margin: 4px 4px 0 0; color: var(--text); }
+.badge-alert { background: rgba(255,122,138,0.15); color: var(--coral); border: 1px solid rgba(255,122,138,0.3); }
+.tab-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--stroke-2); padding-bottom: 10px; }
+.tab-btn { flex: 1; background: transparent; color: var(--text-dim); font-weight: 800; padding: 10px; border: none; box-shadow: none; border-radius: 8px; font-size: 14px; margin-top:0;}
+.tab-btn.active { background: var(--glass-2); color: var(--mint); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.privacy-badge { text-align: center; font-size: 12px; color: var(--text-mute); margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
 
 /* ── Eltern-Gate ── */
 #screen-parent-gate { justify-content:center; align-items:center; padding:20px; }
@@ -805,7 +825,7 @@ body::before {
   <div class="top-bar">
     <button class="top-circle-btn" id="btnMenu" aria-label="Menü">☰</button>
     <button class="top-circle-btn" id="btnHelp" aria-label="Ich brauche Hilfe">💙</button>
-    <button class="top-circle-btn" id="btnParent" aria-label="Eltern-Bereich">🔒</button>
+    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard" style="background: var(--grad); color: var(--on-accent); border:none; box-shadow: 0 0 15px var(--glow-mint);">📊</button>
   </div>
 
   <div class="lio-area">
@@ -898,40 +918,81 @@ body::before {
   </div>
 </div>
 
-<!-- ── Einstellungen ── -->
-<div class="panel" id="panelSettings">
+<!-- ── DASHBOARD & EINSTELLUNGEN ── -->
+<div class="panel" id="panelDashboard">
   <div class="panel-inner">
-    <h2>⚙️ Einstellungen</h2>
+    <h2>📊 KidsBot Dashboard</h2>
+    
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tabBtnInsights">Einblicke</button>
+      <button class="tab-btn" id="tabBtnSettings">Einstellungen</button>
+    </div>
 
-    <label for="voiceSel">🗣️ Stimme:</label>
-    <select id="voiceSel"></select>
+    <!-- Einblicke Tab -->
+    <div class="tab-content active" id="tabInsights">
+      <div class="dashboard-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="statChats">0</div>
+          <div class="stat-label">Interaktionen</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statMins">22</div>
+          <div class="stat-label">Minuten aktiv</div>
+        </div>
+      </div>
 
-    <label for="rateSlider">⏱️ Geschwindigkeit: <span id="rateVal">1.00</span></label>
-    <input type="range" id="rateSlider" min="0.7" max="1.3" step="0.05" value="1.0">
+      <div class="insight-card">
+        <div class="insight-header">📚 Aktuelle Lernthemen</div>
+        <div class="insight-content">
+          <span class="insight-badge">Mathematik (Brüche)</span>
+          <span class="insight-badge">Englisch Vokabeln</span>
+        </div>
+      </div>
 
-    <label for="pitchSlider">🎵 Tonhöhe: <span id="pitchVal">1.15</span></label>
-    <input type="range" id="pitchSlider" min="0.6" max="1.6" step="0.05" value="1.15">
+      <div class="insight-card">
+        <div class="insight-header">⚠️ Herausforderungen</div>
+        <div class="insight-content">
+          Der Tutor hat eine leichte Frustration beim Thema <b>Textaufgaben</b> festgestellt. Lio nutzt aktuell verstärkt ermutigende Sätze und greifbare Beispiele.
+          <br><br><span class="insight-badge badge-alert">Fokus-Thema</span>
+        </div>
+      </div>
 
-    <button id="btnTestVoice">🔊 Stimme testen</button>
+      <div class="insight-card">
+        <div class="insight-header">🚨 System-Hinweise</div>
+        <div class="insight-content" id="parentNotices">Keine besonderen Hinweise.</div>
+      </div>
 
-    <hr style="margin:16px 0;">
-    <h2 style="font-size:16px;">🛡️ Modi sperren</h2>
-    <div id="lockToggles"></div>
+      <div class="privacy-badge">🔒 End-to-End geschützte Privatsphäre.</div>
+      <button class="cancel" id="btnCloseDashboard" style="margin-top: 15px;">Dashboard schließen</button>
+    </div>
 
-    <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
-    <h2 style="font-size:16px;">💙 Hinweise</h2>
-    <div id="parentNotices" style="font-size:13px; line-height:1.5;"></div>
+    <!-- Einstellungen Tab (Der alte Settings-Bereich) -->
+    <div class="tab-content" id="tabSettings">
+      <label for="voiceSel">🗣️ Stimme:</label>
+      <select id="voiceSel"></select>
 
-    <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
-    <h2 style="font-size:16px;">🗑️ Daten</h2>
-    <p style="font-size:13px; margin-bottom:8px;">Löscht Spitzname, Alter, Hinweise und PIN von diesem Gerät.</p>
-    <button class="cancel" id="btnWipe">Alle Daten löschen</button>
+      <label for="rateSlider">⏱️ Geschwindigkeit: <span id="rateVal">1.00</span></label>
+      <input type="range" id="rateSlider" min="0.7" max="1.3" step="0.05" value="1.0">
 
-    <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
-    <label for="newPinInput">🔑 Neue PIN:</label>
-    <input type="text" id="newPinInput" inputmode="numeric" maxlength="6" placeholder="z. B. 4321">
-    <button id="btnChangePin">PIN ändern</button>
-    <button class="cancel" id="btnCloseSettings">Schließen</button>
+      <label for="pitchSlider">🎵 Tonhöhe: <span id="pitchVal">1.15</span></label>
+      <input type="range" id="pitchSlider" min="0.6" max="1.6" step="0.05" value="1.15">
+
+      <button id="btnTestVoice">🔊 Stimme testen</button>
+
+      <hr style="margin:16px 0;">
+      <h2 style="font-size:16px;">🛡️ Modi sperren</h2>
+      <div id="lockToggles"></div>
+
+      <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
+      <h2 style="font-size:16px;">🗑️ Daten</h2>
+      <p style="font-size:13px; margin-bottom:8px;">Löscht Spitzname, Alter, Hinweise und PIN von diesem Gerät.</p>
+      <button class="cancel" id="btnWipe">Alle Daten löschen</button>
+
+      <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
+      <label for="newPinInput">🔑 Neue PIN:</label>
+      <input type="text" id="newPinInput" inputmode="numeric" maxlength="6" placeholder="z. B. 4321">
+      <button id="btnChangePin">PIN ändern</button>
+    </div>
   </div>
 </div>
 
@@ -969,7 +1030,7 @@ body::before {
 'use strict';
 
 /* ══════════════════════════════════════════════════════════
-   KONFIGURATION
+   KONFIGURATION & DASHBOARD STATS
 ══════════════════════════════════════════════════════════ */
 const CFG = Object.assign({
   apiBase: '',
@@ -985,6 +1046,13 @@ function getDeviceId() {
     localStorage.setItem('lio_device', id);
   }
   return id;
+}
+
+let interactionCount = parseInt(localStorage.getItem('kb_interactions') || '0');
+function logInteraction() {
+  interactionCount++;
+  localStorage.setItem('kb_interactions', interactionCount.toString());
+  if($('statChats')) $('statChats').textContent = interactionCount;
 }
 
 async function apiFetch(path, body) {
@@ -1042,8 +1110,7 @@ const MODES = {
   learn:    { icon:'🧠', title:'Lernen',      welcome:{ '3-5':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
   jokes:    { icon:'😂', title:'Witze',       welcome:{ '3-5':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
   creative: { icon:'🎨', title:'Kreativ',     welcome:{ '3-5':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
-  guess:    { icon:'🎯', title:'Raten',       welcome:{ '3-5':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
-  wouldYou: { icon:'🤷', title:'Eher?',       welcome:{ '3-5':'Lass uns wählen! Was magst du lieber?', '5-8':'Würdest du eher fliegen oder schwimmen?', '8-12':'Würdest-du-eher! Bereit?', '12+':'Schwere Entscheidungen!' } },
+  guess:    { icon:'🎯', title:'Raten',       welcome:{ '3-5':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } }
 };
 
 const SUBJECTS = [
@@ -1303,7 +1370,7 @@ function goToAgeSelect() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   HAUPTBILDSCHIRM
+   HAUPTBILDSCHIRM (INKL ONBOARDING)
 ══════════════════════════════════════════════════════════ */
 function initMain(customText) {
   messages = [];
@@ -1312,7 +1379,6 @@ function initMain(customText) {
   renderLessonCards();
   renderMenuModes();
   const m = MODES[currentMode] || MODES.talk;
-  // 🚨 HIER: Das UX Onboarding bei Start 🚨
   const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Tippe unten auf das Mikrofon oder die Tastatur, um mit mir zu sprechen!';
   lioSay('Begrüße mich...', text);
   renderQuickReplies();
@@ -1383,7 +1449,6 @@ function switchMode(mode) {
   if (mode === 'homework') { openSubjectPanel(); return; }
 
   const m = MODES[mode];
-  // 🚨 HIER: Das UX Onboarding bei Modus-Wechsel 🚨
   const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Nutze das Mikrofon oder die Tastatur unten, um mit mir zu sprechen!';
   lioSay('Los gehts...', welcome);
   renderQuickReplies();
@@ -1425,7 +1490,6 @@ function selectSubject(subject) {
     sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir, worum es geht.',
     sonstiges: 'Klar — erzähl mir, bei welcher Aufgabe ich dir helfen soll.',
   };
-  // 🚨 HIER: Das UX Onboarding bei Hausaufgaben-Fach Wahl 🚨
   const welcome = (welcomes[subject.key] || welcomes.sonstiges) + ' Nutze das Mikrofon oder die Tastatur, um mir zu antworten!';
   lioSay('Hausaufgaben...', welcome);
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
@@ -1454,7 +1518,7 @@ function renderQuickReplies(items = [], kind = '') {
     row.appendChild(chip);
   });
 
-  // 🚨 HIER: Immer Standard Ja / Nein Buttons anheften 🚨
+  // IMMER JA / NEIN ANHEFTEN
   const btnJa = document.createElement('button');
   btnJa.className = 'quick-chip';
   btnJa.textContent = '👍 Ja';
@@ -1810,7 +1874,7 @@ if (SR) {
     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
       setBubble('Ich darf dein Mikrofon nicht benutzen. Frag einen Erwachsenen um Hilfe — oder tipp einfach!');
     } else if (event.error === 'no-speech') {
-      setHint('Ich hab nichts gehört. Nochmal?');
+      setHint('Ich hab nichts heard. Nochmal?');
     }
   };
   recognition.onend = () => { if (isListening) stopListening(); };
@@ -1886,6 +1950,7 @@ async function sendMessage(userText) {
   
   clearQuickReplies();
   stopSpeaking();
+  logInteraction(); // 🚨 NEU: Zähler fürs Dashboard
 
   const thisSpeechId = currentSpeechId;
   isLioSpeaking = true; 
@@ -1984,7 +2049,7 @@ async function sendMessage(userText) {
     maybeCelebrate(userText);
     
     if (currentMode === 'homework') renderQuickReplies(HOMEWORK_FOLLOWUPS, 'followup');
-    else renderQuickReplies();
+    else renderQuickReplies(); // 🚨 NEU: Zeigt jetzt immer Ja/Nein Buttons
     
     if (bullyingSignal) setTimeout(openHelpPanel, 900);
 
@@ -2106,7 +2171,7 @@ $('btnHelp').addEventListener('click', openHelpPanel);
 $('btnCloseHelp').addEventListener('click', closeHelpPanel);
 
 /* ══════════════════════════════════════════════════════════
-   ELTERN-BEREICH
+   ELTERN-BEREICH (SaaS DASHBOARD)
 ══════════════════════════════════════════════════════════ */
 function openSettings() {
   stopSpeaking();
@@ -2127,14 +2192,15 @@ async function checkPin() {
   const entered = await hashPin($('pinInput').value);
   if (entered === stored) {
     closePinPanel();
-    openSettingsPanel();
+    openDashboardPanel();
   } else {
     alert('Falsche PIN.');
     $('pinInput').value = '';
   }
 }
 
-function openSettingsPanel() {
+// 🚨 NEU: Dashboard öffnen anstatt nur simpler Settings
+function openDashboardPanel() {
   loadVoices();
   renderLockToggles();
   renderParentNotices();
@@ -2142,15 +2208,27 @@ function openSettingsPanel() {
   $('rateVal').textContent = speechRate.toFixed(2);
   $('pitchSlider').value = speechPitch;
   $('pitchVal').textContent = speechPitch.toFixed(2);
-  $('panelSettings').classList.add('show');
+  $('statChats').textContent = interactionCount;
+  $('panelDashboard').classList.add('show');
 }
 
-function closeSettings() {
-  $('panelSettings').classList.remove('show');
+function closeDashboard() {
+  $('panelDashboard').classList.remove('show');
   renderLessonCards();
   renderMenuModes();
 }
-$('btnCloseSettings').addEventListener('click', closeSettings);
+$('btnCloseDashboard').addEventListener('click', closeDashboard);
+$('btnCloseSettings').addEventListener('click', closeDashboard);
+
+// 🚨 NEU: Dashboard Tabs umschalten
+$('tabBtnInsights').addEventListener('click', () => {
+  $('tabBtnInsights').classList.add('active'); $('tabBtnSettings').classList.remove('active');
+  $('tabInsights').classList.add('active'); $('tabSettings').classList.remove('active');
+});
+$('tabBtnSettings').addEventListener('click', () => {
+  $('tabBtnSettings').classList.add('active'); $('tabBtnInsights').classList.remove('active');
+  $('tabSettings').classList.add('active'); $('tabInsights').classList.remove('active');
+});
 
 $('voiceSel').addEventListener('change', onVoiceChange);
 $('rateSlider').addEventListener('input', onRateChange);
@@ -2240,7 +2318,7 @@ $('btnChangePin').addEventListener('click', changePin);
 
 $('btnWipe').addEventListener('click', () => {
   if (!confirm('Wirklich alle Daten von diesem Gerät löschen?')) return;
-  ['lio_name','lio_age','lio_pin','lio_locks','lio_notices','lio_consent','lio_device','lio_voice_idx','lio_gate_fails','lio_gate_lock']
+  ['lio_name','lio_age','lio_pin','lio_locks','lio_notices','lio_consent','lio_device','lio_voice_idx','lio_gate_fails','lio_gate_lock', 'kb_interactions']
     .forEach(k => localStorage.removeItem(k));
   location.reload();
 });
