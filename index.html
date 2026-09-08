@@ -557,6 +557,7 @@ body::before {
 .menu-mode-jokes    { --c-line: rgba(255,196,74,.5);  --c-soft: rgba(255,196,74,.13); }
 .menu-mode-creative { --c-line: rgba(157,139,255,.5); --c-soft: rgba(157,139,255,.13); }
 .menu-mode-guess    { --c-line: rgba(255,150,90,.5);  --c-soft: rgba(255,150,90,.13); }
+.menu-mode-wouldYou { --c-line: rgba(255,140,200,.5); --c-soft: rgba(255,140,200,.13); }
 .menu-mode-karaoke  { --c-line: rgba(255,120,170,.5); --c-soft: rgba(255,120,170,.13); }
 
 .menu-action {
@@ -624,7 +625,6 @@ body::before {
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 .privacy-badge { text-align: center; font-size: 12px; color: var(--text-mute); margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 6px; }
-
 
 /* ── Eltern-Gate ── */
 #screen-parent-gate { justify-content:center; align-items:center; padding:20px; }
@@ -825,7 +825,7 @@ body::before {
   <div class="top-bar">
     <button class="top-circle-btn" id="btnMenu" aria-label="Menü">☰</button>
     <button class="top-circle-btn" id="btnHelp" aria-label="Ich brauche Hilfe">💙</button>
-    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard" style="background: var(--grad); color: var(--on-accent); border:none; box-shadow: 0 0 15px var(--glow-mint);">📊</button>
+    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard">📊</button>
   </div>
 
   <div class="lio-area">
@@ -1030,7 +1030,7 @@ body::before {
 'use strict';
 
 /* ══════════════════════════════════════════════════════════
-   KONFIGURATION & DASHBOARD STATS
+   KONFIGURATION
 ══════════════════════════════════════════════════════════ */
 const CFG = Object.assign({
   apiBase: '',
@@ -1048,6 +1048,7 @@ function getDeviceId() {
   return id;
 }
 
+// 🚨 Interaktions-Zähler für das Dashboard 🚨
 let interactionCount = parseInt(localStorage.getItem('kb_interactions') || '0');
 function logInteraction() {
   interactionCount++;
@@ -1103,6 +1104,7 @@ const AGE_GROUPS = {
   '12+':  { label: '🎮 12+ Jahre',  rate: 1.05, pitch: 1.05, greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
 };
 
+// 🚨 "Ich seh was" ist komplett entfernt worden 🚨
 const MODES = {
   talk:     { icon:'💬', title:'Chat',        welcome:{ '3-5':'Hallo {name}! Du kannst mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
   homework: { icon:'📚', title:'Hausaufgaben',welcome:{ '3-5':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
@@ -1110,7 +1112,8 @@ const MODES = {
   learn:    { icon:'🧠', title:'Lernen',      welcome:{ '3-5':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
   jokes:    { icon:'😂', title:'Witze',       welcome:{ '3-5':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
   creative: { icon:'🎨', title:'Kreativ',     welcome:{ '3-5':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
-  guess:    { icon:'🎯', title:'Raten',       welcome:{ '3-5':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } }
+  guess:    { icon:'🎯', title:'Raten',       welcome:{ '3-5':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
+  wouldYou: { icon:'🤷', title:'Eher?',       welcome:{ '3-5':'Lass uns wählen! Was magst du lieber?', '5-8':'Würdest du eher fliegen oder schwimmen?', '8-12':'Würdest-du-eher! Bereit?', '12+':'Schwere Entscheidungen!' } },
 };
 
 const SUBJECTS = [
@@ -1370,7 +1373,7 @@ function goToAgeSelect() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   HAUPTBILDSCHIRM (INKL ONBOARDING)
+   HAUPTBILDSCHIRM
 ══════════════════════════════════════════════════════════ */
 function initMain(customText) {
   messages = [];
@@ -1379,6 +1382,7 @@ function initMain(customText) {
   renderLessonCards();
   renderMenuModes();
   const m = MODES[currentMode] || MODES.talk;
+  // 🚨 ONBOARDING BEI START 🚨
   const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Tippe unten auf das Mikrofon oder die Tastatur, um mit mir zu sprechen!';
   lioSay('Begrüße mich...', text);
   renderQuickReplies();
@@ -1449,6 +1453,7 @@ function switchMode(mode) {
   if (mode === 'homework') { openSubjectPanel(); return; }
 
   const m = MODES[mode];
+  // 🚨 ONBOARDING BEI MODUS-WECHSEL 🚨
   const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Nutze das Mikrofon oder die Tastatur unten, um mit mir zu sprechen!';
   lioSay('Los gehts...', welcome);
   renderQuickReplies();
@@ -1490,6 +1495,7 @@ function selectSubject(subject) {
     sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir, worum es geht.',
     sonstiges: 'Klar — erzähl mir, bei welcher Aufgabe ich dir helfen soll.',
   };
+  // 🚨 ONBOARDING BEI FACH-WAHL 🚨
   const welcome = (welcomes[subject.key] || welcomes.sonstiges) + ' Nutze das Mikrofon oder die Tastatur, um mir zu antworten!';
   lioSay('Hausaufgaben...', welcome);
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
@@ -1518,7 +1524,7 @@ function renderQuickReplies(items = [], kind = '') {
     row.appendChild(chip);
   });
 
-  // IMMER JA / NEIN ANHEFTEN
+  // 🚨 NEU: Immer Ja / Nein Buttons anheften 🚨
   const btnJa = document.createElement('button');
   btnJa.className = 'quick-chip';
   btnJa.textContent = '👍 Ja';
@@ -1874,7 +1880,7 @@ if (SR) {
     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
       setBubble('Ich darf dein Mikrofon nicht benutzen. Frag einen Erwachsenen um Hilfe — oder tipp einfach!');
     } else if (event.error === 'no-speech') {
-      setHint('Ich hab nichts heard. Nochmal?');
+      setHint('Ich hab nichts gehört. Nochmal?');
     }
   };
   recognition.onend = () => { if (isListening) stopListening(); };
@@ -1950,7 +1956,7 @@ async function sendMessage(userText) {
   
   clearQuickReplies();
   stopSpeaking();
-  logInteraction(); // 🚨 NEU: Zähler fürs Dashboard
+  logInteraction(); // 🚨 Zähler fürs Dashboard 🚨
 
   const thisSpeechId = currentSpeechId;
   isLioSpeaking = true; 
@@ -2049,7 +2055,7 @@ async function sendMessage(userText) {
     maybeCelebrate(userText);
     
     if (currentMode === 'homework') renderQuickReplies(HOMEWORK_FOLLOWUPS, 'followup');
-    else renderQuickReplies(); // 🚨 NEU: Zeigt jetzt immer Ja/Nein Buttons
+    else renderQuickReplies(); // 🚨 Zeigt jetzt immer Ja/Nein Buttons 🚨
     
     if (bullyingSignal) setTimeout(openHelpPanel, 900);
 
@@ -2192,14 +2198,14 @@ async function checkPin() {
   const entered = await hashPin($('pinInput').value);
   if (entered === stored) {
     closePinPanel();
-    openDashboardPanel();
+    openDashboardPanel(); // 🚨 Öffnet das Dashboard 🚨
   } else {
     alert('Falsche PIN.');
     $('pinInput').value = '';
   }
 }
 
-// 🚨 NEU: Dashboard öffnen anstatt nur simpler Settings
+// 🚨 NEU: Dashboard & Einstellungen Tabs Logik 🚨
 function openDashboardPanel() {
   loadVoices();
   renderLockToggles();
@@ -2220,7 +2226,6 @@ function closeDashboard() {
 $('btnCloseDashboard').addEventListener('click', closeDashboard);
 $('btnCloseSettings').addEventListener('click', closeDashboard);
 
-// 🚨 NEU: Dashboard Tabs umschalten
 $('tabBtnInsights').addEventListener('click', () => {
   $('tabBtnInsights').classList.add('active'); $('tabBtnSettings').classList.remove('active');
   $('tabInsights').classList.add('active'); $('tabSettings').classList.remove('active');
