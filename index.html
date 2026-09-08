@@ -1564,9 +1564,9 @@ body::before {
 .memory-board { 
   display: grid; 
   grid-template-columns: repeat(3, 1fr); 
-  gap: 12px; 
+  gap: 14px; 
   width: 100%; 
-  max-width: 320px; 
+  max-width: 360px; 
   margin: 20px auto; 
 }
 
@@ -1596,7 +1596,7 @@ body::before {
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  font-size: 40px; 
+  font-size: 55px; 
   border-radius: 16px; 
   box-shadow: 0 6px 16px rgba(0,0,0,0.3); 
 }
@@ -1613,7 +1613,7 @@ body::before {
 }
 
 .memory-card.matched { 
-  opacity: 0.6; 
+  cursor: default; 
 }
 
 /* ── Hilfe-Panel ── */
@@ -1760,7 +1760,7 @@ body::before {
   <div class="top-bar">
     <button class="top-circle-btn" id="btnMenu" aria-label="Menü">☰</button>
     <button class="top-circle-btn" id="btnHelp" aria-label="Ich brauche Hilfe">💙</button>
-    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard">📊</button>
+    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard" style="background: var(--grad); color: var(--on-accent); border:none; box-shadow: 0 0 15px var(--glow-mint);">📊</button>
   </div>
 
   <div class="lio-area">
@@ -2159,9 +2159,7 @@ function newMathChallenge() {
   $('mathQuestion').textContent = a + ' × ' + b + ' = ?';
 }
 
-function gateLockedUntil() { 
-  return parseInt(localStorage.getItem('lio_gate_lock') || '0', 10); 
-}
+function gateLockedUntil() { return parseInt(localStorage.getItem('lio_gate_lock') || '0', 10); }
 
 function updateGateLockUI() {
   const remaining = gateLockedUntil() - Date.now();
@@ -2212,12 +2210,10 @@ function startHoldChallenge() {
   $('holdChallenge').style.display = 'block';
   resetHold();
 }
-
 function resetHold() {
   $('holdProgress').style.width = '0%';
   $('holdLabel').textContent = 'Gedrückt halten…';
 }
-
 function holdTick() {
   const pct = Math.min(100, ((Date.now() - holdStart) / HOLD_MS) * 100);
   $('holdProgress').style.width = pct + '%';
@@ -2231,7 +2227,6 @@ function holdTick() {
   }
   holdRaf = requestAnimationFrame(holdTick);
 }
-
 function holdStartHandler(e) { e.preventDefault(); holdStart = Date.now(); holdTick(); }
 function holdEndHandler() { if (holdRaf) cancelAnimationFrame(holdRaf); holdRaf = null; resetHold(); }
 
@@ -3042,7 +3037,7 @@ async function sendMessage(userText) {
 function maybeCelebrate(userText) {
   if (['sad','angry','scared','tired'].includes(currentMood)) return;
   const success = /verstanden|kapiert|alles klar|geschafft|richtig/i.test(userText);
-  const playful = ['jokes','guess'].includes(currentMode);
+  const playful = ['jokes','guess','wouldYou'].includes(currentMode);
   if (success || (playful && Math.random() < 0.35)) triggerConfetti();
 }
 
@@ -3182,6 +3177,7 @@ function initMemoryBoard() {
     wrap.appendChild(card);
     
     wrap.addEventListener('click', () => {
+      // Verhindert Klicks auf bereits umgedrehte oder gefundene Karten
       if(memoryFlipped.length >= 2 || card.classList.contains('flipped') || card.classList.contains('matched')) return;
       
       card.classList.add('flipped'); 
@@ -3189,6 +3185,7 @@ function initMemoryBoard() {
       
       if(memoryFlipped.length === 2) {
         if(memoryFlipped[0].dataset.val === memoryFlipped[1].dataset.val) {
+          // Paar gefunden! Sie bleiben einfach perfekt aufgedeckt (opacity wurde entfernt).
           memoryFlipped[0].classList.add('matched'); 
           memoryFlipped[1].classList.add('matched'); 
           memoryFlipped = []; 
@@ -3200,6 +3197,7 @@ function initMemoryBoard() {
             }, 600); 
           }
         } else { 
+          // Kein Paar, drehe sie wieder um
           setTimeout(() => { 
             memoryFlipped[0].classList.remove('flipped'); 
             memoryFlipped[1].classList.remove('flipped'); 
