@@ -626,6 +626,7 @@ body::before {
 .tab-content.active { display: block; }
 .privacy-badge { text-align: center; font-size: 12px; color: var(--text-mute); margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
+
 /* ── Eltern-Gate ── */
 #screen-parent-gate { justify-content:center; align-items:center; padding:20px; }
 .parent-card {
@@ -992,6 +993,9 @@ body::before {
       <label for="newPinInput">🔑 Neue PIN:</label>
       <input type="text" id="newPinInput" inputmode="numeric" maxlength="6" placeholder="z. B. 4321">
       <button id="btnChangePin">PIN ändern</button>
+      
+      <!-- HIER WAR DER FEHLER: DER SCHLIESSEN BUTTON WURDE VON MIR GELÖSCHT! JETZT IST ER WIEDER DA! -->
+      <button class="cancel" id="btnCloseSettings" style="margin-top: 15px;">Schließen</button>
     </div>
   </div>
 </div>
@@ -2224,7 +2228,7 @@ function closeDashboard() {
   renderMenuModes();
 }
 $('btnCloseDashboard').addEventListener('click', closeDashboard);
-$('btnCloseSettings').addEventListener('click', closeDashboard);
+// Den fehlerhaften closeSettings Listener sicherheitshalber entfernt!
 
 $('tabBtnInsights').addEventListener('click', () => {
   $('tabBtnInsights').classList.add('active'); $('tabBtnSettings').classList.remove('active');
@@ -2327,6 +2331,9 @@ $('btnWipe').addEventListener('click', () => {
     .forEach(k => localStorage.removeItem(k));
   location.reload();
 });
+
+// 🚨 HIER WAR DER FEHLER: DER LISTENER IST JETZT AN DEN ECHTEN SCHLIESSEN-KNOPF GEKOPPELT 🚨
+$('btnCloseSettings').addEventListener('click', closeDashboard);
 
 /* ══════════════════════════════════════════════════════════
    LIO BLINZEL-LOGIK (LÄNGERE DAUER & NATÜRLICH)
