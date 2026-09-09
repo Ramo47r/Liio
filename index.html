@@ -119,6 +119,7 @@ body::before {
   inset: 0; 
   z-index: 1; 
 }
+
 .screen.active { 
   display: flex; 
 }
@@ -257,6 +258,7 @@ body::before {
   transition: opacity .3s; 
   pointer-events: none;
 }
+
 .age-bubble.show { 
   opacity: 1; 
 }
@@ -266,9 +268,10 @@ body::before {
   flex-shrink: 0; 
   padding: 12px 0 calc(24px + env(safe-area-inset-bottom, 0px)); 
 }
+
 .age-grid { 
   display: grid; 
-  grid-template-columns: repeat(2,1fr); 
+  grid-template-columns: repeat(2, 1fr); 
   gap: 12px; 
   width: 100%; 
   max-width: 340px; 
@@ -1234,6 +1237,7 @@ body::before {
   gap: 12px; 
   margin: 20px 0; 
 }
+
 .stat-box { 
   background: rgba(79,227,193,0.08); 
   border: 1px solid rgba(79,227,193,0.2); 
@@ -1241,6 +1245,7 @@ body::before {
   padding: 16px; 
   text-align: center; 
 }
+
 .stat-value { 
   font-size: 28px; 
   font-weight: 900; 
@@ -1248,6 +1253,7 @@ body::before {
   font-family: var(--font-display); 
   line-height: 1.2; 
 }
+
 .stat-label { 
   font-size: 11px; 
   text-transform: uppercase; 
@@ -1255,6 +1261,7 @@ body::before {
   color: var(--text-dim); 
   font-weight: 700; 
 }
+
 .insight-card { 
   background: var(--glass); 
   border: 1px solid var(--stroke-2); 
@@ -1262,6 +1269,7 @@ body::before {
   padding: 18px; 
   margin-bottom: 12px; 
 }
+
 .insight-header { 
   display: flex; 
   align-items: center; 
@@ -1271,11 +1279,13 @@ body::before {
   font-size: 15px; 
   color: #fff; 
 }
+
 .insight-content { 
   font-size: 14px; 
   color: var(--text-dim); 
   line-height: 1.5; 
 }
+
 .insight-badge { 
   display: inline-block; 
   background: rgba(255,255,255,0.1); 
@@ -1285,11 +1295,13 @@ body::before {
   margin: 4px 4px 0 0; 
   color: var(--text); 
 }
+
 .badge-alert { 
   background: rgba(255,122,138,0.15); 
   color: var(--coral); 
   border: 1px solid rgba(255,122,138,0.3); 
 }
+
 .tab-nav { 
   display: flex; 
   gap: 10px; 
@@ -1297,6 +1309,7 @@ body::before {
   border-bottom: 1px solid var(--stroke-2); 
   padding-bottom: 10px; 
 }
+
 .tab-btn { 
   flex: 1; 
   background: transparent; 
@@ -1309,16 +1322,20 @@ body::before {
   font-size: 14px; 
   margin-top: 0;
 }
+
 .tab-btn.active { 
   background: var(--glass-2); 
   color: var(--mint); 
 }
+
 .tab-content { 
   display: none; 
 }
+
 .tab-content.active { 
   display: block; 
 }
+
 .privacy-badge { 
   text-align: center; 
   font-size: 12px; 
@@ -1556,7 +1573,7 @@ body::before {
   border: 1px solid rgba(255,120,170,.4);
 }
 
-/* ── Memory Game ── */
+/* ── Memory Game (Große, brillante Karten) ── */
 #screen-memory {
   justify-content: flex-start;
 }
@@ -1711,7 +1728,7 @@ body::before {
 </div>
 
 <!-- ════════════════════════════════════════
-     ALTERSAUSWAHL
+     ALTERSAUSWAHL (INKL. SPRACH-START)
 ═══════════════════════════════════════ -->
 <div class="screen" id="screen-age">
   <div class="age-top">
@@ -1737,17 +1754,29 @@ body::before {
 
   <div class="age-bottom">
     <div class="age-grid">
-      <button class="age-card age-1" data-age="3-5">
-        <span class="age-icon">🧸</span><span class="age-range">3 – 5 Jahre</span><span class="age-desc">Kita &amp; Vorschule</span>
+      <!-- Sprach-Start ersetzt 3-5 Jahre -->
+      <button class="age-card age-1" data-age="speech-delay">
+        <span class="age-icon">🗣️</span>
+        <span class="age-range">Sprach-Start</span>
+        <span class="age-desc">Geduldig &amp; Einzelförderung</span>
       </button>
+
       <button class="age-card age-2" data-age="5-8">
-        <span class="age-icon">🎈</span><span class="age-range">5 – 8 Jahre</span><span class="age-desc">Vor- &amp; Grundschule</span>
+        <span class="age-icon">🎈</span>
+        <span class="age-range">5 – 8 Jahre</span>
+        <span class="age-desc">Vor- &amp; Grundschule</span>
       </button>
+
       <button class="age-card age-3" data-age="8-12">
-        <span class="age-icon">🎒</span><span class="age-range">8 – 12 Jahre</span><span class="age-desc">Grundschule</span>
+        <span class="age-icon">🎒</span>
+        <span class="age-range">8 – 12 Jahre</span>
+        <span class="age-desc">Grundschule</span>
       </button>
+
       <button class="age-card age-4" data-age="12+">
-        <span class="age-icon">🎮</span><span class="age-range">12+ Jahre</span><span class="age-desc">Teen Crew</span>
+        <span class="age-icon">🎮</span>
+        <span class="age-range">12+ Jahre</span>
+        <span class="age-desc">Teen Crew</span>
       </button>
     </div>
   </div>
@@ -1760,7 +1789,7 @@ body::before {
   <div class="top-bar">
     <button class="top-circle-btn" id="btnMenu" aria-label="Menü">☰</button>
     <button class="top-circle-btn" id="btnHelp" aria-label="Ich brauche Hilfe">💙</button>
-    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard" style="background: var(--grad); color: var(--on-accent); border:none; box-shadow: 0 0 15px var(--glow-mint);">📊</button>
+    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard">📊</button>
   </div>
 
   <div class="lio-area">
@@ -1827,7 +1856,7 @@ body::before {
 ═══════════════════════════════════════ -->
 <div class="screen" id="screen-memory">
   <div class="top-bar">
-    <button class="top-circle-btn" id="btnMemoryBack">←</button>
+    <button class="top-circle-btn" id="btnMemoryBack" aria-label="Zurück">←</button>
     <div class="karaoke-title">🧩 Memory</div>
     <div style="width:46px"></div>
   </div>
@@ -1916,7 +1945,7 @@ body::before {
       <button class="cancel" id="btnCloseDashboard" style="margin-top: 15px;">Dashboard schließen</button>
     </div>
 
-    <!-- Einstellungen Tab (Der alte Settings-Bereich) -->
+    <!-- Einstellungen Tab -->
     <div class="tab-content" id="tabSettings">
       <label for="voiceSel">🗣️ Stimme:</label>
       <select id="voiceSel"></select>
@@ -2000,7 +2029,6 @@ function getDeviceId() {
   return id;
 }
 
-// 🚨 Interaktions-Zähler für das Dashboard 🚨
 let interactionCount = parseInt(localStorage.getItem('kb_interactions') || '0');
 function logInteraction() {
   interactionCount++;
@@ -2050,21 +2078,26 @@ try { parentLocks = JSON.parse(localStorage.getItem('lio_locks') || '{}'); } cat
    INHALTE
 ══════════════════════════════════════════════════════════ */
 const AGE_GROUPS = {
-  '3-5':  { label: '🧸 3–5 Jahre',  rate: 0.95, pitch: 1.20, greeting: 'Hallo {name}! Ich bin Lio! Schön, dass du da bist!' },
+  'speech-delay': { 
+    label: '🗣️ Sprach-Start', 
+    rate: 0.78, 
+    pitch: 1.05, 
+    greeting: 'Hallo {name}! Schön, dass du da bist. Wir sprechen ganz ruhig und gemütlich.' 
+  },
   '5-8':  { label: '🎈 5–8 Jahre',  rate: 0.98, pitch: 1.18, greeting: 'Hallo {name}! Ich bin Lio, dein Freund! Was machen wir heute?' },
   '8-12': { label: '🎒 8–12 Jahre', rate: 1.00, pitch: 1.12, greeting: 'Hi {name}! Ich bin Lio! Worauf hast du heute Lust?' },
   '12+':  { label: '🎮 12+ Jahre',  rate: 1.05, pitch: 1.05, greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
 };
 
 const MODES = {
-  talk:     { icon:'💬', title:'Chat',        welcome:{ '3-5':'Hallo {name}! Du kannst mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
-  homework: { icon:'📚', title:'Hausaufgaben',welcome:{ '3-5':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
-  stories:  { icon:'📖', title:'Geschichte',  welcome:{ '3-5':'Möchtest du eine Geschichte?', '5-8':'Eine Geschichte! Worüber soll sie sein?', '8-12':'Welche Geschichte soll ich erzählen?', '12+':'Geschichten-Modus! Sag mir das Thema.' } },
-  learn:    { icon:'🧠', title:'Lernen',      welcome:{ '3-5':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
-  jokes:    { icon:'😂', title:'Witze',       welcome:{ '3-5':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
-  creative: { icon:'🎨', title:'Kreativ',     welcome:{ '3-5':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
-  guess:    { icon:'🎯', title:'Raten',       welcome:{ '3-5':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
-  memory:   { icon:'🧩', title:'Memory',      welcome:{ '3-5':'Lass uns Memory spielen!', '5-8':'Lass uns Memory spielen!', '8-12':'Lass uns Memory spielen!', '12+':'Lass uns Memory spielen!' } },
+  talk:     { icon:'💬', title:'Chat',        welcome:{ 'speech-delay':'Hallo {name}! Du kannst ganz in Ruhe mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
+  homework: { icon:'📚', title:'Hausaufgaben',welcome:{ 'speech-delay':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
+  stories:  { icon:'📖', title:'Geschichte',  welcome:{ 'speech-delay':'Möchtest du eine ruhige Geschichte?', '5-8':'Eine Geschichte! Worüber soll sie sein?', '8-12':'Welche Geschichte soll ich erzählen?', '12+':'Geschichten-Modus! Sag mir das Thema.' } },
+  learn:    { icon:'🧠', title:'Lernen',      welcome:{ 'speech-delay':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
+  jokes:    { icon:'😂', title:'Witze',       welcome:{ 'speech-delay':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
+  creative: { icon:'🎨', title:'Kreativ',     welcome:{ 'speech-delay':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
+  guess:    { icon:'🎯', title:'Raten',       welcome:{ 'speech-delay':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
+  memory:   { icon:'🧩', title:'Memory',      welcome:{ 'speech-delay':'Lass uns Memory spielen!', '5-8':'Lass uns Memory spielen!', '8-12':'Lass uns Memory spielen!', '12+':'Lass uns Memory spielen!' } },
 };
 
 const SUBJECTS = [
@@ -2095,7 +2128,7 @@ const HOMEWORK_FOLLOWUPS = [
 ];
 
 const ALL_SONGS = [
-  { icon:'🐭', title:'Alle meine Entchen', ages:['3-5','5-8','8-12','12+'], lyrics:[
+  { icon:'🐭', title:'Alle meine Entchen', ages:['speech-delay','5-8','8-12','12+'], lyrics:[
       'Alle meine Entchen schwimmen auf dem See.',
       'Köpfchen in das Wasser, Schwänzchen in die Höh!',
       'Alle meine Täubchen sitzen auf dem Dach.',
@@ -2103,16 +2136,16 @@ const ALL_SONGS = [
   { icon:'🦊', title:'Fuchs, du hast die Gans gestohlen', ages:['5-8','8-12','12+'], lyrics:[
       'Fuchs, du hast die Gans gestohlen, gib sie wieder her!',
       'Sonst wird dich der Jäger holen mit dem Schießgewehr.' ]},
-  { icon:'🌙', title:'Der Mond ist aufgegangen', ages:['3-5','5-8','8-12','12+'], lyrics:[
+  { icon:'🌙', title:'Der Mond ist aufgegangen', ages:['speech-delay','5-8','8-12','12+'], lyrics:[
       'Der Mond ist aufgegangen, die goldnen Sternlein prangen.',
       'Am Himmel hell und klar.',
       'Der Wald steht schwarz und schweiget,',
       'und aus den Wiesen steiget der weiße Nebel wunderbar.' ]},
-  { icon:'🐝', title:'Summ, summ, summ', ages:['3-5','5-8','8-12'], lyrics:[
+  { icon:'🐝', title:'Summ, summ, summ', ages:['speech-delay','5-8','8-12'], lyrics:[
       'Summ, summ, summ! Bienchen summ herum!',
       'Ei, wir tun dir nichts zuleide,',
       'flieg nur aus in Wald und Heide!' ]},
-  { icon:'🐑', title:'Schlaf, Kindlein, schlaf', ages:['3-5','5-8'], lyrics:[
+  { icon:'🐑', title:'Schlaf, Kindlein, schlaf', ages:['speech-delay','5-8'], lyrics:[
       'Schlaf, Kindlein, schlaf! Der Vater hüt die Schaf.',
       'Die Mutter schüttelt s Bäumelein,',
       'da fällt herab ein Träumelein.' ]},
@@ -2146,9 +2179,9 @@ function setBubble(text)   { const b = $('bubble'); if (b) b.textContent = text;
 function setBubbleLoading(){ const b = $('bubble'); if (b) b.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>'; }
 function setHint(text)     { const h = $('hint');  if (h) h.textContent = text; }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    ELTERN-GATE
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 let mathSolution = 0;
 let gateFails = parseInt(localStorage.getItem('lio_gate_fails') || '0', 10);
 
@@ -2257,9 +2290,9 @@ async function saveSetup() {
 }
 $('btnSaveSetup').addEventListener('click', saveSetup);
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    ALTERSAUSWAHL
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 document.querySelectorAll('.age-card').forEach(btn => {
   btn.addEventListener('click', () => selectAge(btn.dataset.age));
 });
@@ -2282,7 +2315,7 @@ function speakOnAge(text, onDone) {
 
   const clean = stripEmoji(text);
 
- if (!('speechSynthesis' in window) || !clean) {
+  if (!('speechSynthesis' in window) || !clean) {
     if (ageRobot) ageRobot.classList.remove('talking');
     setTimeout(finish, 400);
     return;
@@ -2323,9 +2356,9 @@ function goToAgeSelect() {
   showScreen('age');
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    HAUPTBILDSCHIRM (INKL. ONBOARDING)
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function initMain(customText) {
   messages = [];
   activeTopic = null;
@@ -2333,7 +2366,6 @@ function initMain(customText) {
   renderLessonCards();
   renderMenuModes();
   const m = MODES[currentMode] || MODES.talk;
-  // 🚨 ONBOARDING BEI START 🚨
   const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Tippe unten auf das Mikrofon oder die Tastatur, um mit mir zu sprechen!';
   lioSay('Begrüße mich...', text);
   renderQuickReplies();
@@ -2413,7 +2445,6 @@ function switchMode(mode) {
   }
 
   const m = MODES[mode];
-  // 🚨 ONBOARDING BEI MODUS-WECHSEL 🚨
   const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Nutze das Mikrofon oder die Tastatur unten, um mit mir zu sprechen!';
   lioSay('Los gehts...', welcome);
   renderQuickReplies();
@@ -2455,7 +2486,6 @@ function selectSubject(subject) {
     sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir, worum es geht.',
     sonstiges: 'Klar — erzähl mir, bei welcher Aufgabe ich dir helfen soll.',
   };
-  // 🚨 ONBOARDING BEI FACH-WAHL 🚨
   const welcome = (welcomes[subject.key] || welcomes.sonstiges) + ' Nutze das Mikrofon oder die Tastatur, um mir zu antworten!';
   lioSay('Hausaufgaben...', welcome);
   renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
@@ -2484,7 +2514,7 @@ function renderQuickReplies(items = [], kind = '') {
     row.appendChild(chip);
   });
 
-  // 🚨 IMMER JA / NEIN ANHEFTEN 🚨
+  // IMMER JA / NEIN ANHEFTEN
   const btnJa = document.createElement('button');
   btnJa.className = 'quick-chip';
   btnJa.textContent = '👍 Ja';
@@ -2503,9 +2533,9 @@ function clearQuickReplies() {
   if (r) r.innerHTML = ''; 
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    STIMMUNG
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 document.querySelectorAll('.mood-pill').forEach(btn => {
   btn.addEventListener('click', () => selectMood(btn, btn.dataset.mood));
 });
@@ -2556,9 +2586,9 @@ function setLioEmotion(emotion) {
   else if (emotion === 'tired') robot.classList.add('tired');
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    GEFÜHLSERKENNUNG IM TEXT
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const EMOTION_KEYWORDS = {
   happy:      ['freut','glücklich','toll','super','wunderbar','schön','lachen','erleichtert','prima','klasse','cool','mega'],
   sad:        ['traurig','niedergeschlagen','deprimiert','heulen','weine','weinen','betrübt','mutlos','allein','einsam'],
@@ -2592,9 +2622,9 @@ function generateLioGreeting(emotion) {
   return r.greeting + ' ' + r.follow;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    SICHERHEITSNETZ IM CLIENT
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const BULLYING_PATTERNS = [
   /mobb/i, /gemobbt/i, /gehänselt|hänseln/i, /ausgelacht/i, /ausgeschlossen/i,
   /schlagen mich|schlägt mich|geschlagen|haut mich/i,
@@ -2615,9 +2645,9 @@ function logParentNotice(category) {
   } catch (e) {}
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    SPRACHAUFBEREITUNG
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function stripEmoji(text) {
   return String(text).replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s{2,}/g, ' ').trim();
 }
@@ -2641,9 +2671,9 @@ function parseForSpeech(text) {
   return chunks;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    GERÄTESTIMMEN
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function loadVoices() {
   if (!('speechSynthesis' in window)) return;
   const all = window.speechSynthesis.getVoices();
@@ -2711,9 +2741,9 @@ if ('speechSynthesis' in window) {
   [0, 120, 350, 700, 1500, 2500].forEach(ms => setTimeout(loadVoices, ms));
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    STREAMING AUDIO PLAYER & SPRACHAUSGABE
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 let currentAudio = null;
 let streamAudioQueue = [];
 let isPlayingQueue = false;
@@ -2820,11 +2850,13 @@ function repeatLast() {
 }
 $('btnRepeat').addEventListener('click', repeatLast);
 
-/* ══════════════════════════════════════════════════════════
-   SPRACHEINGABE
-══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   SPRACHEINGABE (MIT PAUSEN-PUFFER)
+═══════════════════════════════════════ */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let recognition = null;
+let speechDelayTimer = null;
+let speechDelayCollected = '';
 
 if (SR) {
   recognition = new SR();
@@ -2835,9 +2867,24 @@ if (SR) {
 
   recognition.onresult = (event) => {
     const text = event.results[0][0].transcript;
-    stopListening();
-    if (text && text.trim()) sendMessage(text.trim());
+    
+    // Bei Sprachverzögerung längeres Zeitfenster für Wortpausen
+    if (currentAge === 'speech-delay') {
+      speechDelayCollected += ' ' + text;
+      clearTimeout(speechDelayTimer);
+      speechDelayTimer = setTimeout(() => {
+        stopListening();
+        if (speechDelayCollected.trim()) {
+          sendMessage(speechDelayCollected.trim());
+        }
+        speechDelayCollected = '';
+      }, 1800);
+    } else {
+      stopListening();
+      if (text && text.trim()) sendMessage(text.trim());
+    }
   };
+
   recognition.onerror = (event) => {
     stopListening();
     if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
@@ -2846,7 +2893,10 @@ if (SR) {
       setHint('Ich hab nichts gehört. Nochmal?');
     }
   };
-  recognition.onend = () => { if (isListening) stopListening(); };
+
+  recognition.onend = () => { 
+    if (isListening && currentAge !== 'speech-delay') stopListening(); 
+  };
 }
 
 $('micBtn').addEventListener('click', toggleListen);
@@ -2867,10 +2917,19 @@ function toggleListen() {
     openTextInput();
     return;
   }
-  if (isListening) { try { recognition.stop(); } catch (e) {} return; }
 
-  try { recognition.start(); startListening(); }
-  catch (e) { stopListening(); }
+  if (isListening) { 
+    try { recognition.stop(); } catch (e) {} 
+    return; 
+  }
+
+  try { 
+    speechDelayCollected = '';
+    recognition.start(); 
+    startListening(); 
+  } catch (e) { 
+    stopListening(); 
+  }
 }
 
 function startListening() {
@@ -2878,8 +2937,12 @@ function startListening() {
   $('micBtn').classList.add('listening');
   setHint('Ich höre dich… 👂');
   const robot = $('robot');
-  if (robot) { robot.classList.remove('excited','sad','tired'); robot.classList.add('listening'); }
+  if (robot) { 
+    robot.classList.remove('excited','sad','tired'); 
+    robot.classList.add('listening'); 
+  }
 }
+
 function stopListening() {
   isListening = false;
   $('micBtn').classList.remove('listening');
@@ -2888,9 +2951,9 @@ function stopListening() {
   if (robot) robot.classList.remove('listening');
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    NACHRICHT SENDEN & TASTATUR
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function openTextInput() {
   $('textOverlay').classList.add('show');
   setTimeout(() => $('textInput').focus(), 100);
@@ -2910,16 +2973,16 @@ $('btnCloseText').addEventListener('click', closeTextInput);
 $('btnSendText').addEventListener('click', sendText);
 $('textInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendText(); });
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    STREAMING NACHRICHT SENDEN (Der Wasserhahn)
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 async function sendMessage(userText) {
   if (!userText || !userText.trim()) return;
   userText = userText.trim().slice(0, 500);
   
   clearQuickReplies();
   stopSpeaking();
-  logInteraction(); // 🚨 Zähler fürs Dashboard 🚨
+  logInteraction(); 
 
   const thisSpeechId = currentSpeechId;
   isLioSpeaking = true; 
@@ -3018,7 +3081,7 @@ async function sendMessage(userText) {
     maybeCelebrate(userText);
     
     if (currentMode === 'homework') renderQuickReplies(HOMEWORK_FOLLOWUPS, 'followup');
-    else renderQuickReplies(); // 🚨 Zeigt jetzt immer Ja/Nein Buttons 🚨
+    else renderQuickReplies(); 
     
     if (bullyingSignal) setTimeout(openHelpPanel, 900);
 
@@ -3037,7 +3100,7 @@ async function sendMessage(userText) {
 function maybeCelebrate(userText) {
   if (['sad','angry','scared','tired'].includes(currentMood)) return;
   const success = /verstanden|kapiert|alles klar|geschafft|richtig/i.test(userText);
-  const playful = ['jokes','guess','wouldYou'].includes(currentMode);
+  const playful = ['jokes','guess'].includes(currentMode);
   if (success || (playful && Math.random() < 0.35)) triggerConfetti();
 }
 
@@ -3060,9 +3123,9 @@ function triggerConfetti() {
   }
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    MENÜ
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function openMenu()  { $('menuDrawer').classList.add('show');    $('menuOverlay').classList.add('show'); }
 function closeMenu() { $('menuDrawer').classList.remove('show'); $('menuOverlay').classList.remove('show'); }
 $('btnMenu').addEventListener('click', openMenu);
@@ -3070,9 +3133,9 @@ $('menuOverlay').addEventListener('click', closeMenu);
 $('btnResetChat').addEventListener('click', resetChat);
 $('btnChangeAge').addEventListener('click', goToAgeSelect);
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    KARAOKE
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function goToKaraoke() {
   if (parentLocks.karaoke) { setBubble('🔒 Karaoke ist gesperrt.'); return; }
   closeMenu();
@@ -3131,9 +3194,9 @@ function stopKaraoke() {
   if (list) list.style.opacity = '1';
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    MEMORY SPIEL
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 const MEMORY_EMOJIS = ['🐶', '🐱', '🐸', '🚜', '🚀', '⛵'];
 let memoryFlipped = []; 
 let memoryMatched = 0;
@@ -3177,7 +3240,6 @@ function initMemoryBoard() {
     wrap.appendChild(card);
     
     wrap.addEventListener('click', () => {
-      // Verhindert Klicks auf bereits umgedrehte oder gefundene Karten
       if(memoryFlipped.length >= 2 || card.classList.contains('flipped') || card.classList.contains('matched')) return;
       
       card.classList.add('flipped'); 
@@ -3185,7 +3247,6 @@ function initMemoryBoard() {
       
       if(memoryFlipped.length === 2) {
         if(memoryFlipped[0].dataset.val === memoryFlipped[1].dataset.val) {
-          // Paar gefunden! Sie bleiben einfach perfekt aufgedeckt (opacity wurde entfernt).
           memoryFlipped[0].classList.add('matched'); 
           memoryFlipped[1].classList.add('matched'); 
           memoryFlipped = []; 
@@ -3197,7 +3258,6 @@ function initMemoryBoard() {
             }, 600); 
           }
         } else { 
-          // Kein Paar, drehe sie wieder um
           setTimeout(() => { 
             memoryFlipped[0].classList.remove('flipped'); 
             memoryFlipped[1].classList.remove('flipped'); 
@@ -3210,17 +3270,17 @@ function initMemoryBoard() {
   });
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    HILFE-PANEL
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function openHelpPanel()  { $('panelHelp').classList.add('show'); }
 function closeHelpPanel() { $('panelHelp').classList.remove('show'); }
 $('btnHelp').addEventListener('click', openHelpPanel);
 $('btnCloseHelp').addEventListener('click', closeHelpPanel);
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════
    ELTERN-BEREICH (SaaS DASHBOARD)
-══════════════════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 function openSettings() {
   stopSpeaking();
   $('panelPin').classList.add('show');
@@ -3369,32 +3429,28 @@ $('btnWipe').addEventListener('click', () => {
   location.reload();
 });
 
-/* ══════════════════════════════════════════════════════════
-   LIO BLINZEL-LOGIK (LÄNGERE DAUER & NATÜRLICH)
-══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   LIO BLINZEL-LOGIK
+═══════════════════════════════════════ */
 function startNaturalBlinking() {
   function blink() {
     const containers = document.querySelectorAll('.robot-container');
     containers.forEach(c => c.classList.add('is-blinking'));
     
-    // Lio schließt die Augen für deutliche 280 Millisekunden
     setTimeout(() => {
       containers.forEach(c => c.classList.remove('is-blinking'));
       
-      // Nächster Blinzler in 2,5 bis 5,5 Sekunden
       const nextBlinkIn = 2500 + Math.random() * 3000;
       setTimeout(blink, nextBlinkIn);
     }, 280); 
   }
   
-  // Startet den allerersten Blinzler
   setTimeout(blink, 2000);
 }
 
-
-/* ══════════════════════════════════════════════════════════
-   START
-══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   START & BOOT
+═══════════════════════════════════════ */
 function buildClouds() {
   const box = $('clouds');
   for (let i = 0; i < 5; i++) {
