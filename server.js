@@ -1,5 +1,5 @@
 // ============================================================
-// Lio Backend — Premium TTS (ElevenLabs Turbo + Smart Cache)
+// KidsBot.ai / Lio Backend — Premium TTS & Sokratischer Tutor
 // ============================================================
 import express from 'express';
 import cors from 'cors';
@@ -24,10 +24,14 @@ if (!fs.existsSync(CACHE_DIR)) {
 app.use('/cache', express.static(CACHE_DIR));
 
 // ── API Key Check ──
-if (!process.env.GROQ_API_KEY) console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
-if (!process.env.ELEVENLABS_API_KEY) console.warn('⚠️ ELEVENLABS_API_KEY fehlt! Bitte in Render eintragen.');
+if (!process.env.GROQ_API_KEY) {
+  console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
+}
+if (!process.env.ELEVENLABS_API_KEY) {
+  console.warn('⚠️ ELEVENLABS_API_KEY fehlt! Bitte in Render eintragen.');
+}
 
-app.use(cors({ origin: '*', methods: ['GET','POST','OPTIONS'] }));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static(__dirname));
 
@@ -46,7 +50,7 @@ async function generateTTS(text) {
   try {
     console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..."`);
     
-    // 🚨 MANNIS ECHTE VOICE-ID 🚨
+    // Mannis Voice-ID
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -59,7 +63,10 @@ async function generateTTS(text) {
       body: JSON.stringify({
         text: cleanText,
         model_id: 'eleven_turbo_v2_5',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        voice_settings: { 
+          stability: 0.5, 
+          similarity_boost: 0.75 
+        }
       })
     });
 
@@ -85,19 +92,40 @@ app.post('/api/chat-stream', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion } = req.body;
+    const { 
+      messages, 
+      childName, 
+      mode, 
+      mood, 
+      activeTopic, 
+      topicResolved, 
+      subject, 
+      emotion, 
+      age 
+    } = req.body;
     
-    const nameStr = childName ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` : '';
+    const nameStr = childName 
+      ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` 
+      : '';
     const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
     let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
-WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in 2 bis 3 sehr kurzen, kindgerechten Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
+WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in sehr kurzen Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
-SPRACHE: Sprich auf Deutsch! WICHTIGE AUSNAHME: Wenn ihr gerade Englisch lernt, darfst du englische Vokabeln verwenden. Schreibe Zahlen als ganz normale Ziffern (1, 2, 3). 
+SPRACHE: Sprich auf Deutsch! WICHTIGE AUSNAHME: Wenn ihr Englisch lernt, darfst du englische Vokabeln verwenden. Schreibe Zahlen als ganz normale Ziffern (1, 2, 3). 
 
 EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu und nimm seine Gefühle ernst. 
 
 AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorge erzählt hat, frage später von dir aus liebevoll nach.`;
+
+    // SPEZIELLE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG
+    if (age === 'speech-delay') {
+      systemInstruction += `\n\nBESONDERE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG:
+1. Das Kind spricht möglicherweise sehr langsam, undeutlich oder nur in einzelnen Wörtern oder Fragmenten (z. B. 'Auto rot da').
+2. Deine wichtigste Aufgabe: Verstehe den Sinn hinter den Wortfetzen! Setze die Fragmente im Kopf zusammen und führe das Gespräch liebevoll weiter.
+3. Korrigiere das Kind NIEMALS direkt für Grammatik- oder Aussprachefehler. Wiederhole stattdessen den Gedanken des Kindes in einem korrekten, kurzen Vorbild-Satz.
+4. Antworte in maximal 1 bis 2 extrem kurzen Sätzen. Nutze einfache Alltagswörter und stelle offene oder einfache Entscheidungsfragen (Ja/Nein). Lobe jeden Sprechversuch sanft.`;
+    }
 
     if (emotion && emotion !== 'normal') {
       systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade ${emotion}. Gehe sofort liebevoll darauf ein und tröste es.`;
@@ -105,13 +133,11 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
       systemInstruction += `\n\nStimmung des Kindes heute: ${mood}.`;
     }
     
-    // 🚨 HIER DIE MODUS-REGELN (INKLUSIVE MEMORY) 🚨
     if (mode === 'stories') {
       systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen. Keine Bilder, nur Text.`;
     } else if (mode === 'memory') {
       systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory (Paare aufdecken) mit Tieren und Fahrzeugen. Feuere es an oder freue dich mit ihm!`;
     } else if (mode === 'homework') {
-      
       systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
 WICHTIGE REGELN:
 1. LÖSUNGS-VERBOT: Verrate NIEMALS direkt die Lösung oder das Endergebnis! Führe das Kind Schritt für Schritt dorthin.
@@ -124,8 +150,12 @@ WICHTIGE REGELN:
       }
     }
     
-    if (subject && mode !== 'homework') systemInstruction += `\nFach: ${subject}.`;
-    if (activeTopic) systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
+    if (subject && mode !== 'homework') {
+      systemInstruction += `\nFach: ${subject}.`;
+    }
+    if (activeTopic) {
+      systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
+    }
 
     const formattedMessages = [
       { role: 'system', content: systemInstruction },
@@ -178,7 +208,6 @@ WICHTIGE REGELN:
             currentSentence += token;
             
             if (/[.!?]\s*$/.test(currentSentence)) {
-              
               let cleanSentence = currentSentence.trim()
                 .replace(/\[.*?\]/g, '')  
                 .replace(/\*.*?\*/g, '')  
@@ -193,6 +222,10 @@ WICHTIGE REGELN:
                   .replace(/\*/g, ' mal ')
                   .replace(/\s+/g, ' ')
                   .trim();
+
+                if (age === 'speech-delay') {
+                  ttsText = ttsText.replace(/\. /g, '... ').replace(/, /g, '... ');
+                }
 
                 const audioUrl = await generateTTS(ttsText);
                 res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
@@ -221,6 +254,10 @@ WICHTIGE REGELN:
           .replace(/\*/g, ' mal ')
           .replace(/\s+/g, ' ')
           .trim();
+
+        if (age === 'speech-delay') {
+          ttsText = ttsText.replace(/\. /g, '... ').replace(/, /g, '... ');
+        }
 
         const audioUrl = await generateTTS(ttsText);
         res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
