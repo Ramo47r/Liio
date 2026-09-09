@@ -36,10 +36,10 @@ app.use(express.json({ limit: '50kb' }));
 app.use(express.static(__dirname));
 
 // ── ELEVENLABS TURBO TTS ──
-async function generateTTS(text) {
+async function generateTTS(text, isSpeechDelay = false) {
   const cleanText = text.trim();
   
-  const hash = crypto.createHash('sha256').update(cleanText).digest('hex');
+  const hash = crypto.createHash('sha256').update(cleanText + (isSpeechDelay ? '_slow' : '')).digest('hex');
   const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
 
   if (fs.existsSync(cacheMp3)) {
@@ -48,7 +48,7 @@ async function generateTTS(text) {
   }
 
   try {
-    console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..."`);
+    console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..." (Sprach-Start: ${isSpeechDelay})`);
     
     // Mannis Voice-ID
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
@@ -64,7 +64,7 @@ async function generateTTS(text) {
         text: cleanText,
         model_id: 'eleven_turbo_v2_5',
         voice_settings: { 
-          stability: 0.5, 
+          stability: isSpeechDelay ? 0.75 : 0.5, 
           similarity_boost: 0.75 
         }
       })
@@ -118,13 +118,14 @@ EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist,
 
 AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorge erzählt hat, frage später von dir aus liebevoll nach.`;
 
-    // SPEZIELLE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG
+    // 🚨 SPRACH-START: MAXIMALE EMPATHIE, RUHE UND GEDULD 🚨
     if (age === 'speech-delay') {
-      systemInstruction += `\n\nBESONDERE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG:
-1. Das Kind spricht möglicherweise sehr langsam, undeutlich oder nur in einzelnen Wörtern oder Fragmenten (z. B. 'Auto rot da').
-2. Deine wichtigste Aufgabe: Verstehe den Sinn hinter den Wortfetzen! Setze die Fragmente im Kopf zusammen und führe das Gespräch liebevoll weiter.
-3. Korrigiere das Kind NIEMALS direkt für Grammatik- oder Aussprachefehler. Wiederhole stattdessen den Gedanken des Kindes in einem korrekten, kurzen Vorbild-Satz.
-4. Antworte in maximal 1 bis 2 extrem kurzen Sätzen. Nutze einfache Alltagswörter und stelle offene oder einfache Entscheidungsfragen (Ja/Nein). Lobe jeden Sprechversuch sanft.`;
+      systemInstruction += `\n\nBESONDERE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG (MAXIMALE EMPATHIE & GEDULD):
+1. Das Kind hat möglicherweise eine Sprachverzögerung oder lernt gerade erst sprechen. Sei der geduldigste, liebevollste Begleiter der Welt.
+2. Wenn das Kind nur einzelne Wörter, Laute oder unvollständige Sätze sagt (z. B. "Wauwau da" oder "Ball spielen"), freue dich riesig über jeden Sprechversuch!
+3. Korrigiere das Kind NIEMALS direkt für Fehler. Wiederhole den Gedanken des Kindes liebevoll als vollständigen, einfachen Satz (z. B. "Ja, toll! Da läuft der Hund! Er holt den Ball.").
+4. Antworte immer in nur 1 bis maximal 2 kurzen Sätzen. Sprich in einfachen, warmherzigen Worten.
+5. Ermutige das Kind ständig sanft ("Du machst das prima!", "Ich freue mich, dir zuzuhören!").`;
     }
 
     if (emotion && emotion !== 'normal') {
@@ -136,7 +137,9 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
     if (mode === 'stories') {
       systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen. Keine Bilder, nur Text.`;
     } else if (mode === 'memory') {
-      systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory (Paare aufdecken) mit Tieren und Fahrzeugen. Feuere es an oder freue dich mit ihm!`;
+      systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory mit Tieren und Fahrzeugen. Feuere es an!`;
+    } else if (mode === 'zeigauf') {
+      systemInstruction += `\n\nZEIG-AUF-MODUS: Das Kind spielt gerade das Bildersuchspiel 'Zeig auf!'. Lobe es herzlich für richtige Treffer!`;
     } else if (mode === 'homework') {
       systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
 WICHTIGE REGELN:
@@ -223,11 +226,16 @@ WICHTIGE REGELN:
                   .replace(/\s+/g, ' ')
                   .trim();
 
+                // 🚨 Extralange Pausen bei Sprachverzögerung einfügen 🚨
                 if (age === 'speech-delay') {
-                  ttsText = ttsText.replace(/\. /g, '... ').replace(/, /g, '... ');
+                  ttsText = ttsText
+                    .replace(/\./g, '... ')
+                    .replace(/!/g, '!... ')
+                    .replace(/\?/g, '?... ')
+                    .replace(/,/g, ', ... ');
                 }
 
-                const audioUrl = await generateTTS(ttsText);
+                const audioUrl = await generateTTS(ttsText, age === 'speech-delay');
                 res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
               }
               currentSentence = ""; 
@@ -256,10 +264,14 @@ WICHTIGE REGELN:
           .trim();
 
         if (age === 'speech-delay') {
-          ttsText = ttsText.replace(/\. /g, '... ').replace(/, /g, '... ');
+          ttsText = ttsText
+            .replace(/\./g, '... ')
+            .replace(/!/g, '!... ')
+            .replace(/\?/g, '?... ')
+            .replace(/,/g, ', ... ');
         }
 
-        const audioUrl = await generateTTS(ttsText);
+        const audioUrl = await generateTTS(ttsText, age === 'speech-delay');
         res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
       }
     }
@@ -279,10 +291,18 @@ app.post('/api/chat', async (req, res) => {
 });
 
 app.post('/api/speak', async (req, res) => {
-  const { text } = req.body;
+  const { text, isSpeechDelay } = req.body;
   if (!text) return res.status(400).json({ error: 'Kein Text.' });
   try {
-    const url = await generateTTS(text);
+    let ttsText = text;
+    if (isSpeechDelay) {
+      ttsText = ttsText
+        .replace(/\./g, '... ')
+        .replace(/!/g, '!... ')
+        .replace(/\?/g, '?... ')
+        .replace(/,/g, ', ... ');
+    }
+    const url = await generateTTS(ttsText, !!isSpeechDelay);
     const fileName = url.replace('/cache/', ''); 
     const cachePath = path.join(CACHE_DIR, fileName);
     
