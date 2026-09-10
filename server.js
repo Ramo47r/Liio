@@ -140,6 +140,8 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
       systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory mit Tieren und Fahrzeugen. Feuere es an!`;
     } else if (mode === 'zeigauf') {
       systemInstruction += `\n\nZEIG-AUF-MODUS: Das Kind spielt gerade das Bildersuchspiel 'Zeig auf!'. Lobe es herzlich für richtige Treffer!`;
+    } else if (mode === 'merkspiel') {
+      systemInstruction += `\n\nMERKSPIEL-MODUS: Das Kind spielt gerade ein Merkspiel und muss sich die Reihenfolge von 5 Gegenständen merken. Feuere seine Merkfähigkeit an!`;
     } else if (mode === 'homework') {
       systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
 WICHTIGE REGELN:
@@ -226,7 +228,6 @@ WICHTIGE REGELN:
                   .replace(/\s+/g, ' ')
                   .trim();
 
-                // 🚨 Extralange Pausen bei Sprachverzögerung einfügen 🚨
                 if (age === 'speech-delay') {
                   ttsText = ttsText
                     .replace(/\./g, '... ')
