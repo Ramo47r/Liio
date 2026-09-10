@@ -1,325 +1,4379 @@
-// ============================================================
-// KidsBot.ai / Lio Backend — Premium TTS & Sokratischer Tutor
-// ============================================================
-import express from 'express';
-import cors from 'cors';
-import { fileURLToPath } from 'url';
-import path from 'path';
-import fs from 'fs';
-import crypto from 'crypto';
-import 'dotenv/config';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
-const app  = express();
-const PORT = process.env.PORT || 3000;
-
-app.set('trust proxy', 1);
-
-// ── Cache-Ordner anlegen & freigeben ──
-const CACHE_DIR = path.join(__dirname, 'audio_cache');
-if (!fs.existsSync(CACHE_DIR)) {
-  fs.mkdirSync(CACHE_DIR, { recursive: true });
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KidsBot.ai – Dein sicherer KI-Tutor</title>
+<meta name="theme-color" content="#4A4FC4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KidsBot">
+<meta name="description" content="Lio ist ein freundlicher Roboter-Freund zum Reden, Lernen und Geschichten hören.">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/assets/icon-180.png">
+<style>
+/* ══════════════════════════════════════════════════════════
+   SCHRIFTEN & FARBEN
+══════════════════════════════════════════════════════════ */
+:root {
+  --bg-0:      #04070B;
+  --bg-1:      #0A1017;
+  --bg-2:      #0E1620;
+  --glass:     rgba(255,255,255,0.055);
+  --glass-2:   rgba(255,255,255,0.09);
+  --glass-3:   rgba(255,255,255,0.14);
+  --stroke:    rgba(255,255,255,0.10);
+  --stroke-2:  rgba(255,255,255,0.18);
+  --mint:      #4FE3C1;
+  --mint-deep: #16B48C;
+  --lime:      #B8F24A;
+  --lime-deep: #86D420;
+  --cyan:      #38D9F0;
+  --violet:    #9D8BFF;
+  --coral:     #FF7A8A;
+  --grad:      linear-gradient(135deg, var(--mint) 0%, var(--lime) 100%);
+  --grad-soft: linear-gradient(135deg, rgba(79,227,193,.22) 0%, rgba(184,242,74,.18) 100%);
+  --text:      #EAFBF5;
+  --text-dim:  rgba(234,251,245,0.60);
+  --text-mute: rgba(234,251,245,0.38);
+  --on-accent: #04241C;
+  --glow-mint: rgba(79,227,193,0.45);
+  --glow-lime: rgba(184,242,74,0.35);
+  --font-display: 'Baloo 2', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  --font-body:    'Nunito', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
 }
-app.use('/cache', express.static(CACHE_DIR));
 
-// ── API Key Check ──
-if (!process.env.GROQ_API_KEY) {
-  console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
-}
-if (!process.env.ELEVENLABS_API_KEY) {
-  console.warn('⚠️ ELEVENLABS_API_KEY fehlt! Bitte in Render eintragen.');
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; 
 }
 
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
-app.use(express.json({ limit: '50kb' }));
-app.use(express.static(__dirname));
+html, body { 
+  height: 100%; 
+  overflow: hidden; 
+  font-family: var(--font-body); 
+}
 
-// ── ELEVENLABS TURBO TTS ──
-async function generateTTS(text, isSpeechDelay = false) {
-  const cleanText = text.trim();
+body {
+  background:
+    radial-gradient(120% 80% at 12% -5%,  rgba(79,227,193,0.16) 0%, transparent 55%),
+    radial-gradient(110% 75% at 95% 8%,   rgba(184,242,74,0.10) 0%, transparent 50%),
+    radial-gradient(130% 90% at 50% 108%, rgba(56,217,240,0.12) 0%, transparent 60%),
+    linear-gradient(175deg, var(--bg-1) 0%, var(--bg-0) 55%, #020407 100%);
+  display: flex; 
+  flex-direction: column;
+  height: 100vh; 
+  height: 100dvh;
+  position: relative; 
+  overflow: hidden;
+  color: var(--text);
+}
+
+body::before {
+  content: ''; 
+  position: fixed; 
+  inset: 0; 
+  pointer-events: none; 
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(79,227,193,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,227,193,0.045) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 0%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 35%, black 0%, transparent 78%);
+}
+
+#clouds { 
+  position: fixed; 
+  inset: 0; 
+  pointer-events: none; 
+  z-index: 0; 
+  overflow: hidden; 
+}
+
+.cloud {
+  position: absolute; 
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,227,193,0.30), rgba(184,242,74,0.10) 45%, transparent 70%);
+  filter: blur(28px); 
+  opacity: .55;
+  animation: cloudDrift linear infinite;
+}
+
+@keyframes cloudDrift {
+  from { transform: translateX(-180px); }
+  to   { transform: translateX(calc(100vw + 180px)); }
+}
+
+.screen { 
+  display: none; 
+  flex-direction: column; 
+  align-items: center; 
+  position: absolute; 
+  inset: 0; 
+  z-index: 1; 
+}
+
+.screen.active { 
+  display: flex; 
+}
+
+/* ════════════════════════════════════════
+   ALTERSAUSWAHL (INKL. SPRACH-START)
+═══════════════════════════════════════ */
+#screen-age {
+  justify-content: space-between; 
+  text-align: center;
+  padding: env(safe-area-inset-top, 20px) 18px 20px;
+}
+
+.age-top { 
+  width: 100%; 
+  flex-shrink: 0; 
+  padding-top: 26px; 
+}
+
+.age-greeting {
+  font-size: clamp(26px, 7vw, 34px);
+  font-weight: 700; 
+  font-family: var(--font-display);
+  letter-spacing: -0.5px; 
+  line-height: 1.15; 
+  color: #fff;
+}
+
+.age-greeting .accent {
+  background: var(--grad); 
+  -webkit-background-clip: text; 
+  background-clip: text;
+  -webkit-text-fill-color: transparent; 
+  color: transparent;
+}
+
+.age-subtitle {
+  font-size: clamp(14px, 3.8vw, 17px); 
+  font-weight: 600;
+  color: var(--text-dim); 
+  margin-top: 10px; 
+  letter-spacing: .2px;
+}
+
+.age-middle { 
+  flex: 1; 
+  width: 100%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  min-height: 0; 
+}
+
+.age-scene {
+  position: relative; 
+  width: min(300px, 75vw); 
+  aspect-ratio: 1.2/1;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  margin-top: 20px;
+}
+
+.age-scene::after {
+  content: ''; 
+  position: absolute; 
+  left: 50%; 
+  top: 42%;
+  width: 78%; 
+  height: 78%; 
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, var(--glow-mint) 0%, rgba(56,217,240,.18) 42%, transparent 68%);
+  filter: blur(26px); 
+  z-index: 1; 
+  pointer-events: none;
+  animation: haloPulse 4.5s ease-in-out infinite;
+}
+
+.age-platform {
+  position: absolute; 
+  bottom: -40%; 
+  left: 50%;
+  transform: translateX(-50%); 
+  width: 120%;
+  pointer-events: none; 
+  z-index: 2;
+  filter: drop-shadow(0 0 34px rgba(79,227,193,0.55));
+  margin-top: -90px;
+}
+
+.age-platform img { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+}
+
+.age-robot-wrap {
+  position: absolute; 
+  bottom: 12%; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  width: 125%; 
+  z-index: 3;
+  animation: robotFloat 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(79,227,193,.35));
+  margin-bottom: -40px;
+}
+
+.age-robot-wrap img { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+}
+
+.age-bubble {
+  position: absolute; 
+  top: -40px; 
+  left: 50%; 
+  transform: translateX(-50%);
+  background: rgba(14,22,32,0.82);
+  -webkit-backdrop-filter: blur(16px); 
+  backdrop-filter: blur(16px);
+  color: var(--text); 
+  padding: 11px 18px; 
+  border-radius: var(--r-md);
+  font-size: clamp(13px, 3.4vw, 15px); 
+  font-weight: 700; 
+  z-index: 5;
+  white-space: nowrap; 
+  max-width: 95%; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  border: 1px solid rgba(79,227,193,0.32);
+  box-shadow: 0 10px 34px rgba(0,0,0,.55), 0 0 22px rgba(79,227,193,.16);
+  opacity: 0; 
+  transition: opacity .3s; 
+  pointer-events: none;
+}
+
+.age-bubble.show { 
+  opacity: 1; 
+}
+
+.age-bottom { 
+  width: 100%; 
+  flex-shrink: 0; 
+  padding: 12px 0 calc(24px + env(safe-area-inset-bottom, 0px)); 
+}
+
+.age-grid { 
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 12px; 
+  width: 100%; 
+  max-width: 340px; 
+  margin: 0 auto; 
+}
+
+.age-card {
+  position: relative; 
+  border-radius: var(--r-md);
+  padding: 14px 8px; 
+  cursor: pointer;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center;
+  color: #fff; 
+  font-weight: 800; 
+  font-family: var(--font-body);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(14px); 
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--stroke-2);
+  box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  min-height: 96px; 
+  overflow: hidden;
+}
+
+.age-card::before {
+  content: ''; 
+  position: absolute; 
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, var(--c-glow) 0%, transparent 68%);
+  opacity: .5; 
+  pointer-events: none;
+}
+
+.age-card:active {
+  transform: translateY(3px) scale(.985);
+  border-color: var(--c-line);
+  box-shadow: 0 4px 14px rgba(0,0,0,.4), 0 0 24px var(--c-glow);
+}
+
+.age-card .age-icon {
+  font-size: clamp(21px, 5.4vw, 25px); 
+  line-height: 1; 
+  margin-bottom: 7px;
+  position: relative; 
+  filter: drop-shadow(0 0 10px var(--c-glow));
+}
+
+.age-card .age-range {
+  font-size: clamp(13px, 3.6vw, 15px); 
+  font-weight: 900; 
+  line-height: 1.1;
+  position: relative; 
+  color: var(--c-line);
+}
+
+.age-card .age-desc {
+  font-size: clamp(9.5px, 2.6vw, 11px); 
+  font-weight: 600; 
+  line-height: 1.25;
+  margin-top: 3px; 
+  position: relative; 
+  color: var(--text-dim);
+}
+
+.age-1 { --c-line: var(--mint);   --c-glow: rgba(79,227,193,0.26); }
+.age-2 { --c-line: var(--cyan);   --c-glow: rgba(56,217,240,0.24); }
+.age-3 { --c-line: var(--lime);   --c-glow: rgba(184,242,74,0.24); }
+.age-4 { --c-line: var(--violet); --c-glow: rgba(157,139,255,0.26); }
+
+@keyframes robotFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(-12px); }
+}
+
+@keyframes robotTalk {
+  0%, 100% { filter: drop-shadow(0 14px 34px rgba(0,0,0,.55)) drop-shadow(0 0 26px rgba(79,227,193,.35)); }
+  50%      { filter: drop-shadow(0 14px 40px rgba(0,0,0,.55)) drop-shadow(0 0 46px rgba(79,227,193,.85)); }
+}
+
+@keyframes haloPulse {
+  0%, 100% { opacity: .55; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.09); }
+}
+
+/* ════════════════════════════════════════
+   HAUPTBILDSCHIRM
+═══════════════════════════════════════ */
+#screen-main { 
+  justify-content: space-between; 
+  padding-top: env(safe-area-inset-top, 0px); 
+}
+
+.top-bar { 
+  width: 100%; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 14px 16px; 
+  flex-shrink: 0; 
+  z-index: 6; 
+}
+
+.top-circle-btn {
+  width: 46px; 
+  height: 46px; 
+  border-radius: 50%;
+  background: var(--glass-2);
+  -webkit-backdrop-filter: blur(14px); 
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--stroke-2); 
+  color: var(--text);
+  font-size: 19px; 
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-family: inherit; 
+  font-weight: bold;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+
+.top-circle-btn:active {
+  transform: translateY(2px) scale(.95);
+  border-color: rgba(79,227,193,.5);
+  box-shadow: 0 3px 10px rgba(0,0,0,.4), 0 0 18px var(--glow-mint);
+}
+
+.top-circle-btn.btn-dashboard {
+  background: var(--grad); 
+  color: var(--on-accent); 
+  border: none; 
+  box-shadow: 0 0 15px var(--glow-mint);
+}
+
+.lio-area { 
+  position: relative; 
+  width: 100%; 
+  flex: 1; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  min-height: 0; 
+  padding: 0 16px; 
+  z-index: 1; 
+}
+
+.scene { 
+  position: relative; 
+  width: min(350px, 85vw); 
+  aspect-ratio: 1.1/1; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  margin: 0 auto; 
+}
+
+.halo {
+  position: absolute; 
+  top: 38%; 
+  left: 50%;
+  width: 104%; 
+  height: 86%;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(ellipse 58% 58% at 44% 46%, rgba(79,227,193,.50) 0%, transparent 66%),
+    radial-gradient(ellipse 58% 58% at 60% 56%, rgba(56,217,240,.34) 0%, transparent 66%);
+  filter: blur(20px); 
+  pointer-events: none; 
+  z-index: 1; 
+  border-radius: 50%;
+  animation: haloPulse 4s ease-in-out infinite;
+}
+
+.halo.happy { 
+  background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.46) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(79,227,193,.34) 0%, transparent 66%); 
+}
+.halo.sad { 
+  background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(90,140,255,.38) 0%, transparent 66%); 
+}
+.halo.angry { 
+  background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(255,122,138,.40) 0%, transparent 66%); 
+}
+.halo.scared { 
+  background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(157,139,255,.38) 0%, transparent 66%); 
+}
+.halo.tired { 
+  background: radial-gradient(ellipse 58% 58% at 50% 50%, rgba(120,140,170,.26) 0%, transparent 66%); 
+}
+.halo.excited { 
+  background: radial-gradient(ellipse 58% 58% at 44% 46%, rgba(184,242,74,.55) 0%, transparent 66%), radial-gradient(ellipse 58% 58% at 60% 56%, rgba(56,217,240,.44) 0%, transparent 66%); 
+}
+
+.platform {
+  position: absolute; 
+  bottom: -45%; 
+  left: 50%; 
+  transform: translateX(-50%);
+  width: 110%; 
+  pointer-events: none; 
+  z-index: 2;
+  filter: drop-shadow(0 0 40px rgba(79,227,193,.55));
+}
+
+.platform img { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+}
+
+.robot-wrap {
+  position: absolute; 
+  bottom: -15%; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  width: 130%; 
+  z-index: 3;
+  filter: drop-shadow(0 16px 38px rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(79,227,193,.30));
+  will-change: transform;
+  animation: lioFloat 3.6s ease-in-out infinite;
+  cursor: pointer;
+}
+
+.robot-wrap img { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+  pointer-events: none; 
+}
+
+.robot-wrap.talking    { animation: lioTalk    1.1s ease-in-out infinite; }
+.robot-wrap.listening  { animation: lioListen  2.5s ease-in-out infinite; }
+.robot-wrap.excited    { animation: lioJoy     1.6s ease-in-out infinite; }
+.robot-wrap.sad        { animation: lioSad     3.0s ease-in-out infinite; }
+.robot-wrap.tired      { animation: lioTired   4.0s ease-in-out infinite; }
+
+@keyframes lioFloat  { 0%,100% { transform: translateX(-50%) translateY(0); }    50% { transform: translateX(-50%) translateY(-15px); } }
+@keyframes lioTalk   { 0%,100% { transform: translateX(-50%) translateY(-5px); } 50% { transform: translateX(-50%) translateY(-15px); } }
+@keyframes lioListen { 0%,100% { transform: translateX(-50%) translateY(0) scale(1); } 50% { transform: translateX(-50%) translateY(-5px) scale(1.02); } }
+@keyframes lioJoy    { 0%,100% { transform: translateX(-50%) translateY(0); }    50% { transform: translateX(-50%) translateY(-25px); } }
+@keyframes lioSad    { 0%,100% { transform: translateX(-50%) translateY(10px); } 50% { transform: translateX(-50%) translateY(15px); } }
+@keyframes lioTired  { 0%,100% { transform: translateX(-50%) translateY(5px); }  50% { transform: translateX(-50%) translateY(10px); } }
+
+/* ════════════════════════════════════════
+   BLINZEL-ANIMATION
+═══════════════════════════════════════ */
+.robot-container { 
+  position: relative; 
+  width: 100%; 
+  margin-left: 22%; 
+}
+
+.robot-container img.lio-auge-offen { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+  transform: translate(0%, 0%) scale(1.0) !important; 
+}
+
+.robot-container img.lio-auge-zu { 
+  position: absolute !important; 
+  top: 0 !important; 
+  left: 0 !important; 
+  width: 100% !important; 
+  height: 100% !important; 
+  object-fit: contain !important; 
+  transform: translate(0%, 0%) scale(1.0) !important; 
+  opacity: 0 !important; 
+  pointer-events: none; 
+}
+
+.robot-container.is-blinking img.lio-auge-offen { opacity: 0 !important; }
+.robot-container.is-blinking img.lio-auge-zu { opacity: 1 !important; }
+
+/* ════════════════════════════════════════ */
+
+.sparkle { 
+  position: absolute; 
+  width: 8px; 
+  height: 8px; 
+  pointer-events: none; 
+  z-index: 4; 
+}
+
+.sparkle::before { 
+  content: ''; 
+  display: block; 
+  width: 7px; 
+  height: 7px; 
+  border-radius: 50%;
+  background: var(--mint); 
+  box-shadow: 0 0 12px 3px var(--glow-mint); 
+}
+
+.sp1 { top: 25%; left: 8%;   animation: sparkFloat 3.2s ease-in-out infinite; }
+.sp2 { top: 30%; right: 8%;  animation: sparkFloat 3.8s ease-in-out infinite .7s; }
+.sp3 { top: 60%; left: 10%;  animation: sparkFloat 4.2s ease-in-out infinite 1.4s; }
+.sp4 { top: 65%; right: 12%; animation: sparkFloat 3.5s ease-in-out infinite 2.1s; }
+
+.mood-side { 
+  position: absolute; 
+  right: 10px; 
+  top: 50%; 
+  transform: translateY(-50%); 
+  display: flex; 
+  flex-direction: column; 
+  gap: 7px; 
+  z-index: 5; 
+}
+
+.mood-pill {
+  background: var(--glass-2); 
+  -webkit-backdrop-filter: blur(12px); 
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke-2); 
+  border-radius: 50%; 
+  width: 38px; 
+  height: 38px; 
+  font-size: 18px; 
+  cursor: pointer; 
+  flex-shrink: 0;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  transition: all .2s; 
+  box-shadow: 0 6px 16px rgba(0,0,0,.4);
+}
+
+.mood-pill:active { 
+  transform: translateY(2px) scale(.94); 
+}
+
+.mood-pill.selected {
+  background: var(--grad); 
+  border-color: rgba(255,255,255,.5); 
+  transform: scale(1.16); 
+  box-shadow: 0 0 22px var(--glow-mint), 0 0 40px var(--glow-lime);
+}
+
+.speech-bubble {
+  background: rgba(14,22,32,0.78); 
+  -webkit-backdrop-filter: blur(18px); 
+  backdrop-filter: blur(18px);
+  color: #fff; 
+  padding: 14px 20px; 
+  border-radius: var(--r-lg); 
+  font-size: clamp(15px, 4vw, 18px); 
+  font-weight: 700;
+  text-align: center; 
+  max-width: min(440px, 92vw); 
+  width: calc(100% - 32px); 
+  margin: 0 16px;
+  border: 1px solid rgba(79,227,193,0.28); 
+  box-shadow: 0 14px 40px rgba(0,0,0,.55), 0 0 26px rgba(79,227,193,.12), inset 0 1px 0 rgba(255,255,255,.06);
+  line-height: 1.45; 
+  min-height: 56px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  flex-shrink: 0; 
+  position: relative; 
+  z-index: 5;
+}
+
+.speech-bubble::before {
+  content: ''; 
+  position: absolute; 
+  top: -9px; 
+  left: 50%; 
+  transform: translateX(-50%) rotate(45deg); 
+  width: 16px; 
+  height: 16px; 
+  background: rgba(14,22,32,0.95);
+  border-left: 1px solid rgba(79,227,193,0.28); 
+  border-top: 1px solid rgba(79,227,193,0.28); 
+  border-radius: 3px 0 0 0;
+}
+
+.speech-bubble::after { content: none; }
+
+.quick-replies { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 8px; 
+  justify-content: center; 
+  padding: 10px 16px 0; 
+  max-width: min(440px, 92vw); 
+  z-index: 5; 
+}
+
+.quick-chip {
+  background: var(--glass-2); 
+  -webkit-backdrop-filter: blur(12px); 
+  backdrop-filter: blur(12px);
+  color: var(--text); 
+  border: 1px solid var(--stroke-2); 
+  border-radius: 50px; 
+  padding: 10px 17px; 
+  font-size: 13.5px; 
+  font-weight: 700; 
+  font-family: var(--font-display);
+  cursor: pointer; 
+  box-shadow: 0 6px 18px rgba(0,0,0,.4); 
+  transition: all .15s;
+}
+
+.quick-chip:active { 
+  transform: translateY(2px) scale(.96); 
+  border-color: var(--mint); 
+  box-shadow: 0 0 18px var(--glow-mint); 
+}
+
+.dots span { 
+  display: inline-block; 
+  width: 9px; 
+  height: 9px; 
+  border-radius: 50%; 
+  background: var(--mint); 
+  box-shadow: 0 0 10px var(--glow-mint); 
+  margin: 0 3px; 
+  animation: dotPulse 1.4s ease-in-out infinite; 
+}
+
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes dotPulse { 
+  0%, 80%, 100% { opacity: .3; transform: scale(.8); } 
+  40% { opacity: 1; transform: scale(1.25); } 
+}
+
+.bottom-area {
+  width: calc(100% - 20px); 
+  margin: 0 10px; 
+  z-index: 5; 
+  flex-shrink: 0; 
+  padding: 10px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(10,16,23,0.62); 
+  -webkit-backdrop-filter: blur(20px); 
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--stroke); 
+  border-bottom: none; 
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.lesson-row { 
+  display: flex; 
+  gap: 10px; 
+  padding: 6px 14px 8px; 
+  overflow-x: auto; 
+  -webkit-overflow-scrolling: touch; 
+  scroll-snap-type: x mandatory; 
+  scrollbar-width: none; 
+}
+.lesson-row::-webkit-scrollbar { display: none; }
+
+.lesson-card {
+  flex-shrink: 0; 
+  scroll-snap-align: center; 
+  background: var(--glass); 
+  -webkit-backdrop-filter: blur(12px); 
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke); 
+  border-radius: var(--r-sm); 
+  padding: 11px 6px; 
+  width: 94px; 
+  min-height: 80px; 
+  cursor: pointer;
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 6px; 
+  color: var(--text-dim); 
+  font-weight: 800; 
+  font-family: var(--font-display); 
+  font-size: 11.5px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.4); 
+  text-align: center; 
+  transition: all .16s ease;
+}
+
+.lesson-card:active { 
+  transform: translateY(3px) scale(.97); 
+}
+
+.lesson-card.active { 
+  background: var(--grad-soft); 
+  border-color: rgba(79,227,193,.55); 
+  color: #fff; 
+  box-shadow: 0 8px 26px rgba(0,0,0,.45), 0 0 22px rgba(79,227,193,.28); 
+}
+
+.lesson-card .lesson-icon { 
+  font-size: 23px; 
+  line-height: 1; 
+  width: 40px; 
+  height: 40px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  background: var(--glass-2); 
+  border: 1px solid var(--stroke); 
+}
+
+.lesson-card.active .lesson-icon { 
+  background: var(--grad); 
+  border-color: transparent; 
+  box-shadow: 0 0 18px var(--glow-mint); 
+}
+
+.lesson-card .lesson-label { line-height: 1.15; }
+
+.mic-row { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 14px; 
+  padding: 6px 14px 0; 
+}
+
+.big-mic {
+  position: relative; 
+  flex-shrink: 0; 
+  width: clamp(88px, 23vw, 106px); 
+  height: clamp(88px, 23vw, 106px); 
+  border-radius: 50%; 
+  border: none;
+  background: var(--grad); 
+  color: var(--on-accent); 
+  font-size: clamp(38px, 10vw, 46px); 
+  cursor: pointer;
+  box-shadow: 0 12px 34px rgba(79,227,193,.42), 0 0 0 6px rgba(79,227,193,.10), 0 0 46px rgba(184,242,74,.22);
+  transition: transform .15s, box-shadow .15s; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-family: inherit;
+}
+
+.big-mic:active:not(:disabled) { 
+  transform: translateY(3px) scale(.97); 
+}
+
+.big-mic.listening { 
+  background: linear-gradient(135deg, #FF7A8A, #FF4D6D); 
+  color: #fff; 
+  animation: pulseListen 1.2s ease-out infinite; 
+}
+
+@keyframes pulseListen {
+  0%   { box-shadow: 0 12px 34px rgba(255,77,109,.5), 0 0 0 6px rgba(255,77,109,.18); }
+  100% { box-shadow: 0 12px 34px rgba(255,77,109,.3), 0 0 0 30px rgba(255,77,109,0); }
+}
+
+.big-mic:disabled { 
+  opacity: .45; 
+  cursor: not-allowed; 
+}
+
+.side-btn {
+  width: 56px; 
+  height: 56px; 
+  border-radius: 50%; 
+  background: var(--glass-2); 
+  -webkit-backdrop-filter: blur(12px); 
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke-2); 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  font-family: inherit; 
+  font-size: 22px; 
+  color: var(--text); 
+  box-shadow: 0 8px 22px rgba(0,0,0,.45); 
+  transition: all .15s; 
+  flex-shrink: 0;
+}
+
+.side-btn:active { 
+  transform: translateY(2px) scale(.95); 
+}
+
+.side-btn.keyboard:active { 
+  border-color: var(--cyan);  
+  box-shadow: 0 0 20px rgba(56,217,240,.4); 
+}
+
+.side-btn.repeat:active { 
+  border-color: var(--violet); 
+  box-shadow: 0 0 20px rgba(157,139,255,.4); 
+}
+
+.mic-hint { 
+  text-align: center; 
+  font-size: 12.5px; 
+  color: var(--text-mute); 
+  font-weight: 700; 
+  margin-top: 8px; 
+  min-height: 16px; 
+  letter-spacing: .2px; 
+}
+
+/* ── Text-Eingabe ── */
+.text-overlay {
+  position: fixed; 
+  bottom: 0; 
+  left: 0; 
+  right: 0;
+  background: rgba(10,16,23,0.94); 
+  -webkit-backdrop-filter: blur(22px); 
+  backdrop-filter: blur(22px);
+  border-top: 1px solid var(--stroke-2); 
+  padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top-left-radius: var(--r-lg); 
+  border-top-right-radius: var(--r-lg); 
+  box-shadow: 0 -14px 44px rgba(0,0,0,.6); 
+  z-index: 25;
+  transform: translateY(110%); 
+  transition: transform .3s; 
+  display: flex; 
+  gap: 10px; 
+  align-items: center;
+}
+
+.text-overlay.show { 
+  transform: translateY(0); 
+}
+
+.text-overlay input { 
+  flex: 1; 
+  padding: 14px 18px; 
+  border: 1px solid var(--stroke-2); 
+  background: var(--glass); 
+  border-radius: 50px; 
+  font-size: 16px; 
+  outline: none; 
+  font-family: inherit; 
+  font-weight: 600; 
+  min-width: 0; 
+  color: var(--text); 
+}
+
+.text-overlay input:focus { 
+  border-color: var(--mint); 
+  box-shadow: 0 0 0 3px rgba(79,227,193,.16); 
+}
+
+.text-overlay .send { 
+  width: 52px; 
+  height: 52px; 
+  border-radius: 50%; 
+  border: none; 
+  background: var(--grad); 
+  color: var(--on-accent); 
+  font-size: 21px; 
+  cursor: pointer; 
+  flex-shrink: 0; 
+  box-shadow: 0 6px 20px rgba(79,227,193,.4); 
+}
+
+.text-overlay .close { 
+  width: 42px; 
+  height: 42px; 
+  border-radius: 50%; 
+  border: 1px solid var(--stroke-2); 
+  background: var(--glass); 
+  color: var(--text-dim); 
+  font-size: 17px; 
+  cursor: pointer; 
+  flex-shrink: 0; 
+}
+
+/* ── Menü ── */
+.menu-overlay { 
+  position: fixed; 
+  inset: 0; 
+  background: rgba(0,0,0,0); 
+  z-index: 30; 
+  pointer-events: none; 
+  transition: background .3s; 
+}
+
+.menu-overlay.show { 
+  background: rgba(2,4,7,.72); 
+  pointer-events: all; 
+}
+
+.menu-drawer {
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  bottom: 0; 
+  width: min(292px, 82vw);
+  background: linear-gradient(180deg, rgba(14,22,32,.97) 0%, rgba(4,7,11,.99) 100%);
+  -webkit-backdrop-filter: blur(24px); 
+  backdrop-filter: blur(24px); 
+  border-right: 1px solid var(--stroke-2);
+  z-index: 31; 
+  transform: translateX(-100%); 
+  transition: transform .3s ease-out; 
+  display: flex; 
+  flex-direction: column; 
+  padding: 22px 16px calc(22px + env(safe-area-inset-bottom,0px));
+  overflow-y: auto; 
+  color: var(--text); 
+  box-shadow: 14px 0 50px rgba(0,0,0,.6);
+}
+
+.menu-drawer.show { 
+  transform: translateX(0); 
+}
+
+.menu-title { 
+  font-size: 23px; 
+  font-family: var(--font-display); 
+  font-weight: 700; 
+  margin-bottom: 4px; 
+  background: var(--grad); 
+  -webkit-background-clip: text; 
+  background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+  color: transparent; 
+}
+
+.menu-subtitle { 
+  font-size: 12.5px; 
+  color: var(--text-mute); 
+  margin-bottom: 16px; 
+}
+
+.menu-section-label { 
+  font-size: 10.5px; 
+  text-transform: uppercase; 
+  letter-spacing: 1.4px; 
+  color: var(--text-mute); 
+  margin: 14px 0 8px; 
+  font-weight: 800; 
+}
+
+.menu-item { 
+  background: var(--glass); 
+  border: 1px solid var(--stroke); 
+  border-radius: var(--r-sm); 
+  padding: 12px 14px; 
+  margin-bottom: 7px; 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  color: var(--text); 
+  font-family: var(--font-display); 
+  font-size: 14px; 
+  font-weight: 600; 
+  width: 100%; 
+  text-align: left; 
+  transition: all .15s; 
+}
+
+.menu-item:active { 
+  transform: translateY(2px) scale(.985); 
+}
+
+.menu-item .menu-icon { 
+  font-size: 19px; 
+  flex-shrink: 0; 
+  width: 36px; 
+  height: 36px; 
+  border-radius: 11px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  background: var(--c-soft); 
+  border: 1px solid var(--c-line); 
+}
+
+.menu-item.active { 
+  background: var(--grad-soft); 
+  border-color: rgba(79,227,193,.5); 
+  box-shadow: 0 0 20px rgba(79,227,193,.2); 
+}
+
+.menu-mode-talk      { --c-line: rgba(79,227,193,.5);  --c-soft: rgba(79,227,193,.14); }
+.menu-mode-homework  { --c-line: rgba(184,242,74,.5);  --c-soft: rgba(184,242,74,.13); }
+.menu-mode-stories   { --c-line: rgba(255,122,138,.5); --c-soft: rgba(255,122,138,.13); }
+.menu-mode-learn     { --c-line: rgba(56,217,240,.5);  --c-soft: rgba(56,217,240,.13); }
+.menu-mode-jokes     { --c-line: rgba(255,196,74,.5);  --c-soft: rgba(255,196,74,.13); }
+.menu-mode-creative  { --c-line: rgba(157,139,255,.5); --c-soft: rgba(157,139,255,.13); }
+.menu-mode-guess     { --c-line: rgba(255,150,90,.5);  --c-soft: rgba(255,150,90,.13); }
+.menu-mode-memory    { --c-line: rgba(255,140,200,.5); --c-soft: rgba(255,140,200,.13); }
+.menu-mode-zeigauf   { --c-line: rgba(79,227,193,.5);  --c-soft: rgba(79,227,193,.14); }
+.menu-mode-merkspiel { --c-line: rgba(184,242,74,.5);  --c-soft: rgba(184,242,74,.13); }
+.menu-mode-tetris    { --c-line: rgba(56,217,240,.5);  --c-soft: rgba(56,217,240,.13); }
+.menu-mode-karaoke   { --c-line: rgba(255,120,170,.5); --c-soft: rgba(255,120,170,.13); }
+
+.menu-action { 
+  background: transparent; 
+  border: 1px dashed var(--stroke-2); 
+  border-radius: 12px; 
+  padding: 11px 14px; 
+  margin-bottom: 7px; 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  color: var(--text-dim); 
+  font-family: inherit; 
+  font-size: 13px; 
+  width: 100%; 
+  text-align: left; 
+}
+
+.menu-action:active { 
+  background: var(--glass); 
+  color: var(--text); 
+}
+
+/* ── Panels ── */
+.panel { 
+  position: fixed; 
+  inset: 0; 
+  background: rgba(2,4,7,.78); 
+  -webkit-backdrop-filter: blur(6px); 
+  backdrop-filter: blur(6px); 
+  display: none; 
+  align-items: center; 
+  justify-content: center; 
+  z-index: 40; 
+  padding: 20px; 
+}
+
+.panel.show { 
+  display: flex; 
+}
+
+.panel-inner {
+  background: linear-gradient(180deg, rgba(18,27,38,.98) 0%, rgba(8,13,19,.99) 100%);
+  -webkit-backdrop-filter: blur(24px); 
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--stroke-2); 
+  border-radius: var(--r-lg); 
+  padding: 26px 22px; 
+  max-width: 420px; 
+  width: 100%;
+  color: var(--text); 
+  max-height: 88vh; 
+  overflow-y: auto;
+  box-shadow: 0 26px 70px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);
+  font-family: var(--font-body);
+}
+
+.panel h2 { 
+  margin-bottom: 12px; 
+  font-size: 20px; 
+  color: #fff; 
+  font-family: var(--font-display); 
+}
+
+.panel p { 
+  color: var(--text-dim); 
+}
+
+.panel hr { 
+  border: none !important; 
+  border-top: 1px solid var(--stroke) !important; 
+}
+
+.panel label { 
+  display: block; 
+  margin: 14px 0 6px; 
+  font-size: 13px; 
+  font-weight: 800; 
+  color: var(--text-dim); 
+}
+
+.panel select, .panel input[type=range], .panel input[type=password], .panel input[type=text], .panel input[type=number] {
+  width: 100%; 
+  padding: 12px; 
+  background: var(--glass);
+  border: 1px solid var(--stroke-2); 
+  border-radius: 12px;
+  font-size: 16px; 
+  font-family: inherit; 
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.panel input:focus { 
+  outline: none; 
+  border-color: var(--mint); 
+  box-shadow: 0 0 0 3px rgba(79,227,193,.15); 
+}
+
+.panel input[type=range] { 
+  padding: 0; 
+  accent-color: var(--mint); 
+}
+
+.panel button {
+  margin-top: 12px; 
+  padding: 15px 20px;
+  background: var(--grad); 
+  color: var(--on-accent);
+  border: none; 
+  border-radius: 16px;
+  cursor: pointer; 
+  font-size: 15px; 
+  width: 100%; 
+  font-weight: 900;
+  font-family: var(--font-body); 
+  text-transform: uppercase; 
+  letter-spacing: .6px;
+  box-shadow: 0 8px 26px rgba(79,227,193,.32); 
+  transition: all .15s;
+}
+
+.panel button:active { 
+  transform: translateY(3px); 
+  box-shadow: 0 2px 10px rgba(79,227,193,.25); 
+}
+
+.panel button.cancel {
+  background: var(--glass-2); 
+  color: var(--text-dim);
+  border: 1px solid var(--stroke-2); 
+  box-shadow: none;
+}
+
+.panel button.cancel:active { 
+  transform: translateY(3px); 
+}
+
+.pin-hint { 
+  background: rgba(184,242,74,.09); 
+  border: 1px solid rgba(184,242,74,.24); 
+  padding: 11px 14px; 
+  border-radius: 12px; 
+  font-size: 13px; 
+  margin: 8px 0; 
+  color: rgba(226,247,180,.92); 
+}
+
+/* ── DASHBOARD SPEZIELL ── */
+.dashboard-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 12px; 
+  margin: 20px 0; 
+}
+
+.stat-box { 
+  background: rgba(79,227,193,0.08); 
+  border: 1px solid rgba(79,227,193,0.2); 
+  border-radius: 16px; 
+  padding: 16px; 
+  text-align: center; 
+}
+
+.stat-value { 
+  font-size: 28px; 
+  font-weight: 900; 
+  color: var(--mint); 
+  font-family: var(--font-display); 
+  line-height: 1.2; 
+}
+
+.stat-label { 
+  font-size: 11px; 
+  text-transform: uppercase; 
+  letter-spacing: 1px; 
+  color: var(--text-dim); 
+  font-weight: 700; 
+}
+
+.insight-card { 
+  background: var(--glass); 
+  border: 1px solid var(--stroke-2); 
+  border-radius: 16px; 
+  padding: 18px; 
+  margin-bottom: 12px; 
+}
+
+.insight-header { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  margin-bottom: 10px; 
+  font-weight: 800; 
+  font-size: 15px; 
+  color: #fff; 
+}
+
+.insight-content { 
+  font-size: 14px; 
+  color: var(--text-dim); 
+  line-height: 1.5; 
+}
+
+.insight-badge { 
+  display: inline-block; 
+  background: rgba(255,255,255,0.1); 
+  padding: 4px 10px; 
+  border-radius: 20px; 
+  font-size: 12px; 
+  margin: 4px 4px 0 0; 
+  color: var(--text); 
+}
+
+.badge-alert { 
+  background: rgba(255,122,138,0.15); 
+  color: var(--coral); 
+  border: 1px solid rgba(255,122,138,0.3); 
+}
+
+.tab-nav { 
+  display: flex; 
+  gap: 10px; 
+  margin-bottom: 20px; 
+  border-bottom: 1px solid var(--stroke-2); 
+  padding-bottom: 10px; 
+}
+
+.tab-btn { 
+  flex: 1; 
+  background: transparent; 
+  color: var(--text-dim); 
+  font-weight: 800; 
+  padding: 10px; 
+  border: none; 
+  box-shadow: none; 
+  border-radius: 8px; 
+  font-size: 14px; 
+  margin-top: 0;
+}
+
+.tab-btn.active { 
+  background: var(--glass-2); 
+  color: var(--mint); 
+}
+
+.tab-content { 
+  display: none; 
+}
+
+.tab-content.active { 
+  display: block; 
+}
+
+.privacy-badge { 
+  text-align: center; 
+  font-size: 12px; 
+  color: var(--text-mute); 
+  margin-top: 20px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 6px; 
+}
+
+/* ── Eltern-Gate ── */
+#screen-parent-gate { 
+  justify-content: center; 
+  align-items: center; 
+  padding: 20px; 
+}
+
+.parent-card {
+  background: linear-gradient(180deg, rgba(18,27,38,.96) 0%, rgba(8,13,19,.98) 100%);
+  -webkit-backdrop-filter: blur(24px); 
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--stroke-2);
+  color: var(--text); 
+  padding: 28px 24px; 
+  border-radius: var(--r-lg);
+  max-width: 92%; 
+  width: 360px; 
+  text-align: center;
+  box-shadow: 0 26px 70px rgba(0,0,0,.7), 0 0 60px rgba(79,227,193,.08), inset 0 1px 0 rgba(255,255,255,.06);
+  font-family: var(--font-body); 
+  max-height: 90vh; 
+  overflow-y: auto;
+}
+
+.parent-card h2 { 
+  margin-bottom: 14px; 
+  font-size: 21px; 
+  color: #fff; 
+  font-weight: 900; 
+}
+
+.parent-card p { 
+  font-size: 15px; 
+  margin-bottom: 16px; 
+  font-weight: 600; 
+  color: var(--text-dim); 
+  line-height: 1.5; 
+}
+
+.privacy-note {
+  font-size: 12.5px !important; 
+  background: var(--glass);
+  border: 1px solid var(--stroke); 
+  padding: 14px; 
+  border-radius: 14px;
+  margin-bottom: 16px; 
+  line-height: 1.6; 
+  text-align: left;
+  color: var(--text-dim) !important;
+}
+
+.privacy-note b { color: var(--text); }
+.privacy-note a { color: var(--mint); }
+
+.parent-card input {
+  width: 100%; 
+  padding: 14px; 
+  background: var(--glass);
+  border: 1px solid var(--stroke-2); 
+  border-radius: 14px;
+  margin-bottom: 12px; 
+  font-size: 17px; 
+  text-align: center;
+  font-family: inherit; 
+  font-weight: 800; 
+  color: var(--text);
+}
+
+.parent-card button {
+  background: var(--grad); 
+  color: var(--on-accent);
+  border: none; 
+  border-radius: 16px; 
+  padding: 16px 24px;
+  font-size: 16px; 
+  font-weight: 900; 
+  cursor: pointer; 
+  width: 100%;
+  font-family: inherit; 
+  text-transform: uppercase; 
+  letter-spacing: 1px;
+  box-shadow: 0 8px 28px rgba(79,227,193,.35); 
+  transition: all .15s;
+}
+
+.consent-row { 
+  display: flex; 
+  gap: 11px; 
+  align-items: flex-start; 
+  text-align: left; 
+  font-size: 13px; 
+  font-weight: 600; 
+  color: var(--text-dim); 
+  margin-bottom: 16px; 
+  line-height: 1.45; 
+}
+
+.consent-row input { 
+  width: 22px; 
+  height: 22px; 
+  margin: 1px 0 0; 
+  flex-shrink: 0; 
+  accent-color: var(--mint); 
+}
+
+.hold-btn {
+  position: relative; 
+  overflow: hidden;
+  background: var(--grad) !important; 
+  color: var(--on-accent) !important;
+  border: none; 
+  border-radius: 16px; 
+  padding: 20px 24px;
+  font-size: 15px; 
+  font-weight: 900; 
+  width: 100%; 
+  cursor: pointer;
+  text-transform: uppercase; 
+  letter-spacing: 1px; 
+  font-family: inherit;
+  box-shadow: 0 8px 28px rgba(79,227,193,.35);
+  touch-action: none; 
+  user-select: none; 
+  -webkit-user-select: none;
+}
+
+.hold-progress { 
+  position: absolute; 
+  inset: 0; 
+  background: rgba(255,255,255,.42); 
+  width: 0%; 
+  transition: width .05s linear; 
+}
+
+.hold-label { position: relative; }
+
+/* ── Karaoke ── */
+#screen-karaoke { 
+  justify-content: flex-start; 
+}
+
+.karaoke-title { 
+  font-size: 18px; 
+  font-weight: 800; 
+  font-family: var(--font-display); 
+}
+
+.karaoke-sub { 
+  text-align: center; 
+  padding: 8px 16px; 
+  font-size: 14px; 
+  font-weight: 700; 
+  color: var(--text-dim); 
+}
+
+.song-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 11px; 
+  padding: 8px 16px; 
+  max-width: 480px; 
+  width: 100%; 
+}
+
+.song-btn {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(12px); 
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--stroke-2); 
+  border-radius: var(--r-md);
+  padding: 15px 17px; 
+  color: var(--text); 
+  font-weight: 800; 
+  font-family: inherit;
+  font-size: clamp(13px, 3.4vw, 15px); 
+  cursor: pointer; 
+  text-align: left;
+  display: flex; 
+  align-items: center; 
+  gap: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4); 
+  transition: all .15s;
+}
+
+.song-btn:active { 
+  transform: translateY(3px) scale(.99); 
+  border-color: rgba(255,120,170,.55); 
+  box-shadow: 0 0 22px rgba(255,120,170,.28); 
+}
+
+.song-btn .song-icon {
+  font-size: 22px; 
+  width: 42px; 
+  height: 42px; 
+  border-radius: 12px; 
+  flex-shrink: 0;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  background: rgba(255,120,170,.14); 
+  border: 1px solid rgba(255,120,170,.4);
+}
+
+/* ── Memory Game ── */
+#screen-memory {
+  justify-content: flex-start;
+}
+
+.memory-board { 
+  display: grid; 
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 14px; 
+  width: 100%; 
+  max-width: 360px; 
+  margin: 20px auto; 
+}
+
+.memory-card-wrap { 
+  aspect-ratio: 1; 
+  perspective: 1000px; 
+  cursor: pointer; 
+}
+
+.memory-card { 
+  width: 100%; 
+  height: 100%; 
+  position: relative; 
+  transition: transform 0.5s; 
+  transform-style: preserve-3d; 
+}
+
+.memory-card.flipped { 
+  transform: rotateY(180deg); 
+}
+
+.memory-front, .memory-back { 
+  position: absolute; 
+  width: 100%; 
+  height: 100%; 
+  backface-visibility: hidden; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 55px; 
+  border-radius: 16px; 
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3); 
+}
+
+.memory-front { 
+  background: var(--glass-2); 
+  border: 1px solid var(--stroke-2); 
+  color: var(--mint); 
+}
+
+.memory-back { 
+  background: var(--grad); 
+  transform: rotateY(180deg); 
+}
+
+.memory-card.matched { 
+  cursor: default; 
+}
+
+/* ── ZEIG AUF! (NUR SPRACH-START) ── */
+#screen-zeigauf {
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.zeigauf-prompt {
+  background: rgba(14,22,32,0.85);
+  border: 1px solid rgba(79,227,193,0.35);
+  border-radius: var(--r-md);
+  padding: 16px 20px;
+  margin: 14px 16px;
+  font-size: clamp(18px, 5vw, 24px);
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.zeigauf-prompt .target-word {
+  color: var(--lime);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.zeigauf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  margin: 20px auto;
+  padding: 0 16px;
+}
+
+.zeigauf-card {
+  background: var(--glass-2);
+  border: 2px solid var(--stroke-2);
+  border-radius: var(--r-lg);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.4);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.zeigauf-card:active {
+  transform: scale(0.95);
+}
+
+.zeigauf-card .card-emoji {
+  font-size: clamp(56px, 14vw, 75px);
+  line-height: 1;
+}
+
+.zeigauf-card .card-label {
+  font-size: clamp(16px, 4.2vw, 20px);
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--text);
+}
+
+.zeigauf-card.correct {
+  border-color: var(--lime);
+  background: var(--grad-soft);
+  animation: bounceCorrect 0.6s ease;
+}
+
+.zeigauf-card.wrong {
+  animation: shakeWrong 0.45s ease;
+  border-color: var(--coral);
+}
+
+@keyframes bounceCorrect {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+@keyframes shakeWrong {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+/* ── MERKSPIEL (5-8 & 8-12 JAHRE) ── */
+#screen-merkspiel {
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.merk-progress-wrap {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  height: 8px;
+  background: var(--glass-2);
+  border-radius: 8px;
+  margin: 10px auto;
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+}
+
+.merk-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--grad);
+  transition: width 0.1s linear;
+}
+
+.merk-instruction {
+  font-size: clamp(15px, 4vw, 18px);
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: #fff;
+  margin: 8px 16px;
+  min-height: 26px;
+}
+
+.merk-display-area {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  margin: 14px auto;
+  padding: 0 10px;
+  min-height: 88px;
+}
+
+.merk-slot {
+  flex: 1;
+  max-width: 80px;
+  aspect-ratio: 1;
+  background: var(--glass);
+  border: 2px dashed var(--stroke-2);
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-mute);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.merk-slot.filled {
+  border-style: solid;
+  border-color: var(--mint);
+  background: var(--glass-2);
+  color: var(--text);
+}
+
+.merk-slot .slot-emoji {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.merk-pool-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px auto;
+  padding: 0 14px;
+}
+
+.merk-choice-btn {
+  background: var(--glass-2);
+  border: 1px solid var(--stroke-2);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  transition: transform 0.15s, opacity 0.2s;
+  min-width: 70px;
+}
+
+.merk-choice-btn:active {
+  transform: scale(0.94);
+}
+
+.merk-choice-btn.used {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.merk-choice-btn .choice-emoji {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.merk-choice-btn .choice-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── TETRIS (12+ JAHRE) ── */
+#screen-tetris {
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.tetris-score-bar {
+  display: flex;
+  justify-content: space-between;
+  width: calc(100% - 32px);
+  max-width: 260px;
+  margin: 6px auto;
+  padding: 6px 14px;
+  background: var(--glass-2);
+  border: 1px solid var(--stroke-2);
+  border-radius: 50px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
+.tetris-score-bar b {
+  color: var(--mint);
+}
+
+.tetris-canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 4px auto;
+  width: 100%;
+}
+
+#tetrisCanvas {
+  background: rgba(4, 7, 11, 0.85);
+  border: 2px solid var(--stroke-2);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(79,227,193,0.15);
+  display: block;
+}
+
+.tetris-controls {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  width: calc(100% - 32px);
+  max-width: 320px;
+  margin: 12px auto 6px;
+}
+
+.tetris-btn {
+  background: var(--glass-2);
+  border: 1px solid var(--stroke-2);
+  border-radius: 16px;
+  height: 52px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  transition: transform 0.1s, background 0.1s;
+}
+
+.tetris-btn:active {
+  transform: scale(0.92);
+  background: var(--grad-soft);
+  border-color: var(--mint);
+}
+
+/* ── Hilfe-Panel ── */
+.help-text { 
+  font-size: 14.5px; 
+  line-height: 1.6; 
+  color: var(--text-dim); 
+  margin-bottom: 12px; 
+}
+
+.help-box {
+  font-size: 14.5px; 
+  line-height: 1.7;
+  background: rgba(79,227,193,.08); 
+  border: 1px solid rgba(79,227,193,.26);
+  border-radius: 16px; 
+  padding: 15px; 
+  color: var(--text-dim);
+}
+
+.help-box b { color: #fff; }
+.help-box a { color: var(--mint); font-weight: 900; text-decoration: none; }
+.help-box a.emergency { color: var(--coral); }
+
+.note-row { 
+  padding: 9px 0; 
+  border-bottom: 1px solid var(--stroke); 
+}
+
+.note-time { 
+  color: var(--text-mute); 
+  font-size: 12px; 
+  margin-top: 2px; 
+}
+
+</style>
+</head>
+<body>
+
+<div id="clouds"></div>
+
+<!-- ════════════════════════════════════════
+     ELTERN-GATE / EINRICHTUNG
+═══════════════════════════════════════ -->
+<div id="screen-parent-gate" class="screen">
+  <div class="parent-card">
+    <h2>🔒 Nur für Erwachsene</h2>
+
+    <div id="mathChallenge">
+      <p>Diese App ist nur für Erwachsene einzurichten. Bitte rechne:</p>
+      <span id="mathQuestion" style="font-size:26px; font-weight:900; display:block; margin-bottom:12px;"></span>
+      <input type="number" id="mathAnswer" inputmode="numeric" placeholder="Ergebnis eingeben" autocomplete="off">
+      <button id="btnMath">Weiter</button>
+      <p id="mathLockMsg" style="display:none; font-size:13px; color:#c33; font-weight:700; margin-top:10px;"></p>
+    </div>
+
+    <div id="holdChallenge" style="display:none;">
+      <p>Fast geschafft. Halte den Knopf 3 Sekunden gedrückt, um zu bestätigen, dass du erwachsen bist.</p>
+      <button id="holdBtn" type="button" class="hold-btn">
+        <span id="holdProgress" class="hold-progress"></span>
+        <span id="holdLabel" class="hold-label">Gedrückt halten…</span>
+      </button>
+    </div>
+
+    <div id="setupForm" style="display:none;">
+      <p class="privacy-note">
+        <b>Was passiert mit den Daten?</b><br>
+        Der Spitzname wird auf diesem Gerät gespeichert <b>und bei jeder Frage an
+        unseren Server übertragen</b>, damit Lio das Kind ansprechen kann. Bitte nur
+        einen Spitznamen verwenden, keinen vollen Namen.<br><br>
+        Die Nachrichten werden zur Beantwortung an unsere Dienstleister für
+        Sprachmodell und Sprachausgabe übermittelt und dort nicht dauerhaft
+        gespeichert. Gespräche werden <b>nicht</b> zum Training von KI-Modellen genutzt.
+        Wir speichern keine Chatverläufe auf unseren Servern.<br><br>
+        Details in der <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.
+      </p>
+
+      <input type="text" id="childNameInput" placeholder="Spitzname (z. B. Leo)" maxlength="24" autocomplete="off">
+
+      <p class="privacy-note" style="margin-bottom:10px;">
+        Vergib eine Eltern-PIN (4–6 Ziffern). Damit kommst du später in den Eltern-Bereich.
+      </p>
+      <input type="password" id="setupPinInput" inputmode="numeric" placeholder="Eltern-PIN" maxlength="6" autocomplete="new-password">
+
+      <label class="consent-row">
+        <input type="checkbox" id="consentBox">
+        <span>Ich bin ein Elternteil bzw. sorgeberechtigt und stimme der oben beschriebenen Verarbeitung zu.</span>
+      </label>
+
+      <button id="btnSaveSetup">Speichern &amp; loslegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ALTERSAUSWAHL (INKL. SPRACH-START)
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-age">
+  <div class="age-top">
+    <div class="age-greeting">Hallo!<br>Ich bin <span class="accent">Lio</span></div>
+    <div class="age-subtitle">Wie alt bist du?</div>
+  </div>
+
+  <div class="age-middle">
+    <div class="age-scene">
+      <div class="age-bubble" id="ageBubble"></div>
+      
+      <div class="age-platform"><img src="assets/plattform.png" alt=""></div>
+      
+      <div class="age-robot-wrap" id="ageRobot">
+        <div class="robot-container">
+          <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
+          <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <div class="age-bottom">
+    <div class="age-grid">
+      <!-- Sprach-Start -->
+      <button class="age-card age-1" data-age="speech-delay">
+        <span class="age-icon">🗣️</span>
+        <span class="age-range">Sprach-Start</span>
+        <span class="age-desc">Geduldig &amp; Einzelförderung</span>
+      </button>
+
+      <button class="age-card age-2" data-age="5-8">
+        <span class="age-icon">🎈</span>
+        <span class="age-range">5 – 8 Jahre</span>
+        <span class="age-desc">Vor- &amp; Grundschule</span>
+      </button>
+
+      <button class="age-card age-3" data-age="8-12">
+        <span class="age-icon">🎒</span>
+        <span class="age-range">8 – 12 Jahre</span>
+        <span class="age-desc">Grundschule</span>
+      </button>
+
+      <button class="age-card age-4" data-age="12+">
+        <span class="age-icon">🎮</span>
+        <span class="age-range">12+ Jahre</span>
+        <span class="age-desc">Teen Crew</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     HAUPTBILDSCHIRM
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-main">
+  <div class="top-bar">
+    <button class="top-circle-btn" id="btnMenu" aria-label="Menü">☰</button>
+    <button class="top-circle-btn" id="btnHelp" aria-label="Ich brauche Hilfe">💙</button>
+    <button class="top-circle-btn btn-dashboard" id="btnParent" aria-label="Eltern-Dashboard">📊</button>
+  </div>
+
+  <div class="lio-area">
+    <div class="scene">
+      <div class="halo" id="halo"></div>
+      <div class="sparkle sp1"></div><div class="sparkle sp2"></div>
+      <div class="sparkle sp3"></div><div class="sparkle sp4"></div>
+      
+      <div class="platform"><img src="assets/plattform.png" alt=""></div>
+      
+      <div class="robot-wrap" id="robot" title="Antippen, um Lio zu stoppen">
+        <div class="robot-container">
+          <img src="assets/lio_offen.png" class="lio-auge-offen" alt="Lio">
+          <img src="assets/lio_zu.png" class="lio-auge-zu" alt="Lio blinzelt">
+        </div>
+      </div>
+      
+    </div>
+
+    <div class="mood-side" id="moods">
+      <button class="mood-pill" data-mood="happy"   title="Glücklich">😊</button>
+      <button class="mood-pill" data-mood="sad"     title="Traurig">😢</button>
+      <button class="mood-pill" data-mood="angry"   title="Wütend">😠</button>
+      <button class="mood-pill" data-mood="scared"  title="Ängstlich">😨</button>
+      <button class="mood-pill" data-mood="tired"   title="Müde">😴</button>
+      <button class="mood-pill" data-mood="excited" title="Aufgeregt">🤩</button>
+    </div>
+  </div>
+
+  <div class="speech-bubble" id="bubble" aria-live="polite">Hi! Tipp das Mikro und sprich mit mir!</div>
+  <div class="quick-replies" id="quickReplies"></div>
+
+  <div class="bottom-area">
+    <div class="lesson-row" id="lessonRow"></div>
+    <div class="mic-row">
+      <button class="side-btn keyboard" id="btnKeyboard" aria-label="Tippen">⌨️</button>
+      <button class="big-mic" id="micBtn" aria-label="Sprechen">🎤</button>
+      <button class="side-btn repeat" id="btnRepeat" aria-label="Wiederholen">🔁</button>
+    </div>
+    <div class="mic-hint" id="hint">Tipp das Mikro und sprich!</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     KARAOKE
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-karaoke">
+  <div class="top-bar">
+    <button class="top-circle-btn" id="btnKaraokeBack" aria-label="Zurück">←</button>
+    <div class="karaoke-title">🎤 Karaoke</div>
+    <div style="width:46px"></div>
+  </div>
+  <div class="karaoke-sub">Wähle ein Lied — Lio singt mit! 🎶</div>
+  <div style="flex:1; overflow-y:auto; width:100%; display:flex; justify-content:center;">
+    <div class="song-list" id="songList"></div>
+  </div>
+  <div style="padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px)); display:flex; justify-content:center;">
+    <button class="top-circle-btn" id="stopSongBtn" style="display:none; width:auto; padding:8px 18px; border-radius:50px;">⏹ Stopp</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MEMORY
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-memory">
+  <div class="top-bar">
+    <button class="top-circle-btn" id="btnMemoryBack">←</button>
+    <div class="karaoke-title">🧩 Memory</div>
+    <div style="width:46px"></div>
+  </div>
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+    <div id="memoryBoard" class="memory-board"></div>
+    <button class="top-circle-btn" id="btnMemoryRestart" style="width:auto; padding:8px 18px; border-radius:50px; margin-top:20px;">🔄 Neustart</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ZEIG AUF! (NUR SPRACH-START)
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-zeigauf">
+  <div class="top-bar">
+    <button class="top-circle-btn" id="btnZeigAufBack">←</button>
+    <div class="karaoke-title">👆 Zeig auf!</div>
+    <button class="top-circle-btn" id="btnZeigAufRepeat" title="Nochmal anhören">🔊</button>
+  </div>
+  <div class="zeigauf-prompt" id="zeigAufPrompt">
+    Wo ist: <span class="target-word" id="zeigAufTargetWord">...</span>?
+  </div>
+  <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
+    <div class="zeigauf-grid" id="zeigAufGrid"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MERKSPIEL (5-8 & 8-12 JAHRE)
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-merkspiel">
+  <div class="top-bar">
+    <button class="top-circle-btn" id="btnMerkspielBack">←</button>
+    <div class="karaoke-title">🔮 Merkspiel</div>
+    <button class="top-circle-btn" id="btnMerkspielRestart" title="Neue Runde">🔄</button>
+  </div>
   
-  const hash = crypto.createHash('sha256').update(cleanText + (isSpeechDelay ? '_slow' : '')).digest('hex');
-  const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
+  <div class="merk-progress-wrap">
+    <div class="merk-progress-bar" id="merkProgressBar"></div>
+  </div>
 
-  if (fs.existsSync(cacheMp3)) {
-    console.log(`♻️ Aus Cache geladen: "${cleanText.substring(0, 30)}..."`);
-    return `/cache/${hash}.mp3`;
+  <div class="merk-instruction" id="merkInstruction">
+    Merk dir die 5 Bilder genau in dieser Reihe!
+  </div>
+
+  <div class="merk-display-area" id="merkDisplayArea"></div>
+
+  <div class="merk-pool-area" id="merkPoolArea"></div>
+
+  <div style="padding: 10px; display: flex; justify-content: center; gap: 10px;">
+    <button class="top-circle-btn" id="btnMerkspielReset" style="display:none; width:auto; padding:8px 18px; border-radius:50px;">↩️ Zurücksetzen</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TETRIS (12+ JAHRE)
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-tetris">
+  <div class="top-bar">
+    <button class="top-circle-btn" id="btnTetrisBack">←</button>
+    <div class="karaoke-title">🧱 Tetris</div>
+    <button class="top-circle-btn" id="btnTetrisRestart" title="Neustart">🔄</button>
+  </div>
+  
+  <div class="tetris-score-bar">
+    <span>Punkte: <b id="tetrisScore">0</b></span>
+    <span>Reihen: <b id="tetrisLines">0</b></span>
+  </div>
+
+  <div class="tetris-canvas-wrap">
+    <canvas id="tetrisCanvas" width="200" height="400"></canvas>
+  </div>
+
+  <div class="tetris-controls">
+    <button class="tetris-btn" id="btnTetrisLeft">◀️</button>
+    <button class="tetris-btn" id="btnTetrisRotate">🔄</button>
+    <button class="tetris-btn" id="btnTetrisRight">▶️</button>
+    <button class="tetris-btn" id="btnTetrisDrop">⏬</button>
+  </div>
+</div>
+
+<!-- ── Text-Eingabe ── -->
+<div class="text-overlay" id="textOverlay">
+  <button class="close" id="btnCloseText" aria-label="Schließen">✕</button>
+  <input type="text" id="textInput" placeholder="Frag Lio was…" maxlength="500" autocomplete="off">
+  <button class="send" id="btnSendText" aria-label="Senden">➤</button>
+</div>
+
+<!-- ── Menü ── -->
+<div class="menu-overlay" id="menuOverlay"></div>
+<div class="menu-drawer" id="menuDrawer">
+  <div class="menu-title">🤖 Lio-Menü</div>
+  <div class="menu-subtitle">Wähle, was wir machen</div>
+  <div class="menu-section-label">Modi</div>
+  <div id="menuModes"></div>
+  <div class="menu-section-label">🛠️ Mehr</div>
+  <button class="menu-action" id="btnResetChat"><span style="font-size:18px;">🧹</span><span>Neu anfangen</span></button>
+  <button class="menu-action" id="btnChangeAge"><span style="font-size:18px;">👶</span><span>Alter ändern</span></button>
+</div>
+
+<!-- ── PIN ── -->
+<div class="panel" id="panelPin">
+  <div class="panel-inner">
+    <h2>🔒 Eltern-Bereich</h2>
+    <div class="pin-hint">Nur für Eltern. Bitte PIN eingeben.</div>
+    <label for="pinInput">PIN:</label>
+    <input type="password" id="pinInput" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="current-password">
+    <button id="btnCheckPin">Bestätigen</button>
+    <button class="cancel" id="btnClosePin">Abbrechen</button>
+  </div>
+</div>
+
+<!-- ── DASHBOARD & EINSTELLUNGEN ── -->
+<div class="panel" id="panelDashboard">
+  <div class="panel-inner">
+    <h2>📊 KidsBot Dashboard</h2>
+    
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tabBtnInsights">Einblicke</button>
+      <button class="tab-btn" id="tabBtnSettings">Einstellungen</button>
+    </div>
+
+    <!-- Einblicke Tab -->
+    <div class="tab-content active" id="tabInsights">
+      <div class="dashboard-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="statChats">0</div>
+          <div class="stat-label">Interaktionen</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statMins">22</div>
+          <div class="stat-label">Minuten aktiv</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">📚 Aktuelle Lernthemen</div>
+        <div class="insight-content">
+          <span class="insight-badge">Sprach-Start (Wortfindung)</span>
+          <span class="insight-badge">Arbeitsgedächtnis</span>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">⚠️ Beobachtungen</div>
+        <div class="insight-content">
+          Lio passt die kognitive Beanspruchung an das Alter an. Im <b>Sprach-Start</b> liegt der Fokus auf Ruhe und Entschleunigung; ab 5 Jahren trainiert Lio gezielt das Arbeitsgedächtnis und bei Teenagern Reaktion und Planung.
+          <br><br><span class="insight-badge badge-alert">Aktive Entwicklungsförderung</span>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">🚨 System-Hinweise</div>
+        <div class="insight-content" id="parentNotices">Keine besonderen Hinweise.</div>
+      </div>
+
+      <div class="privacy-badge">🔒 End-to-End geschützte Privatsphäre.</div>
+      <button class="cancel" id="btnCloseDashboard" style="margin-top: 15px;">Dashboard schließen</button>
+    </div>
+
+    <!-- Einstellungen Tab -->
+    <div class="tab-content" id="tabSettings">
+      <label for="voiceSel">🗣️ Stimme:</label>
+      <select id="voiceSel"></select>
+
+      <label for="rateSlider">⏱️ Geschwindigkeit: <span id="rateVal">1.00</span></label>
+      <input type="range" id="rateSlider" min="0.6" max="1.3" step="0.05" value="1.0">
+
+      <label for="pitchSlider">🎵 Tonhöhe: <span id="pitchVal">1.15</span></label>
+      <input type="range" id="pitchSlider" min="0.6" max="1.6" step="0.05" value="1.15">
+
+      <button id="btnTestVoice">🔊 Stimme testen</button>
+
+      <hr style="margin:16px 0;">
+      <h2 style="font-size:16px;">🛡️ Modi sperren</h2>
+      <div id="lockToggles"></div>
+
+      <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
+      <h2 style="font-size:16px;">🗑️ Daten</h2>
+      <p style="font-size:13px; margin-bottom:8px;">Löscht Spitzname, Alter, Hinweise und PIN von diesem Gerät.</p>
+      <button class="cancel" id="btnWipe">Alle Daten löschen</button>
+
+      <hr style="margin:16px 0; border:none; border-top:1px solid #ddd;">
+      <label for="newPinInput">🔑 Neue PIN:</label>
+      <input type="text" id="newPinInput" inputmode="numeric" maxlength="6" placeholder="z. B. 4321">
+      <button id="btnChangePin">PIN ändern</button>
+      
+      <button class="cancel" id="btnCloseSettings" style="margin-top: 15px;">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Hilfe ── -->
+<div class="panel" id="panelHelp">
+  <div class="panel-inner">
+    <h2>💙 Ich brauche Hilfe</h2>
+    <p class="help-text">
+      Wenn dich jemand ärgert, dir wehtut oder du dich nicht sicher fühlst:
+      Das ist <b>nicht deine Schuld</b>. Sprich mit einem Erwachsenen, dem du vertraust.
+    </p>
+    <p class="help-box">
+      📞 <b>Kinder- und Jugendtelefon</b><br>
+      <a href="tel:116111" style="font-size:22px;">116 111</a><br>
+      kostenlos und anonym<br><br>
+      📞 <b>Elterntelefon</b><br>
+      <a href="tel:08001110550">0800 111 0 550</a><br><br>
+      🚨 <b>Notruf</b> <a href="tel:112" class="emergency">112</a>
+    </p>
+    <button class="cancel" id="btnCloseHelp">Zurück</button>
+  </div>
+</div>
+
+<!-- ── Fach-Auswahl ── -->
+<div class="panel" id="panelSubject">
+  <div class="panel-inner">
+    <h2>📚 Hausaufgaben-Hilfe</h2>
+    <p style="font-size:14px; margin-bottom:12px;">Lio erklärt Schritt für Schritt — mit Fragen statt Vorsagen. Welches Fach?</p>
+    <div id="subjectGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+    <button class="cancel" id="btnCloseSubject" style="margin-top:14px;">Zurück</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════
+   KONFIGURATION
+═══════════════════════════════════════ */
+const CFG = Object.assign({
+  apiBase: '',
+  appToken: 'HIER_DEN_APP_TOKEN_EINSETZEN',
+}, window.LIO_CONFIG || {});
+
+const $ = (id) => document.getElementById(id);
+
+function getDeviceId() {
+  let id = localStorage.getItem('lio_device');
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+    localStorage.setItem('lio_device', id);
   }
+  return id;
+}
 
-  try {
-    console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..." (Sprach-Start: ${isSpeechDelay})`);
-    
-    // Mannis Voice-ID
-    const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
-    
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: cleanText,
-        model_id: 'eleven_turbo_v2_5',
-        voice_settings: { 
-          stability: isSpeechDelay ? 0.75 : 0.5, 
-          similarity_boost: 0.75 
-        }
-      })
-    });
+let interactionCount = parseInt(localStorage.getItem('kb_interactions') || '0');
+function logInteraction() {
+  interactionCount++;
+  localStorage.setItem('kb_interactions', interactionCount.toString());
+  if($('statChats')) $('statChats').textContent = interactionCount;
+}
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`ElevenLabs Fehler: ${response.status} - ${errText}`);
-    }
+async function apiFetch(path, body) {
+  return fetch(CFG.apiBase + path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-app-token': CFG.appToken,
+      'x-device-id': getDeviceId(),
+    },
+    body: JSON.stringify(body),
+  });
+}
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    fs.writeFileSync(cacheMp3, buffer);
-    return `/cache/${hash}.mp3`;
+/* ══════════════════════════════════════════════════════════
+   ZUSTAND
+═══════════════════════════════════════ */
+const MAX_HISTORY = 40;
+let messages = [];
+let currentMood = null;
+let currentMode = 'talk';
+let currentAge = null;
+let currentSubject = null;
+let activeTopic = null;
+let topicResolved = true;
+let lastSpeech = null;
+let lastLioText = '';
+let isLioSpeaking = false;
+let isListening = false;
+let isKaraoke = false;
+let childName = localStorage.getItem('lio_name') || '';
 
-  } catch (err) {
-    console.error('TTS Fehler:', err.message);
-    throw new Error('ElevenLabs nicht erreichbar');
+let voices = [];
+let selectedVoice = null;
+let speechRate = 1.0;
+let speechPitch = 1.15;
+
+let parentLocks = {};
+try { parentLocks = JSON.parse(localStorage.getItem('lio_locks') || '{}'); } catch (e) { parentLocks = {}; }
+
+/* ══════════════════════════════════════════════════════════
+   INHALTE & ALTERSSPEZIFISCHE MODI
+═══════════════════════════════════════ */
+const AGE_GROUPS = {
+  'speech-delay': { 
+    label: '🗣️ Sprach-Start', 
+    rate: 0.68, 
+    pitch: 1.05, 
+    greeting: 'Hallo {name}! Schön, dass du da bist. Wir sprechen ganz ruhig und gemütlich zusammen.' 
+  },
+  '5-8':  { label: '🎈 5–8 Jahre',  rate: 0.98, pitch: 1.18, greeting: 'Hallo {name}! Ich bin Lio, dein Freund! Was machen wir heute?' },
+  '8-12': { label: '🎒 8–12 Jahre', rate: 1.00, pitch: 1.12, greeting: 'Hi {name}! Ich bin Lio! Worauf hast du heute Lust?' },
+  '12+':  { label: '🎮 12+ Jahre',  rate: 1.05, pitch: 1.05, greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
+};
+
+// 🚨 MODI MIT NEUEM MERKSPIEL-ICON (🔮) UND TETRIS (🧱) 🚨
+const MODES = {
+  talk:      { icon:'💬', title:'Chat',        welcome:{ 'speech-delay':'Hallo {name}! Du kannst ganz in Ruhe mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
+  zeigauf:   { icon:'👆', title:'Zeig auf!',   allowedAges:['speech-delay'], welcome:{ 'speech-delay':'Lass uns spielen! Zeig auf das richtige Bild.' } },
+  merkspiel: { icon:'🔮', title:'Merkspiel',   allowedAges:['5-8','8-12'], welcome:{ '5-8':'Merkspiel! Kannst du dir die 5 Bilder merken?', '8-12':'Merkspiel! Beweise dein Supergedächtnis!' } },
+  tetris:    { icon:'🧱', title:'Tetris',      allowedAges:['12+'], welcome:{ '12+':'Tetris-Time! Wie viele Reihen schaffst du?' } },
+  memory:    { icon:'🧩', title:'Memory',      welcome:{ 'speech-delay':'Lass uns Memory spielen!', '5-8':'Lass uns Memory spielen!', '8-12':'Lass uns Memory spielen!', '12+':'Lass uns Memory spielen!' } },
+  homework:  { icon:'📚', title:'Hausaufgaben',welcome:{ 'speech-delay':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
+  stories:   { icon:'📖', title:'Geschichte',  welcome:{ 'speech-delay':'Möchtest du eine ruhige Geschichte?', '5-8':'Eine Geschichte! Worüber soll sie sein?', '8-12':'Welche Geschichte soll ich erzählen?', '12+':'Geschichten-Modus! Sag mir das Thema.' } },
+  learn:     { icon:'🧠', title:'Lernen',      welcome:{ 'speech-delay':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
+  jokes:     { icon:'😂', title:'Witze',       welcome:{ 'speech-delay':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
+  creative:  { icon:'🎨', title:'Kreativ',     welcome:{ 'speech-delay':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
+  guess:     { icon:'🎯', title:'Raten',       welcome:{ 'speech-delay':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
+};
+
+const SUBJECTS = [
+  { key:'mathe',     icon:'🔢', label:'Mathe' },
+  { key:'deutsch',   icon:'📖', label:'Deutsch' },
+  { key:'englisch',  icon:'🔤', label:'Englisch' },
+  { key:'sachkunde', icon:'🌍', label:'Sachkunde' },
+  { key:'sonstiges', icon:'✏️', label:'Etwas anderes' },
+];
+
+const HOMEWORK_TOPICS = {
+  mathe:     [ {label:'🔢 Einmaleins', prompt:'Erklär mir bitte das Einmaleins an einem einfachen Beispiel – aber verrate noch keine Lösungen!'},
+               {label:'➗ Textaufgaben', prompt:'Ich hab eine Textaufgabe. Stell mir bitte eine Frage, damit ich weiß, womit ich anfangen soll.'},
+               {label:'🍰 Brüche', prompt:'Erklär mir Brüche Schritt für Schritt mit einem leckeren Kuchen-Beispiel.'} ],
+  deutsch:   [ {label:'📝 Rechtschreibung', prompt:'Kannst du mir eine Rechtschreibregel erklären und mir eine kleine Testfrage dazu stellen?'},
+               {label:'📖 Text verstehen', prompt:'Ich soll einen Text verstehen. Wie gehe ich Schritt für Schritt vor?'},
+               {label:'✍️ Aufsatz', prompt:'Ich muss einen Aufsatz schreiben. Hilf mir mit guten Fragen, Ideen zu sammeln!'} ],
+  englisch:  [ {label:'🔤 Vokabeln', prompt:'Frag mich ein paar einfache englische Vokabeln ab – immer nur eine nach der anderen!'},
+               {label:'🗣️ Sätze bilden', prompt:'Zeig mir ein Beispiel, wie man einen englischen Satz baut, und lass mich dann einen eigenen probieren.'} ],
+  sachkunde: [ {label:'🌍 Thema erklären', prompt:'Erklär mir mein Sachkunde-Thema einfach, spannend und in kurzen Schritten.'} ],
+  sonstiges: [ {label:'💡 Zeig mir ein Beispiel', prompt:'Zeig mir bitte ein ähnliches Beispiel zu meiner Aufgabe, damit ich meine eigene lösen kann.'} ],
+};
+
+const HOMEWORK_FOLLOWUPS = [
+  { label:'👍 Verstanden',        prompt:'Ich hab es verstanden, was kommt als Nächstes?', resolvesTopic:true },
+  { label:'🔁 Nochmal, langsamer', prompt:'Kannst du das nochmal langsamer und einfacher erklären?' },
+  { label:'📝 Anderes Beispiel',   prompt:'Zeig mir noch ein anderes Beispiel dazu.' },
+];
+
+const ALL_SONGS = [
+  { icon:'🐭', title:'Alle meine Entchen', ages:['speech-delay','5-8','8-12','12+'], lyrics:[
+      'Alle meine Entchen schwimmen auf dem See.',
+      'Köpfchen in das Wasser, Schwänzchen in die Höh!',
+      'Alle meine Täubchen sitzen auf dem Dach.',
+      'Klipper, klapper, klapp, klapp, fliegen übers Dach.' ]},
+  { icon:'🦊', title:'Fuchs, du hast die Gans gestohlen', ages:['5-8','8-12','12+'], lyrics:[
+      'Fuchs, du hast die Gans gestohlen, gib sie wieder her!',
+      'Sonst wird dich der Jäger holen mit dem Schießgewehr.' ]},
+  { icon:'🌙', title:'Der Mond ist aufgegangen', ages:['speech-delay','5-8','8-12','12+'], lyrics:[
+      'Der Mond ist aufgegangen, die goldnen Sternlein prangen.',
+      'Am Himmel hell und klar.',
+      'Der Wald steht schwarz und schweiget,',
+      'und aus den Wiesen steiget der weiße Nebel wunderbar.' ]},
+  { icon:'🐝', title:'Summ, summ, summ', ages:['speech-delay','5-8','8-12'], lyrics:[
+      'Summ, summ, summ! Bienchen summ herum!',
+      'Ei, wir tun dir nichts zuleide,',
+      'flieg nur aus in Wald und Heide!' ]},
+  { icon:'🐑', title:'Schlaf, Kindlein, schlaf', ages:['speech-delay','5-8'], lyrics:[
+      'Schlaf, Kindlein, schlaf! Der Vater hüt die Schaf.',
+      'Die Mutter schüttelt s Bäumelein,',
+      'da fällt herab ein Träumelein.' ]},
+  { icon:'🌟', title:'Weißt du, wieviel Sternlein stehen', ages:['5-8','8-12','12+'], lyrics:[
+      'Weißt du, wieviel Sternlein stehen an dem blauen Himmelszelt?',
+      'Weißt du, wieviel Wolken gehen weithin über alle Welt?',
+      'Gott, der Herr, hat sie gezählet,',
+      'dass ihm auch nicht eines fehlet an der ganzen großen Zahl.' ]},
+];
+
+const MOOD_VOICE_PROFILES = {
+  happy:   { rate: 1.12, pitch: 1.28 },
+  excited: { rate: 1.18, pitch: 1.34 },
+  sad:     { rate: 0.85, pitch: 1.05 },
+  angry:   { rate: 0.88, pitch: 1.08 },
+  scared:  { rate: 0.88, pitch: 1.10 },
+  tired:   { rate: 0.82, pitch: 1.00 },
+};
+
+function getMoodVoiceProfile() {
+  return (currentMood && MOOD_VOICE_PROFILES[currentMood]) ? MOOD_VOICE_PROFILES[currentMood] : null;
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = $('screen-' + name);
+  if (el) el.classList.add('active');
+}
+
+function setBubble(text)   { const b = $('bubble'); if (b) b.textContent = text; }
+function setBubbleLoading(){ const b = $('bubble'); if (b) b.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>'; }
+function setHint(text)     { const h = $('hint');  if (h) h.textContent = text; }
+
+/* ════════════════════════════════════════
+   ELTERN-GATE
+═══════════════════════════════════════ */
+let mathSolution = 0;
+let gateFails = parseInt(localStorage.getItem('lio_gate_fails') || '0', 10);
+
+function newMathChallenge() {
+  const a = 5 + Math.floor(Math.random() * 6);
+  const b = 5 + Math.floor(Math.random() * 6);
+  mathSolution = a * b;
+  $('mathQuestion').textContent = a + ' × ' + b + ' = ?';
+}
+
+function gateLockedUntil() { 
+  return parseInt(localStorage.getItem('lio_gate_lock') || '0', 10); 
+}
+
+function updateGateLockUI() {
+  const remaining = gateLockedUntil() - Date.now();
+  const msg = $('mathLockMsg');
+  if (remaining > 0) {
+    msg.style.display = 'block';
+    msg.textContent = 'Zu viele falsche Versuche. Bitte warte ' + Math.ceil(remaining / 1000) + ' Sekunden.';
+    $('btnMath').disabled = true;
+    $('mathAnswer').disabled = true;
+    setTimeout(updateGateLockUI, 1000);
+  } else {
+    msg.style.display = 'none';
+    $('btnMath').disabled = false;
+    $('mathAnswer').disabled = false;
   }
 }
 
-// ── API: Chat-Stream (Wasserhahn) ──
-app.post('/api/chat-stream', async (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
+function checkParentMath() {
+  if (gateLockedUntil() > Date.now()) return;
+
+  if (Number($('mathAnswer').value) === mathSolution) {
+    gateFails = 0;
+    localStorage.setItem('lio_gate_fails', '0');
+    $('mathChallenge').style.display = 'none';
+    startHoldChallenge();
+  } else {
+    gateFails++;
+    localStorage.setItem('lio_gate_fails', String(gateFails));
+    $('mathAnswer').value = '';
+    newMathChallenge();
+    if (gateFails >= 3) {
+      localStorage.setItem('lio_gate_lock', String(Date.now() + 30000));
+      gateFails = 0;
+      localStorage.setItem('lio_gate_fails', '0');
+      updateGateLockUI();
+    }
+  }
+}
+
+$('btnMath').addEventListener('click', checkParentMath);
+$('mathAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkParentMath(); });
+
+const HOLD_MS = 3000;
+let holdRaf = null;
+let holdStart = 0;
+
+function startHoldChallenge() {
+  $('holdChallenge').style.display = 'block';
+  resetHold();
+}
+function resetHold() {
+  $('holdProgress').style.width = '0%';
+  $('holdLabel').textContent = 'Gedrückt halten…';
+}
+function holdTick() {
+  const pct = Math.min(100, ((Date.now() - holdStart) / HOLD_MS) * 100);
+  $('holdProgress').style.width = pct + '%';
+  if (pct >= 100) {
+    $('holdLabel').textContent = 'Bestätigt ✓';
+    setTimeout(() => {
+      $('holdChallenge').style.display = 'none';
+      $('setupForm').style.display = 'block';
+    }, 200);
+    return;
+  }
+  holdRaf = requestAnimationFrame(holdTick);
+}
+function holdStartHandler(e) { e.preventDefault(); holdStart = Date.now(); holdTick(); }
+function holdEndHandler() { if (holdRaf) cancelAnimationFrame(holdRaf); holdRaf = null; resetHold(); }
+
+const holdBtn = $('holdBtn');
+holdBtn.addEventListener('pointerdown', holdStartHandler);
+holdBtn.addEventListener('pointerup', holdEndHandler);
+holdBtn.addEventListener('pointerleave', holdEndHandler);
+holdBtn.addEventListener('pointercancel', holdEndHandler);
+
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('lio:' + pin));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function saveSetup() {
+  const name = $('childNameInput').value.trim();
+  const pin  = $('setupPinInput').value.trim();
+
+  if (!name) { alert('Bitte einen Spitznamen eingeben.'); return; }
+  if (!/^\d{4,6}$/.test(pin)) { alert('Bitte eine PIN mit 4–6 Ziffern vergeben.'); return; }
+  if (!$('consentBox').checked) { alert('Bitte bestätige die Einwilligung.'); return; }
+
+  childName = name.slice(0, 24);
+  localStorage.setItem('lio_name', childName);
+  localStorage.setItem('lio_pin', await hashPin(pin));
+  localStorage.setItem('lio_consent', new Date().toISOString());
+  showScreen('age');
+}
+$('btnSaveSetup').addEventListener('click', saveSetup);
+
+/* ════════════════════════════════════════
+   ALTERSAUSWAHL
+═══════════════════════════════════════ */
+document.querySelectorAll('.age-card').forEach(btn => {
+  btn.addEventListener('click', () => selectAge(btn.dataset.age));
+});
+
+function showAgeBubble(text) {
+  const bubble = $('ageBubble');
+  if (!bubble) return;
+  bubble.textContent = text;
+  bubble.classList.add('show');
+  clearTimeout(showAgeBubble._t);
+  showAgeBubble._t = setTimeout(() => bubble.classList.remove('show'), 4500);
+}
+
+function selectAge(age) {
+  currentAge = age;
+  localStorage.setItem('lio_age', age);
+
+  const grp = AGE_GROUPS[age];
+  speechRate = grp.rate;
+  speechPitch = grp.pitch;
+
+  const greeting = grp.greeting.replace('{name}', childName);
+  showAgeBubble(greeting);
+
+  showScreen('main');
+  initMain(greeting);
+}
+
+function goToAgeSelect() {
+  closeMenu();
+  stopSpeaking();
+  showScreen('age');
+}
+
+/* ════════════════════════════════════════
+   HAUPTBILDSCHIRM (INKL. ALTERS-FILTER)
+═══════════════════════════════════════ */
+function initMain(customText) {
+  messages = [];
+  activeTopic = null;
+  topicResolved = true;
+  renderLessonCards();
+  renderMenuModes();
+  const m = MODES[currentMode] || MODES.talk;
+  const text = (customText || m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Tippe unten auf das Mikrofon oder die Tastatur, um mit mir zu sprechen!';
+  lioSay('Begrüße mich...', text);
+  renderQuickReplies();
+}
+
+function resetChat() {
+  closeMenu();
+  initMain();
+  setHint('Tipp das Mikro und sprich!');
+}
+
+function renderLessonCards() {
+  const row = $('lessonRow');
+  if (!row) return;
+  row.innerHTML = '';
+
+  Object.entries(MODES).forEach(([key, m]) => {
+    if (parentLocks[key]) return;
+    if (m.allowedAges && currentAge && !m.allowedAges.includes(currentAge)) return;
+
+    const card = document.createElement('button');
+    card.className = 'lesson-card' + (key === currentMode ? ' active' : '');
+    card.innerHTML = `<span class="lesson-icon">${m.icon}</span><span class="lesson-label">${m.title}</span>`;
+    card.addEventListener('click', () => switchMode(key));
+    row.appendChild(card);
+  });
+
+  if (!parentLocks.karaoke) {
+    const k = document.createElement('button');
+    k.className = 'lesson-card';
+    k.innerHTML = '<span class="lesson-icon">🎤</span><span class="lesson-label">Karaoke</span>';
+    k.addEventListener('click', goToKaraoke);
+    row.appendChild(k);
+  }
+}
+
+function renderMenuModes() {
+  const box = $('menuModes');
+  if (!box) return;
+  box.innerHTML = '';
+
+  const entries = Object.entries(MODES).concat([['karaoke', { icon:'🎤', title:'Karaoke' }]]);
+  entries.forEach(([key, m]) => {
+    if (m.allowedAges && currentAge && !m.allowedAges.includes(currentAge)) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'menu-item menu-mode-' + key + (key === currentMode ? ' active' : '');
+    btn.innerHTML = `<span class="menu-icon">${m.icon}</span><span class="menu-label">${m.title} ${parentLocks[key] ? ' 🔒' : ''}</span>`;
+    if (parentLocks[key]) btn.style.opacity = '0.45';
+    btn.addEventListener('click', () => key === 'karaoke' ? goToKaraoke() : switchMode(key));
+    box.appendChild(btn);
+  });
+}
+
+function switchMode(mode) {
+  if (isLioSpeaking) stopSpeaking();
+  if (parentLocks[mode]) {
+    lioSay('Gesperrt.', 'Das haben deine Eltern gesperrt.');
+    return;
+  }
+
+  closeMenu();
+  clearQuickReplies();
+  
+  if (mode === 'memory') {
+    startMemory();
+    return;
+  }
+  if (mode === 'zeigauf') {
+    startZeigAuf();
+    return;
+  }
+  if (mode === 'merkspiel') {
+    startMerkspiel();
+    return;
+  }
+  if (mode === 'tetris') {
+    startTetris();
+    return;
+  }
+
+  currentMode = mode;
+  messages = [];
+  activeTopic = null;
+  topicResolved = true;
+  renderLessonCards();
+  renderMenuModes();
+
+  if (mode === 'homework') { 
+    openSubjectPanel(); 
+    return; 
+  }
+
+  const m = MODES[mode];
+  const welcome = (m.welcome[currentAge] || m.welcome['8-12']).replace('{name}', childName) + ' Nutze das Mikrofon oder die Tastatur unten, um mit mir zu sprechen!';
+  lioSay('Los gehts...', welcome);
+  renderQuickReplies();
+}
+
+/* ── Fach-Auswahl ── */
+function openSubjectPanel() {
+  const grid = $('subjectGrid');
+  grid.innerHTML = '';
+  SUBJECTS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'lesson-card';
+    btn.style.cssText = 'width:100%;';
+    btn.innerHTML = `<span class="lesson-icon">${s.icon}</span><span class="lesson-label">${s.label}</span>`;
+    btn.addEventListener('click', () => selectSubject(s));
+    grid.appendChild(btn);
+  });
+  $('panelSubject').classList.add('show');
+}
+
+function closeSubjectPanel() {
+  $('panelSubject').classList.remove('show');
+  if (!currentSubject) switchMode('talk');
+}
+$('btnCloseSubject').addEventListener('click', closeSubjectPanel);
+
+function selectSubject(subject) {
+  currentSubject = subject.key;
+  activeTopic = null;
+  topicResolved = true;
+  $('panelSubject').classList.remove('show');
+  messages = [];
+  const welcomes = {
+    mathe:     'Mathe! Ich hab ein paar Ideen — oder erzähl mir direkt, woran du gerade arbeitest.',
+    deutsch:   'Deutsch! Such dir ein Thema aus, oder sag mir, was du übst.',
+    englisch:  'English time! Wähl ein Thema, oder erzähl mir, was du gerade übst.',
+    sachkunde: 'Sachkunde! Wähl ein Thema, oder erzähl mir, worum es geht.',
+    sonstiges: 'Klar — erzähl mir, bei welcher Aufgabe ich dir helfen soll.',
+  };
+  const welcome = (welcomes[subject.key] || welcomes.sonstiges) + ' Nutze das Mikrofon oder die Tastatur, um mir zu antworten!';
+  lioSay('Hausaufgaben...', welcome);
+  renderQuickReplies(HOMEWORK_TOPICS[subject.key] || HOMEWORK_TOPICS.sonstiges, 'topic-start');
+}
+
+function renderQuickReplies(items = [], kind = '') {
+  const row = $('quickReplies');
+  if (!row) return;
+  row.innerHTML = '';
+  
+  items.forEach(item => {
+    const chip = document.createElement('button');
+    chip.className = 'quick-chip';
+    chip.textContent = item.label;
+    chip.addEventListener('click', () => {
+      clearQuickReplies();
+      if (kind === 'topic-start') {
+        activeTopic = item.prompt;
+        topicResolved = false;
+      } else if (item.resolvesTopic) {
+        topicResolved = true;
+        activeTopic = null;
+      }
+      sendMessage(item.prompt);
+    });
+    row.appendChild(chip);
+  });
+
+  const btnJa = document.createElement('button');
+  btnJa.className = 'quick-chip';
+  btnJa.textContent = '👍 Ja';
+  btnJa.addEventListener('click', () => { clearQuickReplies(); sendMessage('Ja'); });
+  row.appendChild(btnJa);
+
+  const btnNein = document.createElement('button');
+  btnNein.className = 'quick-chip';
+  btnNein.textContent = '👎 Nein';
+  btnNein.addEventListener('click', () => { clearQuickReplies(); sendMessage('Nein'); });
+  row.appendChild(btnNein);
+}
+
+function clearQuickReplies() { 
+  const r = $('quickReplies'); 
+  if (r) r.innerHTML = ''; 
+}
+
+/* ════════════════════════════════════════
+   STIMMUNG
+═══════════════════════════════════════ */
+document.querySelectorAll('.mood-pill').forEach(btn => {
+  btn.addEventListener('click', () => selectMood(btn, btn.dataset.mood));
+});
+
+function selectMood(btn, mood) {
+  if (isLioSpeaking) stopSpeaking();
+
+  if (currentMood === mood) {
+    currentMood = null;
+    btn.classList.remove('selected');
+    $('halo').className = 'halo';
+    setLioEmotion('normal');
+    return;
+  }
+  document.querySelectorAll('.mood-pill').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  currentMood = mood;
+  $('halo').className = 'halo ' + mood;
+  reactToMood(mood);
+}
+
+function reactToMood(mood) {
+  const reactions = {
+    happy:   'Oh, wie schön! Was ist denn Tolles passiert?',
+    sad:     'Oh, du bist traurig. Magst du mir erzählen, was los ist? Ich hör dir zu.',
+    angry:   'Du bist wütend? Das ist völlig okay — jeder ist mal wütend. Erzähl mal, was passiert ist.',
+    scared:  'Hab keine Angst, ich bin da. Was hat dich erschreckt?',
+    tired:   'Du bist müde? Soll ich dir eine ruhige Geschichte erzählen?',
+    excited: 'Wow, du bist aufgeregt! Erzähl mir, was los ist!',
+  };
+  const text = reactions[mood];
+  if (text) {
+    lioSay('Reaktion auf Stimmung', text);
+  }
+
+  if (mood === 'excited' || mood === 'happy') setLioEmotion('excited');
+  else if (mood === 'sad' || mood === 'scared') setLioEmotion('sad');
+  else if (mood === 'tired') setLioEmotion('tired');
+  else setLioEmotion('normal');
+}
+
+function setLioEmotion(emotion) {
+  const robot = $('robot');
+  if (!robot) return;
+  robot.classList.remove('excited','sad','tired','listening');
+  if (emotion === 'sad' || emotion === 'anxious') robot.classList.add('sad');
+  else if (emotion === 'happy' || emotion === 'excited') robot.classList.add('excited');
+  else if (emotion === 'tired') robot.classList.add('tired');
+}
+
+/* ════════════════════════════════════════
+   GEFÜHLSERKENNUNG IM TEXT
+═══════════════════════════════════════ */
+const EMOTION_KEYWORDS = {
+  happy:      ['freut','glücklich','toll','super','wunderbar','schön','lachen','erleichtert','prima','klasse','cool','mega'],
+  sad:        ['traurig','niedergeschlagen','deprimiert','heulen','weine','weinen','betrübt','mutlos','allein','einsam'],
+  anxious:    ['angst','nervös','sorge','angespannt','panik','stress','unsicher','aufgeregt vor','fürchte'],
+  frustrated: ['frustriert','wütend','sauer','entnervt','genervt','zornig','ärgerlich','doof','blöd'],
+  tired:      ['müde','erschöpft','schläfrig','energielos','ausgelaugt','kaputt','keine lust'],
+};
+
+function detectUserEmotionAdvanced(userText) {
+  const lower = String(userText).toLowerCase();
+  let best = 'normal';
+  let bestScore = 0;
+  Object.entries(EMOTION_KEYWORDS).forEach(([emotion, words]) => {
+    const score = words.filter(w => lower.includes(w)).length;
+    if (score > bestScore) { bestScore = score; best = emotion; }
+  });
+  return best;
+}
+
+const lioEmotionalResponses = {
+  happy:      { greeting:'Das freut mich zu hören!',            follow:'Erzähl mir gleich mehr davon.' },
+  sad:        { greeting:'Ich merke, dass es dir gerade nicht gut geht.', follow:'Deine Gefühle sind wichtig. Ich bin gleich wieder für dich da.' },
+  anxious:    { greeting:'Ich merke, dass dich etwas beunruhigt.',        follow:'Das ist ganz normal. Gleich reden wir in Ruhe darüber.' },
+  frustrated: { greeting:'Ich spüre, dass dich etwas ärgert.',            follow:'Das darf auch mal sein. Gleich sortieren wir das zusammen.' },
+  tired:      { greeting:'Du klingst müde.',                              follow:'Ruh dich ruhig kurz aus, ich warte auf dich.' },
+  normal:     { greeting:'Ich konnte dich gerade nicht hören.',             follow:'Probier es gleich nochmal!' },
+};
+
+function generateLioGreeting(emotion) {
+  const r = lioEmotionalResponses[emotion] || lioEmotionalResponses.normal;
+  return r.greeting + ' ' + r.follow;
+}
+
+/* ════════════════════════════════════════
+   SICHERHEITSNETZ IM CLIENT
+═══════════════════════════════════════ */
+const BULLYING_PATTERNS = [
+  /mobb/i, /gemobbt/i, /gehänselt|hänseln/i, /ausgelacht/i, /ausgeschlossen/i,
+  /schlagen mich|schlägt mich|geschlagen|haut mich/i,
+  /keiner mag mich|niemand mag mich|habe keine freunde/i,
+  /haben mich fertig ?gemacht/i, /tut mir weh/i, /angst vor der schule/i,
+  /nennen mich (immer )?(dumm|hässlich|fett|blöd)/i, /wollen nicht mit mir spielen/i,
+];
+
+function detectBullyingSignal(text) {
+  return BULLYING_PATTERNS.some(p => p.test(text));
+}
+
+function logParentNotice(category) {
+  try {
+    const notices = JSON.parse(localStorage.getItem('lio_notices') || '[]');
+    notices.push({ category, date: new Date().toISOString() });
+    localStorage.setItem('lio_notices', JSON.stringify(notices.slice(-20)));
+  } catch (e) {}
+}
+
+function stripEmoji(text) {
+  return String(text).replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+/* ════════════════════════════════════════
+   GERÄTESTIMMEN
+═══════════════════════════════════════ */
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const all = window.speechSynthesis.getVoices();
+  voices = all.filter(v => v.lang.toLowerCase().startsWith('de'));
+
+  const sel = $('voiceSel');
+  let bestIdx = 0;
+
+  if (sel) {
+    sel.innerHTML = '';
+    if (voices.length === 0) {
+      const opt = document.createElement('option');
+      opt.textContent = 'Keine deutsche Stimme gefunden';
+      sel.appendChild(opt);
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const preferred = isMobile
+      ? ['Google Deutsch', 'Microsoft Katja', 'Anna', 'Hanna', 'Microsoft Clara', 'Hedda']
+      : ['Microsoft Katja', 'Anna', 'Google Deutsch', 'Microsoft Clara', 'Hanna', 'Hedda'];
+
+    voices.forEach((v, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(opt);
+      if (preferred.some(n => v.name.includes(n))) bestIdx = i;
+    });
+
+    const saved = parseInt(localStorage.getItem('lio_voice_idx') || '', 10);
+    if (!isNaN(saved) && voices[saved]) bestIdx = saved;
+    sel.selectedIndex = bestIdx;
+  }
+
+  selectedVoice = voices[bestIdx] || voices[0] || null;
+}
+
+function onVoiceChange() {
+  const idx = parseInt($('voiceSel').value, 10);
+  if (!isNaN(idx) && voices[idx]) {
+    selectedVoice = voices[idx];
+    localStorage.setItem('lio_voice_idx', String(idx));
+  }
+}
+
+function onRateChange() {
+  speechRate = parseFloat($('rateSlider').value);
+  $('rateVal').textContent = speechRate.toFixed(2);
+}
+function onPitchChange() {
+  speechPitch = parseFloat($('pitchSlider').value);
+  $('pitchVal').textContent = speechPitch.toFixed(2);
+}
+function testVoice() {
+  lioSay('Test', 'Hallo! Ich bin Lio, dein Roboter-Freund!');
+}
+
+if ('speechSynthesis' in window) {
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+  [0, 120, 350, 700, 1500, 2500].forEach(ms => setTimeout(loadVoices, ms));
+}
+
+/* ════════════════════════════════════════
+   STREAMING AUDIO PLAYER & SPRACHAUSGABE
+═══════════════════════════════════════ */
+let currentAudio = null;
+let streamAudioQueue = [];
+let isPlayingQueue = false;
+let currentSpeechId = 0; 
+
+function stopSpeaking() {
+  currentSpeechId++;
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    } catch (e) {}
+    currentAudio = null;
+  }
+  if ('speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  isLioSpeaking = false;
+  streamAudioQueue = [];
+  isPlayingQueue = false;
+  
+  document.querySelectorAll('.robot-container').forEach(r => r.classList.remove('talking'));
+  const micBtn = $('micBtn');
+  if (micBtn) micBtn.style.opacity = '1';
+}
+
+document.querySelectorAll('.robot-container').forEach(r => {
+  r.addEventListener('click', () => { if (isLioSpeaking) stopSpeaking(); });
+});
+
+async function playNextInQueue(speechId) {
+  if (speechId !== currentSpeechId || streamAudioQueue.length === 0) {
+    isPlayingQueue = false;
+    if (!isLioSpeaking) {
+      document.querySelectorAll('.robot-container').forEach(r => r.classList.remove('talking'));
+    }
+    return;
+  }
+
+  isPlayingQueue = true;
+  const audioUrl = streamAudioQueue.shift();
+  
+  currentAudio = new Audio(audioUrl);
+  
+  currentAudio.onended = () => {
+    currentAudio = null;
+    playNextInQueue(speechId); 
+  };
+  
+  currentAudio.onerror = () => {
+    console.warn('[Audio] Fehler beim Abspielen eines Satzes.');
+    currentAudio = null;
+    playNextInQueue(speechId); 
+  };
+
+  await currentAudio.play().catch(err => {
+    console.warn('[Audio] Autoplay blockiert:', err);
+    currentAudio = null;
+    playNextInQueue(speechId);
+  });
+}
+
+async function speakSigned(speech) {
+  if (!speech || !speech.text) return;
+  stopSpeaking();
+  const thisSpeechId = currentSpeechId;
+  isLioSpeaking = true;
+  
+  document.querySelectorAll('.robot-container').forEach(r => r.classList.add('talking'));
+  $('micBtn').style.opacity = '0.5';
 
   try {
-    const { 
-      messages, 
-      childName, 
-      mode, 
-      mood, 
-      activeTopic, 
-      topicResolved, 
-      subject, 
-      emotion, 
-      age 
-    } = req.body;
+    const isSpeechDelay = currentAge === 'speech-delay';
+    const res = await apiFetch('/api/speak', { text: speech.text, isSpeechDelay });
+    if (thisSpeechId !== currentSpeechId || !res.ok) throw new Error('API Fehler');
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    streamAudioQueue.push(url);
     
-    const nameStr = childName 
-      ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` 
-      : '';
-    const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
+    const originalPlayNext = playNextInQueue;
+    playNextInQueue = async (id) => {
+      await originalPlayNext(id);
+      if (streamAudioQueue.length === 0) URL.revokeObjectURL(url);
+    };
 
-    let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
-WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in sehr kurzen Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
+    isLioSpeaking = false;
+    playNextInQueue(thisSpeechId);
+  } catch (err) {
+    console.error('Sprachfehler:', err);
+    stopSpeaking();
+  }
+}
 
-SPRACHE: Sprich auf Deutsch! WICHTIGE AUSNAHME: Wenn ihr Englisch lernt, darfst du englische Vokabeln verwenden. Schreibe Zahlen als ganz normale Ziffern (1, 2, 3). 
+async function lioSay(hiddenPrompt, fallbackText) {
+  setBubble(fallbackText);
+  lastLioText = fallbackText;
+  lastSpeech = { text: fallbackText };
+  await speakSigned({ text: fallbackText });
+}
 
-EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist, sei der beste Freund. Tröste es, höre aktiv zu und nimm seine Gefühle ernst. 
+function repeatLast() {
+  if (lastSpeech) speakSigned(lastSpeech);
+  else if (lastLioText) speakSigned({ text: lastLioText });
+}
+$('btnRepeat').addEventListener('click', repeatLast);
 
-AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorge erzählt hat, frage später von dir aus liebevoll nach.`;
+/* ════════════════════════════════════════
+   SPRACHEINGABE (MIT PAUSEN-PUFFER)
+═══════════════════════════════════════ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let recognition = null;
+let speechDelayTimer = null;
+let speechDelayCollected = '';
 
-    // 🚨 SPRACH-START: MAXIMALE EMPATHIE, RUHE UND GEDULD 🚨
-    if (age === 'speech-delay') {
-      systemInstruction += `\n\nBESONDERE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG (MAXIMALE EMPATHIE & GEDULD):
-1. Das Kind hat möglicherweise eine Sprachverzögerung oder lernt gerade erst sprechen. Sei der geduldigste, liebevollste Begleiter der Welt.
-2. Wenn das Kind nur einzelne Wörter, Laute oder unvollständige Sätze sagt (z. B. "Wauwau da" oder "Ball spielen"), freue dich riesig über jeden Sprechversuch!
-3. Korrigiere das Kind NIEMALS direkt für Fehler. Wiederhole den Gedanken des Kindes liebevoll als vollständigen, einfachen Satz (z. B. "Ja, toll! Da läuft der Hund! Er holt den Ball.").
-4. Antworte immer in nur 1 bis maximal 2 kurzen Sätzen. Sprich in einfachen, warmherzigen Worten.
-5. Ermutige das Kind ständig sanft ("Du machst das prima!", "Ich freue mich, dir zuzuhören!").`;
-    }
+if (SR) {
+  recognition = new SR();
+  recognition.lang = 'de-DE';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
 
-    if (emotion && emotion !== 'normal') {
-      systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade ${emotion}. Gehe sofort liebevoll darauf ein und tröste es.`;
-    } else if (mood) {
-      systemInstruction += `\n\nStimmung des Kindes heute: ${mood}.`;
-    }
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript;
     
-    if (mode === 'stories') {
-      systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen. Keine Bilder, nur Text.`;
-    } else if (mode === 'memory') {
-      systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory mit Tieren und Fahrzeugen. Feuere es an!`;
-    } else if (mode === 'zeigauf') {
-      systemInstruction += `\n\nZEIG-AUF-MODUS: Das Kind spielt gerade das Bildersuchspiel 'Zeig auf!'. Lobe es herzlich für richtige Treffer!`;
-    } else if (mode === 'merkspiel') {
-      systemInstruction += `\n\nMERKSPIEL-MODUS: Das Kind spielt gerade ein Merkspiel und muss sich die Reihenfolge von 5 Gegenständen merken. Feuere seine Merkfähigkeit an!`;
-    } else if (mode === 'tetris') {
-      systemInstruction += `\n\nTETRIS-MODUS: Der Teenager spielt gerade Tetris. Feuere ihn an, wenn er Zeilen abräumt oder neue Highscores knackt!`;
-    } else if (mode === 'homework') {
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
-WICHTIGE REGELN:
-1. LÖSUNGS-VERBOT: Verrate NIEMALS direkt die Lösung oder das Endergebnis! Führe das Kind Schritt für Schritt dorthin.
-2. STRENGE PRÜFUNG: Lese die Antworten des Kindes GANZ GENAU. Wenn das Kind Quatsch schreibt, wild rät oder die Vokabel/Aufgabe falsch ist, LOBE ES NICHT! Sag niemals "Gut gemacht" zu einer falschen Antwort! Sage freundlich: "Das stimmt leider noch nicht ganz." und gib einen neuen kleinen Tipp.`;
-
-      if (subject === 'mathe') {
-        systemInstruction += `\nFACH MATHE: Nutze kleine Gedankenexperimente (Gummibärchen, Äpfel) zum Erklären der Rechenwege.`;
-      } else if (subject === 'englisch') {
-        systemInstruction += `\nFACH ENGLISCH: Achte ganz genau auf die richtige Vokabel und Rechtschreibung! Wenn das englische Wort falsch ist oder Quatsch getippt wurde, korrigiere es nicht sofort, sondern gib als Tipp z.B. den Anfangsbuchstaben.`;
-      }
+    if (currentAge === 'speech-delay') {
+      speechDelayCollected += ' ' + text;
+      clearTimeout(speechDelayTimer);
+      speechDelayTimer = setTimeout(() => {
+        stopListening();
+        if (speechDelayCollected.trim()) {
+          sendMessage(speechDelayCollected.trim());
+        }
+        speechDelayCollected = '';
+      }, 1800);
+    } else {
+      stopListening();
+      if (text && text.trim()) sendMessage(text.trim());
     }
-    
-    if (subject && mode !== 'homework') {
-      systemInstruction += `\nFach: ${subject}.`;
-    }
-    if (activeTopic) {
-      systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
-    }
+  };
 
-    const formattedMessages = [
-      { role: 'system', content: systemInstruction },
-      ...messages.map(msg => ({ role: msg.role, content: msg.content }))
-    ];
+  recognition.onerror = (event) => {
+    stopListening();
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      setBubble('Ich darf dein Mikrofon nicht benutzen. Frag einen Erwachsenen um Hilfe — oder tipp einfach!');
+    } else if (event.error === 'no-speech') {
+      setHint('Ich hab nichts gehört. Nochmal?');
+    }
+  };
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  recognition.onend = () => { 
+    if (isListening && currentAge !== 'speech-delay') stopListening(); 
+  };
+}
+
+$('micBtn').addEventListener('click', toggleListen);
+
+function toggleListen() {
+  if (isLioSpeaking) stopSpeaking();
+
+  if (window.LioNativeSTT && typeof window.LioNativeSTT.listen === 'function') {
+    startListening();
+    window.LioNativeSTT.listen()
+      .then(text => { stopListening(); if (text) sendMessage(text.trim()); })
+      .catch(() => stopListening());
+    return;
+  }
+
+  if (!recognition) {
+    setBubble('Sprechen geht auf diesem Gerät nicht. Tipp einfach!');
+    openTextInput();
+    return;
+  }
+
+  if (isListening) { 
+    try { recognition.stop(); } catch (e) {} 
+    return; 
+  }
+
+  try { 
+    speechDelayCollected = '';
+    recognition.start(); 
+    startListening(); 
+  } catch (e) { 
+    stopListening(); 
+  }
+}
+
+function startListening() {
+  isListening = true;
+  $('micBtn').classList.add('listening');
+  setHint('Ich höre dich… 👂');
+  const robot = $('robot');
+  if (robot) { 
+    robot.classList.remove('excited','sad','tired'); 
+    robot.classList.add('listening'); 
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  $('micBtn').classList.remove('listening');
+  setHint('Tipp das Mikro und sprich!');
+  const robot = $('robot');
+  if (robot) robot.classList.remove('listening');
+}
+
+/* ════════════════════════════════════════
+   NACHRICHT SENDEN & TASTATUR
+═══════════════════════════════════════ */
+function openTextInput() {
+  $('textOverlay').classList.add('show');
+  setTimeout(() => $('textInput').focus(), 100);
+}
+function closeTextInput() {
+  $('textOverlay').classList.remove('show');
+  $('textInput').value = '';
+}
+function sendText() {
+  const val = $('textInput').value.trim();
+  if (!val) return;
+  closeTextInput();
+  sendMessage(val);
+}
+$('btnKeyboard').addEventListener('click', openTextInput);
+$('btnCloseText').addEventListener('click', closeTextInput);
+$('btnSendText').addEventListener('click', sendText);
+$('textInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendText(); });
+
+/* ════════════════════════════════════════
+   STREAMING NACHRICHT SENDEN
+═══════════════════════════════════════ */
+async function sendMessage(userText) {
+  if (!userText || !userText.trim()) return;
+  userText = userText.trim().slice(0, 500);
+  
+  clearQuickReplies();
+  stopSpeaking();
+  logInteraction(); 
+
+  const thisSpeechId = currentSpeechId;
+  isLioSpeaking = true; 
+
+  const bullyingSignal = detectBullyingSignal(userText);
+  if (bullyingSignal) logParentNotice('bullying');
+
+  const userEmotion = detectUserEmotionAdvanced(userText);
+  setLioEmotion(userEmotion);
+
+  if (currentMode === 'homework' && !activeTopic) {
+    activeTopic = userText.slice(0, 60);
+    topicResolved = false;
+  }
+
+  setBubble('Du: „' + userText + '"');
+  setHint('Lio denkt nach… 🤔');
+  
+  document.querySelectorAll('.robot-container').forEach(r => r.classList.add('talking'));
+  $('micBtn').disabled = true;
+
+  messages.push({ role: 'user', content: userText });
+  if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
+
+  try {
+    const res = await fetch('/api/chat-stream', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
-        messages: formattedMessages,
-        temperature: 0.7, 
-        stream: true
+        messages,
+        mode: currentMode,
+        mood: currentMood || undefined,
+        age: currentAge || undefined,
+        emotion: userEmotion !== 'normal' ? userEmotion : undefined,
+        subject: currentMode === 'homework' ? currentSubject || undefined : undefined,
+        childName,
+        topic: (!topicResolved && activeTopic) ? activeTopic : undefined,
       })
     });
 
-    if (!groqResponse.ok) {
-      const errText = await groqResponse.text();
-      console.error('\n❌ GROQ FEHLER:', groqResponse.status, errText, '\n');
-      throw new Error(`Groq Fehler ${groqResponse.status}`);
-    }
+    if (!res.ok) throw new Error('Server-Fehler beim Streaming');
 
-    const reader = groqResponse.body.getReader();
+    const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
-    let currentSentence = "";
-    let streamBuffer = "";
     
+    let fullReply = "";
+    setBubble(""); 
+
     while (true) {
-      const { value, done } = await reader.read();
+      if (thisSpeechId !== currentSpeechId) break; 
+      
+      const { done, value } = await reader.read();
       if (done) break;
-      
-      streamBuffer += decoder.decode(value, { stream: true });
-      const lines = streamBuffer.split('\n');
-      
-      streamBuffer = lines.pop();
-      
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+
       for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-          const dataStr = trimmedLine.slice(6).trim();
-          if (!dataStr) continue;
+        if (line.startsWith('data: ')) {
+          const dataStr = line.replace('data: ', '').trim();
+          
+          if (dataStr === '[DONE]') continue;
+          
+          if (dataStr) {
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.error) throw new Error(parsed.error);
 
-          try {
-            const data = JSON.parse(dataStr);
-            const token = data.choices[0]?.delta?.content || "";
-            currentSentence += token;
-            
-            if (/[.!?]\s*$/.test(currentSentence)) {
-              let cleanSentence = currentSentence.trim()
-                .replace(/\[.*?\]/g, '')  
-                .replace(/\*.*?\*/g, '')  
-                .replace(/\(.*?\)/g, '')  
-                .trim();
+              fullReply += parsed.text + " ";
+              setBubble(fullReply.trim());
 
-              if (cleanSentence.length > 2) {
-                let ttsText = cleanSentence
-                  .replace(/([0-9]+)/g, ' $1 ') 
-                  .replace(/\+/g, ' plus ')
-                  .replace(/\=/g, ' ist gleich ')
-                  .replace(/\*/g, ' mal ')
-                  .replace(/\s+/g, ' ')
-                  .trim();
-
-                if (age === 'speech-delay') {
-                  ttsText = ttsText
-                    .replace(/\./g, '... ')
-                    .replace(/!/g, '!... ')
-                    .replace(/\?/g, '?... ')
-                    .replace(/,/g, ', ... ');
-                }
-
-                const audioUrl = await generateTTS(ttsText, age === 'speech-delay');
-                res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
+              streamAudioQueue.push(parsed.audio);
+              
+              if (!isPlayingQueue) {
+                playNextInQueue(thisSpeechId);
               }
-              currentSentence = ""; 
+              
+            } catch (e) {
+              console.error('[Streaming] Daten-Fehler:', e);
             }
-          } catch (e) {
-            console.error('[Puffer] Zerstückeltes Paket repariert.');
           }
         }
       }
     }
+
+    isLioSpeaking = false; 
     
-    if (currentSentence.trim().length > 0) {
-      let cleanSentence = currentSentence.trim()
-        .replace(/\[.*?\]/g, '')
-        .replace(/\*.*?\*/g, '')
-        .replace(/\(.*?\)/g, '')
-        .trim();
-        
-      if (cleanSentence.length > 2) {
-        let ttsText = cleanSentence
-          .replace(/([0-9]+)/g, ' $1 ') 
-          .replace(/\+/g, ' plus ')
-          .replace(/\=/g, ' ist gleich ')
-          .replace(/\*/g, ' mal ')
-          .replace(/\s+/g, ' ')
-          .trim();
+    const cleanReply = fullReply.trim();
+    if (cleanReply) {
+      messages.push({ role: 'assistant', content: cleanReply });
+      lastSpeech = { text: cleanReply };
+      lastLioText = cleanReply;
+    }
+    
+    setHint('Tipp das Mikro und sprich!');
+    maybeCelebrate(userText);
+    
+    if (currentMode === 'homework') renderQuickReplies(HOMEWORK_FOLLOWUPS, 'followup');
+    else renderQuickReplies(); 
+    
+    if (bullyingSignal) setTimeout(openHelpPanel, 900);
 
-        if (age === 'speech-delay') {
-          ttsText = ttsText
-            .replace(/\./g, '... ')
-            .replace(/!/g, '!... ')
-            .replace(/\?/g, '?... ')
-            .replace(/,/g, ', ... ');
+  } catch (err) {
+    console.error('[sendMessage Streaming]', err.message);
+    const fallback = generateLioGreeting(userEmotion);
+    setBubble(fallback);
+    await speakSigned({ text: fallback });
+    setHint('Nochmal versuchen?');
+    messages.pop();
+  } finally {
+    $('micBtn').disabled = false;
+  }
+}
+
+function maybeCelebrate(userText) {
+  if (['sad','angry','scared','tired'].includes(currentMood)) return;
+  const success = /verstanden|kapiert|alles klar|geschafft|richtig/i.test(userText);
+  const playful = ['jokes','guess'].includes(currentMode);
+  if (success || (playful && Math.random() < 0.35)) triggerConfetti();
+}
+
+function triggerConfetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#4FE3C1', '#B8F24A', '#38D9F0', '#9D8BFF', '#FF7A8A'];
+  for (let i = 0; i < 34; i++) {
+    const c = document.createElement('div');
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    c.style.cssText = 'position:fixed;top:-12px;width:11px;height:11px;border-radius:50%;z-index:9999;' +
+                      'pointer-events:none;left:' + (Math.random() * 100) + 'vw;background:' + color +
+                      ';box-shadow:0 0 12px ' + color;
+    document.body.appendChild(c);
+    c.animate(
+      [ { transform:'translate3d(0,0,0) rotate(0deg)', opacity:1 },
+        { transform:'translate3d(' + (Math.random()*120-60) + 'px,100vh,0) rotate(' + (Math.random()*360) + 'deg)', opacity:0 } ],
+      { duration: 2000 + Math.random()*1500, easing:'ease-out' }
+    );
+    setTimeout(() => c.remove(), 3800);
+  }
+}
+
+/* ════════════════════════════════════════
+   MENÜ
+═══════════════════════════════════════ */
+function openMenu()  { $('menuDrawer').classList.add('show');    $('menuOverlay').classList.add('show'); }
+function closeMenu() { $('menuDrawer').classList.remove('show'); $('menuOverlay').classList.remove('show'); }
+$('btnMenu').addEventListener('click', openMenu);
+$('menuOverlay').addEventListener('click', closeMenu);
+$('btnResetChat').addEventListener('click', resetChat);
+$('btnChangeAge').addEventListener('click', goToAgeSelect);
+
+/* ════════════════════════════════════════
+   KARAOKE
+═══════════════════════════════════════ */
+function goToKaraoke() {
+  if (parentLocks.karaoke) { setBubble('🔒 Karaoke ist gesperrt.'); return; }
+  closeMenu();
+  stopSpeaking();
+  showScreen('karaoke');
+  renderSongList();
+}
+function backToMain() {
+  stopKaraoke();
+  showScreen('main');
+}
+$('btnKaraokeBack').addEventListener('click', backToMain);
+$('stopSongBtn').addEventListener('click', stopKaraoke);
+
+function renderSongList() {
+  const list = $('songList');
+  list.innerHTML = '';
+  const songs = ALL_SONGS.filter(s => !currentAge || s.ages.includes(currentAge));
+  songs.forEach(song => {
+    const btn = document.createElement('button');
+    btn.className = 'song-btn';
+    btn.innerHTML = '<span class="song-icon"></span><span class="song-title"></span>';
+    btn.querySelector('.song-icon').textContent = song.icon;
+    btn.querySelector('.song-title').textContent = song.title;
+    btn.addEventListener('click', () => playSong(song));
+    list.appendChild(btn);
+  });
+}
+
+function playSong(song) {
+  if (!('speechSynthesis' in window) || !song) return;
+  stopSpeaking();
+  isKaraoke = true;
+  $('stopSongBtn').style.display = 'inline-flex';
+  $('songList').style.opacity = '0.5';
+
+  let i = 0;
+  const next = () => {
+    if (!isKaraoke || i >= song.lyrics.length) { stopKaraoke(); return; }
+    const u = new SpeechSynthesisUtterance(song.lyrics[i]);
+    if (selectedVoice) u.voice = selectedVoice;
+    u.lang = 'de-DE'; u.rate = 0.9; u.pitch = 1.05;
+    u.onend = () => { i++; setTimeout(next, 400); };
+    u.onerror = stopKaraoke;
+    window.speechSynthesis.speak(u);
+  };
+  window.speechSynthesis.cancel();
+  setTimeout(next, 200);
+}
+
+function stopKaraoke() {
+  isKaraoke = false;
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  $('stopSongBtn').style.display = 'none';
+  const list = $('songList');
+  if (list) list.style.opacity = '1';
+}
+
+/* ════════════════════════════════════════
+   MEMORY SPIEL
+═══════════════════════════════════════ */
+const MEMORY_EMOJIS = ['🐶', '🐱', '🐸', '🚜', '🚀', '⛵'];
+let memoryFlipped = []; 
+let memoryMatched = 0;
+
+function startMemory() { 
+  closeMenu(); 
+  stopSpeaking(); 
+  showScreen('memory'); 
+  initMemoryBoard(); 
+  lioSay('Start Memory', 'Lass uns Memory spielen! Finde zwei gleiche Bilder.'); 
+}
+
+$('btnMemoryBack').addEventListener('click', () => { showScreen('main'); }); 
+$('btnMemoryRestart').addEventListener('click', initMemoryBoard);
+
+function initMemoryBoard() {
+  const board = $('memoryBoard'); 
+  board.innerHTML = ''; 
+  memoryFlipped = []; 
+  memoryMatched = 0;
+  
+  let deck = [...MEMORY_EMOJIS, ...MEMORY_EMOJIS].sort(() => Math.random() - 0.5);
+  
+  deck.forEach(item => {
+    const wrap = document.createElement('div'); 
+    wrap.className = 'memory-card-wrap';
+    
+    const card = document.createElement('div'); 
+    card.className = 'memory-card'; 
+    card.dataset.val = item;
+    
+    const front = document.createElement('div'); 
+    front.className = 'memory-front'; 
+    front.textContent = '❓';
+    
+    const back = document.createElement('div'); 
+    back.className = 'memory-back'; 
+    back.textContent = item;
+    
+    card.append(front, back); 
+    wrap.appendChild(card);
+    
+    wrap.addEventListener('click', () => {
+      if(memoryFlipped.length >= 2 || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      
+      card.classList.add('flipped'); 
+      memoryFlipped.push(card);
+      
+      if(memoryFlipped.length === 2) {
+        if(memoryFlipped[0].dataset.val === memoryFlipped[1].dataset.val) {
+          memoryFlipped[0].classList.add('matched'); 
+          memoryFlipped[1].classList.add('matched'); 
+          memoryFlipped = []; 
+          memoryMatched++;
+          if(memoryMatched === MEMORY_EMOJIS.length) { 
+            setTimeout(() => { 
+              triggerConfetti(); 
+              lioSay('Gewonnen', 'Super gemacht! Du hast alle Paare gefunden!'); 
+            }, 600); 
+          }
+        } else { 
+          setTimeout(() => { 
+            memoryFlipped[0].classList.remove('flipped'); 
+            memoryFlipped[1].classList.remove('flipped'); 
+            memoryFlipped = []; 
+          }, 1200); 
         }
+      }
+    });
+    board.appendChild(wrap);
+  });
+}
 
-        const audioUrl = await generateTTS(ttsText, age === 'speech-delay');
-        res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
+/* ════════════════════════════════════════
+   ZEIG AUF! (NUR SPRACH-START)
+═══════════════════════════════════════ */
+const ZEIG_AUF_ITEMS = [
+  // Tiere
+  { emoji: '🐶', name: 'Hund', article: 'der' },
+  { emoji: '🐱', name: 'Katze', article: 'die' },
+  { emoji: '🐮', name: 'Kuh', article: 'die' },
+  { emoji: '🐷', name: 'Schwein', article: 'das' },
+  { emoji: '🐴', name: 'Pferd', article: 'das' },
+  { emoji: '🦆', name: 'Ente', article: 'die' },
+  { emoji: '🐸', name: 'Frosch', article: 'der' },
+  { emoji: '🦁', name: 'Löwe', article: 'der' },
+  { emoji: '🐘', name: 'Elefant', article: 'der' },
+  { emoji: '🐵', name: 'Affe', article: 'der' },
+  { emoji: '🐻', name: 'Bär', article: 'der' },
+  { emoji: '🐰', name: 'Hase', article: 'der' },
+  { emoji: '🐑', name: 'Schaf', article: 'das' },
+  { emoji: '🐧', name: 'Pinguin', article: 'der' },
+  { emoji: '🐠', name: 'Fisch', article: 'der' },
+  { emoji: '🦋', name: 'Schmetterling', article: 'der' },
+  { emoji: '🐝', name: 'Biene', article: 'die' },
+  { emoji: '🐢', name: 'Schildkröte', article: 'die' },
+  // Alltag & Essen
+  { emoji: '🍎', name: 'Apfel', article: 'der' },
+  { emoji: '🍌', name: 'Banane', article: 'die' },
+  { emoji: '🍓', name: 'Erdbeere', article: 'die' },
+  { emoji: '🍞', name: 'Brot', article: 'das' },
+  { emoji: '🥛', name: 'Milch', article: 'die' },
+  { emoji: '🥄', name: 'Löffel', article: 'der' },
+  { emoji: '👟', name: 'Schuh', article: 'der' },
+  { emoji: '🧦', name: 'Socke', article: 'die' },
+  { emoji: '👕', name: 'T-Shirt', article: 'das' },
+  { emoji: '🛏️', name: 'Bett', article: 'das' },
+  { emoji: '⚽', name: 'Ball', article: 'der' },
+  { emoji: '🎈', name: 'Ballon', article: 'der' },
+  { emoji: '🧸', name: 'Teddybär', article: 'der' },
+  { emoji: '📖', name: 'Buch', article: 'das' },
+  { emoji: '☀️', name: 'Sonne', article: 'die' },
+  { emoji: '🌙', name: 'Mond', article: 'der' },
+  { emoji: '🌸', name: 'Blume', article: 'die' },
+  { emoji: '🌳', name: 'Baum', article: 'der' },
+  // Fahrzeuge
+  { emoji: '🚗', name: 'Auto', article: 'das' },
+  { emoji: '🚒', name: 'Feuerwehr', article: 'die' },
+  { emoji: '🚑', name: 'Krankenwagen', article: 'der' },
+  { emoji: '🚜', name: 'Traktor', article: 'der' },
+  { emoji: '🚂', name: 'Zug', article: 'der' },
+  { emoji: '🚲', name: 'Fahrrad', article: 'das' },
+  { emoji: '✈️', name: 'Flugzeug', article: 'das' },
+  { emoji: '⛵', name: 'Boot', article: 'das' },
+  { emoji: '🚀', name: 'Rakete', article: 'die' }
+];
+
+let currentTargetItem = null;
+let zeigAufRoundBusy = false;
+
+function startZeigAuf() {
+  closeMenu();
+  stopSpeaking();
+  showScreen('zeigauf');
+  nextZeigAufRound();
+}
+
+$('btnZeigAufBack').addEventListener('click', () => {
+  stopSpeaking();
+  showScreen('main');
+});
+
+$('btnZeigAufRepeat').addEventListener('click', () => {
+  if (currentTargetItem) {
+    speakZeigAufPrompt(currentTargetItem);
+  }
+});
+
+function speakZeigAufPrompt(item) {
+  const text = `Wo ist ${item.article} ${item.name}? Zeig auf: ${item.name}!`;
+  lioSay('Zeig Auf Frage', text);
+}
+
+function nextZeigAufRound() {
+  zeigAufRoundBusy = false;
+  const grid = $('zeigAufGrid');
+  grid.innerHTML = '';
+
+  const shuffled = [...ZEIG_AUF_ITEMS].sort(() => Math.random() - 0.5);
+  currentTargetItem = shuffled[0];
+
+  const roundCount = 2;
+  const currentOptions = shuffled.slice(0, roundCount).sort(() => Math.random() - 0.5);
+
+  $('zeigAufTargetWord').textContent = `${currentTargetItem.article} ${currentTargetItem.name}`;
+  speakZeigAufPrompt(currentTargetItem);
+
+  currentOptions.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'zeigauf-card';
+    card.innerHTML = `
+      <span class="card-emoji">${item.emoji}</span>
+      <span class="card-label">${item.name}</span>
+    `;
+
+    card.addEventListener('click', () => {
+      if (zeigAufRoundBusy) return;
+
+      if (item.name === currentTargetItem.name) {
+        zeigAufRoundBusy = true;
+        card.classList.add('correct');
+        triggerConfetti();
+        const praise = `Klasse! Das ist ${item.article} ${item.name}!`;
+        lioSay('Richtig geantwortet', praise);
+
+        setTimeout(() => {
+          nextZeigAufRound();
+        }, 2200);
+      } else {
+        card.classList.add('wrong');
+        setTimeout(() => card.classList.remove('wrong'), 500);
+        const hint = `Das ist ${item.article} ${item.name}. Such mal: ${currentTargetItem.article} ${currentTargetItem.name}!`;
+        lioSay('Falsches Bild angetippt', hint);
+      }
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+/* ════════════════════════════════════════
+   MERKSPIEL (5-8 & 8-12 JAHRE)
+═══════════════════════════════════════ */
+let merkTargetSequence = [];
+let merkUserPicks = [];
+let merkTimerInterval = null;
+let merkRoundPhase = 'idle';
+
+function startMerkspiel() {
+  closeMenu();
+  stopSpeaking();
+  showScreen('merkspiel');
+  initMerkspielRound();
+}
+
+$('btnMerkspielBack').addEventListener('click', () => {
+  if (merkTimerInterval) clearInterval(merkTimerInterval);
+  stopSpeaking();
+  showScreen('main');
+});
+
+$('btnMerkspielRestart').addEventListener('click', initMerkspielRound);
+$('btnMerkspielReset').addEventListener('click', resetMerkUserPicks);
+
+function initMerkspielRound() {
+  if (merkTimerInterval) clearInterval(merkTimerInterval);
+  merkRoundPhase = 'memorize';
+  merkUserPicks = [];
+
+  $('btnMerkspielReset').style.display = 'none';
+  $('merkPoolArea').innerHTML = '';
+  $('merkProgressBar').style.width = '100%';
+  $('merkInstruction').textContent = 'Merk dir die 5 Bilder genau in dieser Reihe!';
+
+  const shuffled = [...ZEIG_AUF_ITEMS].sort(() => Math.random() - 0.5);
+  merkTargetSequence = shuffled.slice(0, 5);
+
+  const displayArea = $('merkDisplayArea');
+  displayArea.innerHTML = '';
+  merkTargetSequence.forEach((item) => {
+    const slot = document.createElement('div');
+    slot.className = 'merk-slot filled';
+    slot.innerHTML = `<span class="slot-emoji">${item.emoji}</span><span style="font-size:10px; margin-top:2px;">${item.name}</span>`;
+    displayArea.appendChild(slot);
+  });
+
+  lioSay('Merkspiel Start', 'Merk dir die 5 Bilder gut! Gleich sind sie weg.');
+
+  const durationMs = 4000;
+  const startTime = Date.now();
+
+  merkTimerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remainingPct = Math.max(0, 100 - (elapsed / durationMs) * 100);
+    $('merkProgressBar').style.width = remainingPct + '%';
+
+    if (elapsed >= durationMs) {
+      clearInterval(merkTimerInterval);
+      startMerkReconstructionPhase();
+    }
+  }, 50);
+}
+
+function startMerkReconstructionPhase() {
+  merkRoundPhase = 'reconstruct';
+  $('merkInstruction').textContent = 'Tippe die 5 Bilder in der richtigen Reihenfolge an!';
+  $('btnMerkspielReset').style.display = 'inline-flex';
+
+  renderMerkSlots();
+
+  const poolArea = $('merkPoolArea');
+  poolArea.innerHTML = '';
+  const mixed = [...merkTargetSequence].sort(() => Math.random() - 0.5);
+
+  mixed.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'merk-choice-btn';
+    btn.dataset.name = item.name;
+    btn.innerHTML = `
+      <span class="choice-emoji">${item.emoji}</span>
+      <span class="choice-name">${item.name}</span>
+    `;
+
+    btn.addEventListener('click', () => {
+      if (merkRoundPhase !== 'reconstruct' || btn.classList.contains('used')) return;
+
+      btn.classList.add('used');
+      merkUserPicks.push(item);
+      renderMerkSlots();
+
+      if (merkUserPicks.length === merkTargetSequence.length) {
+        evaluateMerkspiel();
+      }
+    });
+
+    poolArea.appendChild(btn);
+  });
+
+  lioSay('Merkspiel Lösen', 'In welcher Reihenfolge waren sie da? Tipp sie an!');
+}
+
+function renderMerkSlots() {
+  const displayArea = $('merkDisplayArea');
+  displayArea.innerHTML = '';
+
+  for (let i = 0; i < 5; i++) {
+    const slot = document.createElement('div');
+    const pick = merkUserPicks[i];
+
+    if (pick) {
+      slot.className = 'merk-slot filled';
+      slot.innerHTML = `<span class="slot-emoji">${pick.emoji}</span><span style="font-size:10px; margin-top:2px;">${pick.name}</span>`;
+    } else {
+      slot.className = 'merk-slot';
+      slot.textContent = (i + 1).toString();
+    }
+    displayArea.appendChild(slot);
+  }
+}
+
+function resetMerkUserPicks() {
+  if (merkRoundPhase !== 'reconstruct') return;
+  merkUserPicks = [];
+  renderMerkSlots();
+  document.querySelectorAll('.merk-choice-btn').forEach(b => b.classList.remove('used'));
+}
+
+function evaluateMerkspiel() {
+  merkRoundPhase = 'done';
+  let isCorrect = true;
+
+  for (let i = 0; i < 5; i++) {
+    if (merkUserPicks[i].name !== merkTargetSequence[i].name) {
+      isCorrect = false;
+      break;
+    }
+  }
+
+  if (isCorrect) {
+    triggerConfetti();
+    $('merkInstruction').textContent = '🌟 Perfekt gemerkt! Alle 5 in richtiger Reihenfolge!';
+    lioSay('Merkspiel Richtig', 'Genial! Du hast dir alle 5 Bilder genau in der richtigen Reihenfolge gemerkt!');
+  } else {
+    $('merkInstruction').textContent = 'Fast! Schau mal, so war die Reihenfolge:';
+    const displayArea = $('merkDisplayArea');
+    displayArea.innerHTML = '';
+    merkTargetSequence.forEach(item => {
+      const slot = document.createElement('div');
+      slot.className = 'merk-slot filled';
+      slot.style.borderColor = 'var(--coral)';
+      slot.innerHTML = `<span class="slot-emoji">${item.emoji}</span><span style="font-size:10px; margin-top:2px;">${item.name}</span>`;
+      displayArea.appendChild(slot);
+    });
+
+    lioSay('Merkspiel Falsch', 'Fast geschafft! Schau kurz hin, so war die Reihe. Wollen wir eine neue Runde probieren?');
+  }
+}
+
+/* ════════════════════════════════════════
+   TETRIS (12+ JAHRE) LOGIK
+═══════════════════════════════════════ */
+const TETRIS_COLS = 10;
+const TETRIS_ROWS = 20;
+const BLOCK_SIZE = 20;
+
+const SHAPES = [
+  // I
+  [[1, 1, 1, 1]],
+  // J
+  [[1, 0, 0], [1, 1, 1]],
+  // L
+  [[0, 0, 1], [1, 1, 1]],
+  // O
+  [[1, 1], [1, 1]],
+  // S
+  [[0, 1, 1], [1, 1, 0]],
+  // T
+  [[0, 1, 0], [1, 1, 1]],
+  // Z
+  [[1, 1, 0], [0, 1, 1]]
+];
+
+const TETRIS_COLORS = [
+  '#4FE3C1', // mint
+  '#38D9F0', // cyan
+  '#B8F24A', // lime
+  '#9D8BFF', // violet
+  '#FF7A8A', // coral
+  '#FFC44A', // gold
+  '#FF965A'  // orange
+];
+
+let tetrisGrid = [];
+let tetrisScore = 0;
+let tetrisLines = 0;
+let tetrisCurrentPiece = null;
+let tetrisTimer = null;
+let tetrisIsGameOver = false;
+
+function startTetris() {
+  closeMenu();
+  stopSpeaking();
+  showScreen('tetris');
+  initTetrisGame();
+}
+
+$('btnTetrisBack').addEventListener('click', () => {
+  stopTetrisGame();
+  showScreen('main');
+});
+
+$('btnTetrisRestart').addEventListener('click', initTetrisGame);
+
+// Touch-Buttons
+$('btnTetrisLeft').addEventListener('click', () => moveTetrisPiece(-1, 0));
+$('btnTetrisRight').addEventListener('click', () => moveTetrisPiece(1, 0));
+$('btnTetrisRotate').addEventListener('click', rotateTetrisPiece);
+$('btnTetrisDrop').addEventListener('click', dropTetrisPiece);
+
+// Tastatursteuerung
+window.addEventListener('keydown', (e) => {
+  const tetrisScreen = $('screen-tetris');
+  if (!tetrisScreen || !tetrisScreen.classList.contains('active') || tetrisIsGameOver) return;
+
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    moveTetrisPiece(-1, 0);
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    moveTetrisPiece(1, 0);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    rotateTetrisPiece();
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    moveTetrisPiece(0, 1);
+  } else if (e.key === ' ' || e.key === 'Spacebar') {
+    e.preventDefault();
+    dropTetrisPiece();
+  }
+});
+
+function initTetrisGame() {
+  stopTetrisGame();
+  tetrisGrid = Array.from({ length: TETRIS_ROWS }, () => Array(TETRIS_COLS).fill(0));
+  tetrisScore = 0;
+  tetrisLines = 0;
+  tetrisIsGameOver = false;
+
+  $('tetrisScore').textContent = '0';
+  $('tetrisLines').textContent = '0';
+
+  spawnTetrisPiece();
+  drawTetris();
+
+  lioSay('Tetris Start', 'Auf gehts! Bring die Blöcke in Reihe!');
+
+  tetrisTimer = setInterval(() => {
+    if (!tetrisIsGameOver) {
+      moveTetrisPiece(0, 1);
+    }
+  }, 600);
+}
+
+function stopTetrisGame() {
+  if (tetrisTimer) {
+    clearInterval(tetrisTimer);
+    tetrisTimer = null;
+  }
+}
+
+function spawnTetrisPiece() {
+  const randIndex = Math.floor(Math.random() * SHAPES.length);
+  const shape = SHAPES[randIndex];
+  const color = TETRIS_COLORS[randIndex];
+
+  tetrisCurrentPiece = {
+    shape,
+    color,
+    x: Math.floor(TETRIS_COLS / 2) - Math.floor(shape[0].length / 2),
+    y: 0
+  };
+
+  if (checkTetrisCollision(tetrisCurrentPiece.x, tetrisCurrentPiece.y, tetrisCurrentPiece.shape)) {
+    tetrisIsGameOver = true;
+    stopTetrisGame();
+    lioSay('Tetris Game Over', `Game Over! Stark gespielt! Du hast ${tetrisScore} Punkte erreicht.`);
+    drawTetris();
+  }
+}
+
+function checkTetrisCollision(targetX, targetY, shape) {
+  for (let r = 0; r < shape.length; r++) {
+    for (let c = 0; c < shape[r].length; c++) {
+      if (shape[r][c] !== 0) {
+        const newX = targetX + c;
+        const newY = targetY + r;
+
+        if (newX < 0 || newX >= TETRIS_COLS || newY >= TETRIS_ROWS) {
+          return true;
+        }
+        if (newY >= 0 && tetrisGrid[newY][newX] !== 0) {
+          return true;
+        }
       }
     }
-
-    res.write('data: [DONE]\n\n');
-    res.end();
-
-  } catch (error) {
-    console.error('Streaming Fehler:', error.message);
-    res.write(`data: {"error": "Lio ist kurz eingeschlafen!"}\n\n`);
-    res.end();
   }
-});
+  return false;
+}
 
-app.post('/api/chat', async (req, res) => {
-  res.json({ reply: "Nutze bitte den neuen Chat-Stream!" });
-});
+function moveTetrisPiece(dx, dy) {
+  if (tetrisIsGameOver || !tetrisCurrentPiece) return;
 
-app.post('/api/speak', async (req, res) => {
-  const { text, isSpeechDelay } = req.body;
-  if (!text) return res.status(400).json({ error: 'Kein Text.' });
-  try {
-    let ttsText = text;
-    if (isSpeechDelay) {
-      ttsText = ttsText
-        .replace(/\./g, '... ')
-        .replace(/!/g, '!... ')
-        .replace(/\?/g, '?... ')
-        .replace(/,/g, ', ... ');
+  if (!checkTetrisCollision(tetrisCurrentPiece.x + dx, tetrisCurrentPiece.y + dy, tetrisCurrentPiece.shape)) {
+    tetrisCurrentPiece.x += dx;
+    tetrisCurrentPiece.y += dy;
+    drawTetris();
+  } else if (dy > 0) {
+    // Stück auf den Boden oder anderes Stück getroffen -> fixieren
+    lockTetrisPiece();
+  }
+}
+
+function rotateTetrisPiece() {
+  if (tetrisIsGameOver || !tetrisCurrentPiece) return;
+
+  const shape = tetrisCurrentPiece.shape;
+  const rotated = shape[0].map((_, index) => shape.map(row => row[index]).reverse());
+
+  if (!checkTetrisCollision(tetrisCurrentPiece.x, tetrisCurrentPiece.y, rotated)) {
+    tetrisCurrentPiece.shape = rotated;
+    drawTetris();
+  }
+}
+
+function dropTetrisPiece() {
+  if (tetrisIsGameOver || !tetrisCurrentPiece) return;
+  while (!checkTetrisCollision(tetrisCurrentPiece.x, tetrisCurrentPiece.y + 1, tetrisCurrentPiece.shape)) {
+    tetrisCurrentPiece.y++;
+  }
+  lockTetrisPiece();
+}
+
+function lockTetrisPiece() {
+  const shape = tetrisCurrentPiece.shape;
+  for (let r = 0; r < shape.length; r++) {
+    for (let c = 0; c < shape[r].length; c++) {
+      if (shape[r][c] !== 0) {
+        const boardY = tetrisCurrentPiece.y + r;
+        const boardX = tetrisCurrentPiece.x + c;
+        if (boardY >= 0 && boardY < TETRIS_ROWS) {
+          tetrisGrid[boardY][boardX] = tetrisCurrentPiece.color;
+        }
+      }
     }
-    const url = await generateTTS(ttsText, !!isSpeechDelay);
-    const fileName = url.replace('/cache/', ''); 
-    const cachePath = path.join(CACHE_DIR, fileName);
+  }
+
+  clearTetrisLines();
+  spawnTetrisPiece();
+  drawTetris();
+}
+
+function clearTetrisLines() {
+  let clearedCount = 0;
+
+  for (let r = TETRIS_ROWS - 1; r >= 0; r--) {
+    if (tetrisGrid[r].every(cell => cell !== 0)) {
+      tetrisGrid.splice(r, 1);
+      tetrisGrid.unshift(Array(TETRIS_COLS).fill(0));
+      clearedCount++;
+      r++;
+    }
+  }
+
+  if (clearedCount > 0) {
+    tetrisLines += clearedCount;
+    const points = [0, 100, 300, 500, 800];
+    tetrisScore += points[clearedCount] || (clearedCount * 200);
+
+    $('tetrisScore').textContent = tetrisScore.toString();
+    $('tetrisLines').textContent = tetrisLines.toString();
+
+    if (clearedCount >= 4) {
+      triggerConfetti();
+      lioSay('Tetris Vierer', 'BOOM! Vier Reihen auf einmal!');
+    }
+  }
+}
+
+function drawTetris() {
+  const canvas = $('tetrisCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Gitter zeichnen
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let c = 0; c <= TETRIS_COLS; c++) {
+    ctx.beginPath();
+    ctx.moveTo(c * BLOCK_SIZE, 0);
+    ctx.lineTo(c * BLOCK_SIZE, canvas.height);
+    ctx.stroke();
+  }
+  for (let r = 0; r <= TETRIS_ROWS; r++) {
+    ctx.beginPath();
+    ctx.moveTo(0, r * BLOCK_SIZE);
+    ctx.lineTo(canvas.width, r * BLOCK_SIZE);
+    ctx.stroke();
+  }
+
+  // Bereits liegende Blöcke zeichnen
+  for (let r = 0; r < TETRIS_ROWS; r++) {
+    for (let c = 0; c < TETRIS_COLS; c++) {
+      if (tetrisGrid[r][c] !== 0) {
+        drawTetrisBlock(ctx, c, r, tetrisGrid[r][c]);
+      }
+    }
+  }
+
+  // Aktuelles fallendes Stück zeichnen
+  if (tetrisCurrentPiece && !tetrisIsGameOver) {
+    const shape = tetrisCurrentPiece.shape;
+    for (let r = 0; r < shape.length; r++) {
+      for (let c = 0; c < shape[r].length; c++) {
+        if (shape[r][c] !== 0) {
+          drawTetrisBlock(ctx, tetrisCurrentPiece.x + c, tetrisCurrentPiece.y + r, tetrisCurrentPiece.color);
+        }
+      }
+    }
+  }
+
+  // Game Over Overlay
+  if (tetrisIsGameOver) {
+    ctx.fillStyle = 'rgba(4, 7, 11, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#FF7A8A';
+    ctx.font = 'bold 22px Baloo 2, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 10);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px Nunito, sans-serif';
+    ctx.fillText(`Punkte: ${tetrisScore}`, canvas.width / 2, canvas.height / 2 + 20);
+  }
+}
+
+function drawTetrisBlock(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x * BLOCK_SIZE + 1, y * BLOCK_SIZE + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+
+  // Leichter 3D-Lichtkanten-Effekt
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.fillRect(x * BLOCK_SIZE + 1, y * BLOCK_SIZE + 1, BLOCK_SIZE - 2, 2);
+  ctx.fillRect(x * BLOCK_SIZE + 1, y * BLOCK_SIZE + 1, 2, BLOCK_SIZE - 2);
+}
+
+/* ════════════════════════════════════════
+   HILFE-PANEL
+═══════════════════════════════════════ */
+function openHelpPanel()  { $('panelHelp').classList.add('show'); }
+function closeHelpPanel() { $('panelHelp').classList.remove('show'); }
+$('btnHelp').addEventListener('click', openHelpPanel);
+$('btnCloseHelp').addEventListener('click', closeHelpPanel);
+
+/* ════════════════════════════════════════
+   ELTERN-BEREICH (SaaS DASHBOARD)
+═══════════════════════════════════════ */
+function openSettings() {
+  stopSpeaking();
+  $('panelPin').classList.add('show');
+  $('pinInput').value = '';
+  setTimeout(() => $('pinInput').focus(), 100);
+}
+function closePinPanel() { $('panelPin').classList.remove('show'); }
+
+$('btnParent').addEventListener('click', openSettings);
+$('btnClosePin').addEventListener('click', closePinPanel);
+$('btnCheckPin').addEventListener('click', checkPin);
+$('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPin(); });
+
+async function checkPin() {
+  const stored = localStorage.getItem('lio_pin');
+  if (!stored) { alert('Es ist noch keine PIN vergeben. Bitte die App neu einrichten.'); return; }
+  const entered = await hashPin($('pinInput').value);
+  if (entered === stored) {
+    closePinPanel();
+    openDashboardPanel(); 
+  } else {
+    alert('Falsche PIN.');
+    $('pinInput').value = '';
+  }
+}
+
+function openDashboardPanel() {
+  loadVoices();
+  renderLockToggles();
+  renderParentNotices();
+  $('rateSlider').value = speechRate;
+  $('rateVal').textContent = speechRate.toFixed(2);
+  $('pitchSlider').value = speechPitch;
+  $('pitchVal').textContent = speechPitch.toFixed(2);
+  $('statChats').textContent = interactionCount;
+  $('panelDashboard').classList.add('show');
+}
+
+function closeDashboard() {
+  $('panelDashboard').classList.remove('show');
+  renderLessonCards();
+  renderMenuModes();
+}
+$('btnCloseDashboard').addEventListener('click', closeDashboard);
+$('btnCloseSettings').addEventListener('click', closeDashboard);
+
+$('tabBtnInsights').addEventListener('click', () => {
+  $('tabBtnInsights').classList.add('active'); $('tabBtnSettings').classList.remove('active');
+  $('tabInsights').classList.add('active'); $('tabSettings').classList.remove('active');
+});
+$('tabBtnSettings').addEventListener('click', () => {
+  $('tabBtnSettings').classList.add('active'); $('tabBtnInsights').classList.remove('active');
+  $('tabSettings').classList.add('active'); $('tabInsights').classList.remove('active');
+});
+
+$('voiceSel').addEventListener('change', onVoiceChange);
+$('rateSlider').addEventListener('input', onRateChange);
+$('pitchSlider').addEventListener('input', onPitchChange);
+$('btnTestVoice').addEventListener('click', testVoice);
+
+function toggleLock(mode, value) {
+  parentLocks[mode] = value;
+  localStorage.setItem('lio_locks', JSON.stringify(parentLocks));
+}
+
+function renderLockToggles() {
+  const box = $('lockToggles');
+  box.innerHTML = '';
+  const all = Object.entries(MODES).concat([['karaoke', { icon:'🎤', title:'Karaoke' }]]);
+  all.forEach(([key, m]) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:6px 0;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.id = 'lock-' + key;
+    cb.checked = !!parentLocks[key];
+    cb.style.cssText = 'width:20px; height:20px; cursor:pointer;';
+    cb.addEventListener('change', () => toggleLock(key, cb.checked));
+    const label = document.createElement('label');
+    label.setAttribute('for', 'lock-' + key);
+    label.style.cssText = 'margin:0; font-weight:normal; cursor:pointer;';
+    label.textContent = m.icon + ' ' + m.title + ' sperren';
+    row.append(cb, label);
+    box.appendChild(row);
+  });
+}
+
+function clearParentNotices() {
+  localStorage.removeItem('lio_notices');
+  renderParentNotices();
+}
+
+function renderParentNotices() {
+  const box = $('parentNotices');
+  let notices = [];
+  try { notices = JSON.parse(localStorage.getItem('lio_notices') || '[]'); } catch (e) {}
+  box.innerHTML = '';
+
+  if (!notices.length) {
+    box.textContent = 'Keine besonderen Hinweise.';
+    box.style.color = 'rgba(234,251,245,0.38)';
+    return;
+  }
+  box.style.color = '';
+
+  const labels = {
+    self_harm: '⚠️ Ein Gespräch deutete auf große Traurigkeit oder Hoffnungslosigkeit hin',
+    abuse:     '⚠️ Ein Gespräch deutete darauf hin, dass jemand dem Kind wehtut',
+    bullying:  '⚠️ Ein Gespräch deutete auf Mobbing oder Ausgrenzung hin',
+    emergency: '⚠️ Das Kind hat von einer Notsituation gesprochen',
+    'inhalt-blockiert': 'ℹ️ Ein Inhalt wurde blockiert',
+  };
+
+  notices.slice().reverse().forEach(n => {
+    const d = new Date(n.date);
+    const div = document.createElement('div');
+    div.className = 'note-row';
+    div.textContent = labels[n.category] || n.category;
+    const time = document.createElement('div');
+    time.className = 'note-time';
+    time.textContent = d.toLocaleDateString('de-DE') + ', ' + d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+    div.appendChild(time);
+    box.appendChild(div);
+  });
+
+  const clear = document.createElement('button');
+  clear.className = 'cancel';
+  clear.textContent = 'Hinweise löschen';
+  clear.addEventListener('click', clearParentNotices);
+  box.appendChild(clear);
+}
+
+async function changePin() {
+  const pin = $('newPinInput').value.trim();
+  if (!/^\d{4,6}$/.test(pin)) { alert('Die PIN muss 4–6 Ziffern haben.'); return; }
+  localStorage.setItem('lio_pin', await hashPin(pin));
+  $('newPinInput').value = '';
+  alert('PIN geändert.');
+}
+$('btnChangePin').addEventListener('click', changePin);
+
+$('btnWipe').addEventListener('click', () => {
+  if (!confirm('Wirklich alle Daten von diesem Gerät löschen?')) return;
+  ['lio_name','lio_age','lio_pin','lio_locks','lio_notices','lio_consent','lio_device','lio_voice_idx','lio_gate_fails','lio_gate_lock', 'kb_interactions']
+    .forEach(k => localStorage.removeItem(k));
+  location.reload();
+});
+
+/* ════════════════════════════════════════
+   LIO BLINZEL-LOGIK
+═══════════════════════════════════════ */
+function startNaturalBlinking() {
+  function blink() {
+    const containers = document.querySelectorAll('.robot-container');
+    containers.forEach(c => c.classList.add('is-blinking'));
     
-    if (fs.existsSync(cachePath)) {
-      const buffer = fs.readFileSync(cachePath);
-      res.set({ 'Content-Type': 'audio/mpeg', 'Content-Length': buffer.length });
-      return res.send(buffer);
-    }
-  } catch(e) {
-    console.error(e);
+    setTimeout(() => {
+      containers.forEach(c => c.classList.remove('is-blinking'));
+      const nextBlinkIn = 2500 + Math.random() * 3000;
+      setTimeout(blink, nextBlinkIn);
+    }, 280); 
   }
-  res.status(500).json({ error: 'Fehler' });
-});
+  
+  setTimeout(blink, 2000);
+}
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Lio Server läuft auf Port ${PORT}`);
-});
+/* ════════════════════════════════════════
+   START & BOOT
+═══════════════════════════════════════ */
+function buildClouds() {
+  const box = $('clouds');
+  for (let i = 0; i < 5; i++) {
+    const c = document.createElement('div');
+    c.className = 'cloud';
+    const size = 80 + Math.random() * 140;
+    c.style.cssText = 'width:' + size + 'px;height:' + (size * 0.55) + 'px;top:' +
+                      (Math.random() * 70) + '%;animation-duration:' + (35 + Math.random() * 35) +
+                      's;animation-delay:-' + (Math.random() * 30) + 's';
+    box.appendChild(c);
+  }
+}
+
+function boot() {
+  startNaturalBlinking();
+  newMathChallenge();
+  updateGateLockUI();
+  buildClouds();
+  renderMenuModes();
+  loadVoices();
+
+  const savedAge  = localStorage.getItem('lio_age');
+  const savedName = localStorage.getItem('lio_name');
+
+  if (!savedName || !localStorage.getItem('lio_consent')) {
+    showScreen('parent-gate');
+  } else if (savedAge && AGE_GROUPS[savedAge]) {
+    childName = savedName;
+    currentAge = savedAge;
+    speechRate = AGE_GROUPS[savedAge].rate;
+    speechPitch = AGE_GROUPS[savedAge].pitch;
+    showScreen('main');
+    initMain();
+  } else {
+    showScreen('age');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+window.onerror = function (msg, url, line) {
+  console.error('[Fehler]', msg, 'Zeile', line);
+  return false;
+};
+window.addEventListener('unhandledrejection', (e) => console.warn('[promise]', e.reason));
+
+</script>
+</body>
+</html>
