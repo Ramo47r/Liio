@@ -149,7 +149,7 @@ body::before {
 }
 
 .age-greeting .accent {
-  background: var(--grad);
+  background: var(--grad); 
   -webkit-background-clip: text; 
   background-clip: text;
   -webkit-text-fill-color: transparent; 
@@ -1065,16 +1065,17 @@ body::before {
   box-shadow: 0 0 20px rgba(79,227,193,.2);
 }
 
-.menu-mode-talk     { --c-line: rgba(79,227,193,.5);  --c-soft: rgba(79,227,193,.14); }
-.menu-mode-homework { --c-line: rgba(184,242,74,.5);  --c-soft: rgba(184,242,74,.13); }
-.menu-mode-stories  { --c-line: rgba(255,122,138,.5); --c-soft: rgba(255,122,138,.13); }
-.menu-mode-learn    { --c-line: rgba(56,217,240,.5);  --c-soft: rgba(56,217,240,.13); }
-.menu-mode-jokes    { --c-line: rgba(255,196,74,.5);  --c-soft: rgba(255,196,74,.13); }
-.menu-mode-creative { --c-line: rgba(157,139,255,.5); --c-soft: rgba(157,139,255,.13); }
-.menu-mode-guess    { --c-line: rgba(255,150,90,.5);  --c-soft: rgba(255,150,90,.13); }
-.menu-mode-memory   { --c-line: rgba(255,140,200,.5); --c-soft: rgba(255,140,200,.13); }
-.menu-mode-zeigauf  { --c-line: rgba(79,227,193,.5);  --c-soft: rgba(79,227,193,.14); }
-.menu-mode-karaoke  { --c-line: rgba(255,120,170,.5); --c-soft: rgba(255,120,170,.13); }
+.menu-mode-talk      { --c-line: rgba(79,227,193,.5);  --c-soft: rgba(79,227,193,.14); }
+.menu-mode-homework  { --c-line: rgba(184,242,74,.5);  --c-soft: rgba(184,242,74,.13); }
+.menu-mode-stories   { --c-line: rgba(255,122,138,.5); --c-soft: rgba(255,122,138,.13); }
+.menu-mode-learn     { --c-line: rgba(56,217,240,.5);  --c-soft: rgba(56,217,240,.13); }
+.menu-mode-jokes     { --c-line: rgba(255,196,74,.5);  --c-soft: rgba(255,196,74,.13); }
+.menu-mode-creative  { --c-line: rgba(157,139,255,.5); --c-soft: rgba(157,139,255,.13); }
+.menu-mode-guess     { --c-line: rgba(255,150,90,.5);  --c-soft: rgba(255,150,90,.13); }
+.menu-mode-memory    { --c-line: rgba(255,140,200,.5); --c-soft: rgba(255,140,200,.13); }
+.menu-mode-zeigauf   { --c-line: rgba(79,227,193,.5);  --c-soft: rgba(79,227,193,.14); }
+.menu-mode-merkspiel { --c-line: rgba(184,242,74,.5);  --c-soft: rgba(184,242,74,.13); }
+.menu-mode-karaoke   { --c-line: rgba(255,120,170,.5); --c-soft: rgba(255,120,170,.13); }
 
 .menu-action {
   background: transparent; 
@@ -1722,6 +1723,129 @@ body::before {
   75% { transform: translateX(10px); }
 }
 
+/* ── MERKSPIEL (5-8 & 8-12 JAHRE) ── */
+#screen-merkspiel {
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.merk-progress-wrap {
+  width: calc(100% - 32px);
+  max-width: 440px;
+  height: 8px;
+  background: var(--glass-2);
+  border-radius: 8px;
+  margin: 10px auto;
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+}
+
+.merk-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--grad);
+  transition: width 0.1s linear;
+}
+
+.merk-instruction {
+  font-size: clamp(15px, 4vw, 18px);
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: #fff;
+  margin: 8px 16px;
+  min-height: 26px;
+}
+
+.merk-display-area {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  margin: 14px auto;
+  padding: 0 10px;
+  min-height: 88px;
+}
+
+.merk-slot {
+  flex: 1;
+  max-width: 80px;
+  aspect-ratio: 1;
+  background: var(--glass);
+  border: 2px dashed var(--stroke-2);
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-mute);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.merk-slot.filled {
+  border-style: solid;
+  border-color: var(--mint);
+  background: var(--glass-2);
+  color: var(--text);
+}
+
+.merk-slot .slot-emoji {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.merk-pool-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px auto;
+  padding: 0 14px;
+}
+
+.merk-choice-btn {
+  background: var(--glass-2);
+  border: 1px solid var(--stroke-2);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  transition: transform 0.15s, opacity 0.2s;
+  min-width: 70px;
+}
+
+.merk-choice-btn:active {
+  transform: scale(0.94);
+}
+
+.merk-choice-btn.used {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.merk-choice-btn .choice-emoji {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.merk-choice-btn .choice-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+
 /* ── Hilfe-Panel ── */
 .help-text { 
   font-size: 14.5px; 
@@ -1729,8 +1853,6 @@ body::before {
   color: var(--text-dim); 
   margin-bottom: 12px; 
 }
-
-.help-text b { color: #fff; }
 
 .help-box {
   font-size: 14.5px; 
@@ -1843,7 +1965,7 @@ body::before {
 
   <div class="age-bottom">
     <div class="age-grid">
-      <!-- 🚨 Sprach-Start ersetzt 3-5 Jahre 🚨 -->
+      <!-- Sprach-Start -->
       <button class="age-card age-1" data-age="speech-delay">
         <span class="age-icon">🗣️</span>
         <span class="age-range">Sprach-Start</span>
@@ -1956,7 +2078,7 @@ body::before {
 </div>
 
 <!-- ════════════════════════════════════════
-     ZEIG AUF! (SPIEL FÜR SPRACH-START)
+     ZEIG AUF! (NUR SPRACH-START)
 ═══════════════════════════════════════ -->
 <div class="screen" id="screen-zeigauf">
   <div class="top-bar">
@@ -1969,6 +2091,33 @@ body::before {
   </div>
   <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%;">
     <div class="zeigauf-grid" id="zeigAufGrid"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MERKSPIEL (5-8 & 8-12 JAHRE)
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-merkspiel">
+  <div class="top-bar">
+    <button class="top-circle-btn" id="btnMerkspielBack">←</button>
+    <div class="karaoke-title">🧠 Merkspiel</div>
+    <button class="top-circle-btn" id="btnMerkspielRestart" title="Neue Runde">🔄</button>
+  </div>
+  
+  <div class="merk-progress-wrap">
+    <div class="merk-progress-bar" id="merkProgressBar"></div>
+  </div>
+
+  <div class="merk-instruction" id="merkInstruction">
+    Merk dir die 5 Bilder gut!
+  </div>
+
+  <div class="merk-display-area" id="merkDisplayArea"></div>
+
+  <div class="merk-pool-area" id="merkPoolArea"></div>
+
+  <div style="padding: 10px; display: flex; justify-content: center; gap: 10px;">
+    <button class="top-circle-btn" id="btnMerkspielReset" style="display:none; width:auto; padding:8px 18px; border-radius:50px;">↩️ Zurücksetzen</button>
   </div>
 </div>
 
@@ -2030,15 +2179,15 @@ body::before {
         <div class="insight-header">📚 Aktuelle Lernthemen</div>
         <div class="insight-content">
           <span class="insight-badge">Sprach-Start (Wortfindung)</span>
-          <span class="insight-badge">Zeig auf! Spiel</span>
+          <span class="insight-badge">Merkspiel (Gedächtnis)</span>
         </div>
       </div>
 
       <div class="insight-card">
         <div class="insight-header">⚠️ Beobachtungen</div>
         <div class="insight-content">
-          Lio spricht im <b>Sprach-Start</b> extra langsam und geduldig. Sprechpausen werden toleriert, um Frustration komplett zu vermeiden.
-          <br><br><span class="insight-badge badge-alert">Aktive Sprachförderung</span>
+          Lio passt sich dynamisch an die gewählte Altersgruppe an. Im <b>Sprach-Start</b> liegt der Fokus auf Ruhe und Entschleunigung; ab 5 Jahren trainiert Lio gezielt das Arbeitsgedächtnis.
+          <br><br><span class="insight-badge badge-alert">Aktive Entwicklungsförderung</span>
         </div>
       </div>
 
@@ -2181,8 +2330,8 @@ let parentLocks = {};
 try { parentLocks = JSON.parse(localStorage.getItem('lio_locks') || '{}'); } catch (e) { parentLocks = {}; }
 
 /* ══════════════════════════════════════════════════════════
-   INHALTE
-══════════════════════════════════════════════════════════ */
+   INHALTE & ALTERSSPEZIFISCHE MODI
+═══════════════════════════════════════ */
 const AGE_GROUPS = {
   'speech-delay': { 
     label: '🗣️ Sprach-Start', 
@@ -2195,16 +2344,18 @@ const AGE_GROUPS = {
   '12+':  { label: '🎮 12+ Jahre',  rate: 1.05, pitch: 1.05, greeting: 'Hey {name}! Ich bin Lio. Was wollen wir heute machen?' },
 };
 
+// 🚨 MODI MIT ALTERS-ZUGRIFFSREGELN (allowedAges) 🚨
 const MODES = {
-  talk:     { icon:'💬', title:'Chat',        welcome:{ 'speech-delay':'Hallo {name}! Du kannst ganz in Ruhe mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
-  zeigauf:  { icon:'👆', title:'Zeig auf!',   welcome:{ 'speech-delay':'Lass uns spielen! Zeig auf das richtige Bild.', '5-8':'Zeig auf! Finde das passende Bild.', '8-12':'Zeig auf! Erkennst du alles?', '12+':'Zeig auf!' } },
-  memory:   { icon:'🧩', title:'Memory',      welcome:{ 'speech-delay':'Lass uns Memory spielen!', '5-8':'Lass uns Memory spielen!', '8-12':'Lass uns Memory spielen!', '12+':'Lass uns Memory spielen!' } },
-  homework: { icon:'📚', title:'Hausaufgaben',welcome:{ 'speech-delay':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
-  stories:  { icon:'📖', title:'Geschichte',  welcome:{ 'speech-delay':'Möchtest du eine ruhige Geschichte?', '5-8':'Eine Geschichte! Worüber soll sie sein?', '8-12':'Welche Geschichte soll ich erzählen?', '12+':'Geschichten-Modus! Sag mir das Thema.' } },
-  learn:    { icon:'🧠', title:'Lernen',      welcome:{ 'speech-delay':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
-  jokes:    { icon:'😂', title:'Witze',       welcome:{ 'speech-delay':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
-  creative: { icon:'🎨', title:'Kreativ',     welcome:{ 'speech-delay':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
-  guess:    { icon:'🎯', title:'Raten',       welcome:{ 'speech-delay':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
+  talk:      { icon:'💬', title:'Chat',        welcome:{ 'speech-delay':'Hallo {name}! Du kannst ganz in Ruhe mit mir reden.', '5-8':'Hallo {name}! Frag mich, was du willst!', '8-12':'Hi {name}! Frag mich, was du willst!', '12+':'Hey {name}! Frag mich alles!' } },
+  zeigauf:   { icon:'👆', title:'Zeig auf!',   allowedAges:['speech-delay'], welcome:{ 'speech-delay':'Lass uns spielen! Zeig auf das richtige Bild.' } },
+  merkspiel: { icon:'🧠', title:'Merkspiel',   allowedAges:['5-8','8-12'], welcome:{ '5-8':'Merkspiel! Kannst du dir die Reihenfolge merken?', '8-12':'Merkspiel! Beweise dein Supergedächtnis!' } },
+  memory:    { icon:'🧩', title:'Memory',      welcome:{ 'speech-delay':'Lass uns Memory spielen!', '5-8':'Lass uns Memory spielen!', '8-12':'Lass uns Memory spielen!', '12+':'Lass uns Memory spielen!' } },
+  homework:  { icon:'📚', title:'Hausaufgaben',welcome:{ 'speech-delay':'Lass uns spielerisch was lernen!', '5-8':'Bei welchen Aufgaben kann ich helfen?', '8-12':'Hausaufgaben-Hilfe! Welches Fach?', '12+':'Hausaufgaben! Welches Fach? Ich erkläre Schritt für Schritt.' } },
+  stories:   { icon:'📖', title:'Geschichte',  welcome:{ 'speech-delay':'Möchtest du eine ruhige Geschichte?', '5-8':'Eine Geschichte! Worüber soll sie sein?', '8-12':'Welche Geschichte soll ich erzählen?', '12+':'Geschichten-Modus! Sag mir das Thema.' } },
+  learn:     { icon:'🧠', title:'Lernen',      welcome:{ 'speech-delay':'Lass uns spielen und lernen!', '5-8':'Cool, wir lernen! Welches Thema?', '8-12':'Lern-Modus! Welches Thema?', '12+':'Lernen oder Quiz? Sag mir das Thema!' } },
+  jokes:     { icon:'😂', title:'Witze',       welcome:{ 'speech-delay':'Hihi! Magst du lustige Geräusche?', '5-8':'Witz oder Rätsel?', '8-12':'Bereit zum Lachen?', '12+':'Lass uns lachen!' } },
+  creative:  { icon:'🎨', title:'Kreativ',     welcome:{ 'speech-delay':'Wir basteln mit Worten!', '5-8':'Lass uns was Tolles erfinden!', '8-12':'Kreativ-Modus! Was wollen wir erfinden?', '12+':'Creator-Time! Was geht?' } },
+  guess:     { icon:'🎯', title:'Raten',       welcome:{ 'speech-delay':'Lass uns raten! Welches Tier mag ich?', '5-8':'Ratespiel! An welches Tier denke ich?', '8-12':'Ratespiel! Was soll ich raten lassen?', '12+':'20 Fragen! Sag mir die Kategorie.' } },
 };
 
 const SUBJECTS = [
@@ -2437,7 +2588,7 @@ function goToAgeSelect() {
 }
 
 /* ════════════════════════════════════════
-   HAUPTBILDSCHIRM (INKL. ONBOARDING)
+   HAUPTBILDSCHIRM (INKL. ALTERS-FILTER)
 ═══════════════════════════════════════ */
 function initMain(customText) {
   messages = [];
@@ -2457,18 +2608,23 @@ function resetChat() {
   setHint('Tipp das Mikro und sprich!');
 }
 
+// 🚨 Filtert die Modi strikt nach Alter (Zeig auf nur für Sprach-Start, Merkspiel nur 5-8 & 8-12) 🚨
 function renderLessonCards() {
   const row = $('lessonRow');
   if (!row) return;
   row.innerHTML = '';
+
   Object.entries(MODES).forEach(([key, m]) => {
     if (parentLocks[key]) return;
+    if (m.allowedAges && currentAge && !m.allowedAges.includes(currentAge)) return;
+
     const card = document.createElement('button');
     card.className = 'lesson-card' + (key === currentMode ? ' active' : '');
     card.innerHTML = `<span class="lesson-icon">${m.icon}</span><span class="lesson-label">${m.title}</span>`;
     card.addEventListener('click', () => switchMode(key));
     row.appendChild(card);
   });
+
   if (!parentLocks.karaoke) {
     const k = document.createElement('button');
     k.className = 'lesson-card';
@@ -2482,8 +2638,11 @@ function renderMenuModes() {
   const box = $('menuModes');
   if (!box) return;
   box.innerHTML = '';
+
   const entries = Object.entries(MODES).concat([['karaoke', { icon:'🎤', title:'Karaoke' }]]);
   entries.forEach(([key, m]) => {
+    if (m.allowedAges && currentAge && !m.allowedAges.includes(currentAge)) return;
+
     const btn = document.createElement('button');
     btn.className = 'menu-item menu-mode-' + key + (key === currentMode ? ' active' : '');
     btn.innerHTML = `<span class="menu-icon">${m.icon}</span><span class="menu-label">${m.title} ${parentLocks[key] ? ' 🔒' : ''}</span>`;
@@ -2509,6 +2668,10 @@ function switchMode(mode) {
   }
   if (mode === 'zeigauf') {
     startZeigAuf();
+    return;
+  }
+  if (mode === 'merkspiel') {
+    startMerkspiel();
     return;
   }
 
@@ -3326,7 +3489,7 @@ function initMemoryBoard() {
 }
 
 /* ════════════════════════════════════════
-   ZEIG AUF! (SPIEL FÜR SPRACH-START)
+   ZEIG AUF! (NUR SPRACH-START)
 ═══════════════════════════════════════ */
 const ZEIG_AUF_ITEMS = [
   // Tiere
@@ -3410,11 +3573,11 @@ function nextZeigAufRound() {
   const grid = $('zeigAufGrid');
   grid.innerHTML = '';
 
-  // 1 Ziel und 1 oder 2 Ablenker wählen
   const shuffled = [...ZEIG_AUF_ITEMS].sort(() => Math.random() - 0.5);
   currentTargetItem = shuffled[0];
 
-  const roundCount = currentAge === 'speech-delay' ? 2 : 3;
+  // Im Sprach-Start 2 Optionen
+  const roundCount = 2;
   const currentOptions = shuffled.slice(0, roundCount).sort(() => Math.random() - 0.5);
 
   $('zeigAufTargetWord').textContent = `${currentTargetItem.article} ${currentTargetItem.name}`;
@@ -3451,6 +3614,170 @@ function nextZeigAufRound() {
 
     grid.appendChild(card);
   });
+}
+
+/* ════════════════════════════════════════
+   MERKSPIEL (5-8 & 8-12 JAHRE)
+═══════════════════════════════════════ */
+let merkTargetSequence = [];
+let merkUserPicks = [];
+let merkTimerInterval = null;
+let merkRoundPhase = 'idle'; // 'memorize' | 'reconstruct' | 'done'
+
+function startMerkspiel() {
+  closeMenu();
+  stopSpeaking();
+  showScreen('merkspiel');
+  initMerkspielRound();
+}
+
+$('btnMerkspielBack').addEventListener('click', () => {
+  if (merkTimerInterval) clearInterval(merkTimerInterval);
+  stopSpeaking();
+  showScreen('main');
+});
+
+$('btnMerkspielRestart').addEventListener('click', initMerkspielRound);
+$('btnMerkspielReset').addEventListener('click', resetMerkUserPicks);
+
+function initMerkspielRound() {
+  if (merkTimerInterval) clearInterval(merkTimerInterval);
+  merkRoundPhase = 'memorize';
+  merkUserPicks = [];
+
+  $('btnMerkspielReset').style.display = 'none';
+  $('merkPoolArea').innerHTML = '';
+  $('merkProgressBar').style.width = '100%';
+  $('merkInstruction').textContent = 'Merk dir die 5 Bilder genau in dieser Reihe!';
+
+  // 5 unterschiedliche Zufallsbilder wählen
+  const shuffled = [...ZEIG_AUF_ITEMS].sort(() => Math.random() - 0.5);
+  merkTargetSequence = shuffled.slice(0, 5);
+
+  // Zeige die 5 Bilder 4 Sekunden lang
+  const displayArea = $('merkDisplayArea');
+  displayArea.innerHTML = '';
+  merkTargetSequence.forEach((item, index) => {
+    const slot = document.createElement('div');
+    slot.className = 'merk-slot filled';
+    slot.innerHTML = `<span class="slot-emoji">${item.emoji}</span><span style="font-size:10px; margin-top:2px;">${item.name}</span>`;
+    displayArea.appendChild(slot);
+  });
+
+  lioSay('Merkspiel Start', 'Merk dir die 5 Bilder gut! Gleich sind sie weg.');
+
+  // 4 Sekunden Countdown
+  const durationMs = 4000;
+  const startTime = Date.now();
+
+  merkTimerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remainingPct = Math.max(0, 100 - (elapsed / durationMs) * 100);
+    $('merkProgressBar').style.width = remainingPct + '%';
+
+    if (elapsed >= durationMs) {
+      clearInterval(merkTimerInterval);
+      startMerkReconstructionPhase();
+    }
+  }, 50);
+}
+
+function startMerkReconstructionPhase() {
+  merkRoundPhase = 'reconstruct';
+  $('merkInstruction').textContent = 'Tippe die 5 Bilder in der richtigen Reihenfolge an!';
+  $('btnMerkspielReset').style.display = 'inline-flex';
+
+  // Display leeren und 5 leere Slots anzeigen
+  renderMerkSlots();
+
+  // Die 5 Bilder zufällig durcheinander anzeigen
+  const poolArea = $('merkPoolArea');
+  poolArea.innerHTML = '';
+  const mixed = [...merkTargetSequence].sort(() => Math.random() - 0.5);
+
+  mixed.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'merk-choice-btn';
+    btn.dataset.name = item.name;
+    btn.innerHTML = `
+      <span class="choice-emoji">${item.emoji}</span>
+      <span class="choice-name">${item.name}</span>
+    `;
+
+    btn.addEventListener('click', () => {
+      if (merkRoundPhase !== 'reconstruct' || btn.classList.contains('used')) return;
+
+      btn.classList.add('used');
+      merkUserPicks.push(item);
+      renderMerkSlots();
+
+      if (merkUserPicks.length === merkTargetSequence.length) {
+        evaluateMerkspiel();
+      }
+    });
+
+    poolArea.appendChild(btn);
+  });
+
+  lioSay('Merkspiel Lösen', 'In welcher Reihenfolge waren sie da? Tipp sie an!');
+}
+
+function renderMerkSlots() {
+  const displayArea = $('merkDisplayArea');
+  displayArea.innerHTML = '';
+
+  for (let i = 0; i < 5; i++) {
+    const slot = document.createElement('div');
+    const pick = merkUserPicks[i];
+
+    if (pick) {
+      slot.className = 'merk-slot filled';
+      slot.innerHTML = `<span class="slot-emoji">${pick.emoji}</span><span style="font-size:10px; margin-top:2px;">${pick.name}</span>`;
+    } else {
+      slot.className = 'merk-slot';
+      slot.textContent = (i + 1).toString();
+    }
+    displayArea.appendChild(slot);
+  }
+}
+
+function resetMerkUserPicks() {
+  if (merkRoundPhase !== 'reconstruct') return;
+  merkUserPicks = [];
+  renderMerkSlots();
+  document.querySelectorAll('.merk-choice-btn').forEach(b => b.classList.remove('used'));
+}
+
+function evaluateMerkspiel() {
+  merkRoundPhase = 'done';
+  let isCorrect = true;
+
+  for (let i = 0; i < 5; i++) {
+    if (merkUserPicks[i].name !== merkTargetSequence[i].name) {
+      isCorrect = false;
+      break;
+    }
+  }
+
+  if (isCorrect) {
+    triggerConfetti();
+    $('merkInstruction').textContent = '🌟 Perfekt gemerkt! Alle 5 in richtiger Reihenfolge!';
+    lioSay('Merkspiel Richtig', 'Genial! Du hast dir alle 5 Bilder genau in der richtigen Reihenfolge gemerkt!');
+  } else {
+    $('merkInstruction').textContent = 'Fast! Schau mal, so war die Reihenfolge:';
+    // Zeige die richtige Reihe noch einmal zur Visualisierung
+    const displayArea = $('merkDisplayArea');
+    displayArea.innerHTML = '';
+    merkTargetSequence.forEach(item => {
+      const slot = document.createElement('div');
+      slot.className = 'merk-slot filled';
+      slot.style.borderColor = 'var(--coral)';
+      slot.innerHTML = `<span class="slot-emoji">${item.emoji}</span><span style="font-size:10px; margin-top:2px;">${item.name}</span>`;
+      displayArea.appendChild(slot);
+    });
+
+    lioSay('Merkspiel Falsch', 'Fast geschafft! Schau kurz hin, so war die Reihe. Wollen wir eine neue Runde probieren?');
+  }
 }
 
 /* ════════════════════════════════════════
