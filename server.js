@@ -1,5 +1,5 @@
 // ============================================================
-// KidsBot.ai / Lio Backend — Premium TTS & Sokratischer Tutor
+// KidsBot.ai / Lio Backend — Premium TTS, Tutor & Story Engine
 // ============================================================
 import express from 'express';
 import cors from 'cors';
@@ -16,14 +16,14 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
-// ── Cache-Ordner anlegen & freigeben ──
+// ── Cache-Ordner für Sprachdateien & Hörspiele ──
 const CACHE_DIR = path.join(__dirname, 'audio_cache');
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
 app.use('/cache', express.static(CACHE_DIR));
 
-// ── API Key Check ──
+// ── API Key Prüfung ──
 if (!process.env.GROQ_API_KEY) {
   console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
 }
@@ -35,11 +35,11 @@ app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static(__dirname));
 
-// ── ELEVENLABS TURBO TTS ──
-async function generateTTS(text, isSpeechDelay = false) {
+// ── ELEVENLABS TURBO TTS ENGINE ──
+async function generateTTS(text, isSlow = false) {
   const cleanText = text.trim();
   
-  const hash = crypto.createHash('sha256').update(cleanText + (isSpeechDelay ? '_slow' : '')).digest('hex');
+  const hash = crypto.createHash('sha256').update(cleanText + (isSlow ? '_slow' : '')).digest('hex');
   const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
 
   if (fs.existsSync(cacheMp3)) {
@@ -48,7 +48,7 @@ async function generateTTS(text, isSpeechDelay = false) {
   }
 
   try {
-    console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..." (Sprach-Start: ${isSpeechDelay})`);
+    console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..." (Slow-Modus: ${isSlow})`);
     
     // Mannis Voice-ID
     const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
@@ -64,7 +64,7 @@ async function generateTTS(text, isSpeechDelay = false) {
         text: cleanText,
         model_id: 'eleven_turbo_v2_5',
         voice_settings: { 
-          stability: isSpeechDelay ? 0.75 : 0.5, 
+          stability: isSlow ? 0.75 : 0.5, 
           similarity_boost: 0.75 
         }
       })
@@ -84,6 +84,93 @@ async function generateTTS(text, isSpeechDelay = false) {
     throw new Error('ElevenLabs nicht erreichbar');
   }
 }
+
+// ── NEU: OPTION 2 — PERSONALISIERTER GUTE-NACHT-GESCHICHTEN GENERATOR ──
+app.post('/api/generate-story', async (req, res) => {
+  try {
+    const { hero, companion, theme, setting, isBedtime, age } = req.body;
+
+    const heroName = hero || 'Leo';
+    const compName = companion ? `zusammen mit dem besten Freund ${companion}` : 'ganz mutig allein';
+    const worldName = setting || 'einem zauberhaften Zauberwald';
+    const userTheme = theme || 'einer wunderbaren Traumreise';
+
+    console.log(`🌙 Generiere Gute-Nacht-Geschichte für ${heroName} (${worldName}, Thema: ${userTheme})`);
+
+    const storyPrompt = `Du bist ein weltbester Kinderbuchautor und Experte für kindgerechte Einschlafpsychologie.
+Schreibe eine herzerwärmende, beruhigende Vorlesegeschichte für ein Kind namens ${heroName}.
+
+PARAMETER:
+- Hauptfigur: ${heroName} ${compName}
+- Schauplatz / Welt: In ${worldName}
+- Kern-Thema / Erlebnis: ${userTheme}
+- Modus: ${isBedtime ? 'Einschlaf-Geschichte (Sleep-Fade-Prinzip)' : 'Spannendes Tages-Abenteuer'}
+- Zielgruppe: Altersgerecht, warmherzig und liebevoll
+
+AUFBAU & REGELN:
+1. Länge: Exakt 4 bis 5 kurze Absätze (ca. 220 bis 280 Wörter).
+2. Zu Beginn starten ${heroName} und die Begleiter neugierig in das Setting.
+3. Das Thema (${userTheme}) wird sanft und tröstend aufgegriffen. Ängste oder Herausforderungen lösen sich liebevoll auf.
+${isBedtime ? `4. SLEEP-FADE-ENDE: Der letzte Absatz wird extrem ruhig, bildhaft und schläfrig. Die Welt kommt zur Ruhe, die Sterne funkeln, ein langes Gähnen breitet sich aus, und ${heroName} schläft friedlich, behütet und glücklich ein.` : '4. Schließe mit einem fröhlichen, mutmachenden Erfolgserlebnis ab.'}
+5. Keine Regieanweisungen, keine Sternchen (*gähnt*), keine Überschrift im Fließtext. Schreibe reinen, perfekten Vorlesetext.`;
+
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-oss-20b',
+        messages: [{ role: 'system', content: storyPrompt }],
+        temperature: 0.7,
+        max_tokens: 650
+      })
+    });
+
+    if (!groqResponse.ok) {
+      throw new Error(`Groq Fehler: ${groqResponse.status}`);
+    }
+
+    const groqData = await groqResponse.json();
+    const storyText = groqData.choices[0]?.message?.content?.trim() || '';
+
+    if (!storyText) {
+      throw new Error('Keine Geschichte generiert.');
+    }
+
+    // Titel generieren
+    const title = `${heroName} in ${worldName}`;
+
+    // Audio für das Vorlesen aufbereiten
+    let ttsStoryText = storyText
+      .replace(/([0-9]+)/g, ' $1 ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (isBedtime) {
+      // Einschlafrhythmus: Zusätzliche Atempausen einfügen
+      ttsStoryText = ttsStoryText
+        .replace(/\./g, '... ')
+        .replace(/!/g, '!... ')
+        .replace(/\?/g, '?... ')
+        .replace(/,/g, ', ... ');
+    }
+
+    const audioUrl = await generateTTS(ttsStoryText, isBedtime || age === 'speech-delay');
+
+    res.json({
+      success: true,
+      title,
+      story: storyText,
+      audioUrl
+    });
+
+  } catch (error) {
+    console.error('Fehler bei Geschichten-Generierung:', error.message);
+    res.status(500).json({ error: 'Die Traumwelt schläft noch. Bitte gleich nochmal probieren!' });
+  }
+});
 
 // ── API: Chat-Stream (Wasserhahn) ──
 app.post('/api/chat-stream', async (req, res) => {
@@ -135,13 +222,15 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
     }
     
     if (mode === 'stories') {
-      systemInstruction += `\n\nGESCHICHTEN-MODUS: Erzähle eine spannende Geschichte als reines Hörspiel in ca. 4-5 Sätzen. Keine Bilder, nur Text.`;
+      systemInstruction += `\n\nGESCHICHTEN-MODUS: Das Kind wünscht sich eine Geschichte. Ermutige es, den magischen Geschichten-Zauberer zu öffnen!`;
     } else if (mode === 'memory') {
       systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory mit Tieren und Fahrzeugen. Feuere es an!`;
     } else if (mode === 'zeigauf') {
       systemInstruction += `\n\nZEIG-AUF-MODUS: Das Kind spielt gerade das Bildersuchspiel 'Zeig auf!'. Lobe es herzlich für richtige Treffer!`;
     } else if (mode === 'merkspiel') {
       systemInstruction += `\n\nMERKSPIEL-MODUS: Das Kind spielt gerade ein Merkspiel und muss sich die Reihenfolge von 5 Gegenständen merken. Feuere seine Merkfähigkeit an!`;
+    } else if (mode === 'tetris') {
+      systemInstruction += `\n\nTETRIS-MODUS: Der Teenager spielt gerade Tetris. Feuere ihn an, wenn er Zeilen abräumt oder neue Highscores knackt!`;
     } else if (mode === 'homework') {
       systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
 WICHTIGE REGELN:
@@ -319,5 +408,5 @@ app.post('/api/speak', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Lio Server läuft auf Port ${PORT}`);
+  console.log(`\n🚀 KidsBot.ai / Lio Server läuft auf Port ${PORT}`);
 });
