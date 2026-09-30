@@ -2076,6 +2076,11 @@ body::before {
 </head>
 <body>
 
+<div style="position:fixed; top:14px; right:16px; z-index:99; display:flex; gap:4px; background:rgba(14,22,32,0.85); border:1px solid rgba(255,255,255,0.18); border-radius:50px; padding:4px; backdrop-filter:blur(12px);">
+  <a href="index.html" style="text-decoration:none; font-size:12px; font-weight:800; padding:5px 10px; border-radius:50px; background:linear-gradient(135deg, #4FE3C1, #B8F24A); color:#04241C;">🇩🇪 DE</a>
+  <a href="en.html" style="text-decoration:none; font-size:12px; font-weight:800; padding:5px 10px; border-radius:50px; color:rgba(234,251,245,0.6);">🇬🇧 EN</a>
+</div>
+
 <div id="clouds"></div>
 
 <!-- ════════════════════════════════════════
@@ -2663,7 +2668,7 @@ const SUBJECTS = [
   { key:'deutsch',   icon:'📖', label:'Deutsch' },
   { key:'englisch',  icon:'🔤', label:'Englisch' },
   { key:'sachkunde', icon:'🌍', label:'Sachkunde' },
-  { key:'sonstiges', icon:'✏️', label:'Etwas anderes' },
+  { key:'sonstiges', icon:'✏️️', label:'Etwas anderes' },
 ];
 
 const HOMEWORK_TOPICS = {
@@ -3162,7 +3167,7 @@ const lioEmotionalResponses = {
   anxious:    { greeting:'Ich merke, dass dich etwas beunruhigt.',        follow:'Das ist ganz normal. Gleich reden wir in Ruhe darüber.' },
   frustrated: { greeting:'Ich spüre, dass dich etwas ärgert.',            follow:'Das darf auch mal sein. Gleich sortieren wir das zusammen.' },
   tired:      { greeting:'Du klingst müde.',                              follow:'Ruh dich ruhig kurz aus, ich warte auf dich.' },
-  normal:     { greeting:'Ich konnte dich gerade nicht hören.',             follow:'Probier es gleich nochmal!' },
+  normal:     { greeting:'Ich konnte dich gerade nicht hören.',           follow:'Probier es gleich nochmal!' },
 };
 
 function generateLioGreeting(emotion) {
@@ -3773,7 +3778,7 @@ function openStoryPlayer(title, text, audioUrl) {
 
   storyAudioElement.play().then(() => {
     isAudioPlaying = true;
-    $('btnPlayerPlayPause').textContent = '⏸️';
+    $('btnPlayerPlayPause').textContent = '⏸️️';
   }).catch(() => {
     isAudioPlaying = false;
     $('btnPlayerPlayPause').textContent = '▶️';
@@ -4612,24 +4617,20 @@ function drawTetrisBlock(ctx, x, y, color) {
 ═══════════════════════════════════════ */
 function openHelpPanel()  { $('panelHelp').classList.add('show'); }
 function closeHelpPanel() { $('panelHelp').classList.remove('show'); }
-$('btnHelp').addEventListener('click', openHelpPanel);
-$('btnCloseHelp').addEventListener('click', closeHelpPanel);
+$('btnHelp').addEventListener('click', openHelpPanel);$('btnCloseHelp').addEventListener('click', closeHelpPanel);
 
 /* ════════════════════════════════════════
    ELTERN-BEREICH (SaaS DASHBOARD)
 ═══════════════════════════════════════ */
 function openSettings() {
   stopSpeaking();
-  $('panelPin').classList.add('show');
-  $('pinInput').value = '';
+  $('panelPin').classList.add('show');$('pinInput').value = '';
   setTimeout(() => $('pinInput').focus(), 100);
 }
 function closePinPanel() { $('panelPin').classList.remove('show'); }
 
-$('btnParent').addEventListener('click', openSettings);
-$('btnClosePin').addEventListener('click', closePinPanel);
-$('btnCheckPin').addEventListener('click', checkPin);
-$('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPin(); });
+$('btnParent').addEventListener('click', openSettings);$('btnClosePin').addEventListener('click', closePinPanel);
+$('btnCheckPin').addEventListener('click', checkPin);$('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPin(); });
 
 async function checkPin() {
   const stored = localStorage.getItem('lio_pin');
@@ -4649,10 +4650,8 @@ function openDashboardPanel() {
   renderLockToggles();
   renderParentNotices();
   $('rateSlider').value = speechRate;
-  $('rateVal').textContent = speechRate.toFixed(2);
-  $('pitchSlider').value = speechPitch;
-  $('pitchVal').textContent = speechPitch.toFixed(2);
-  $('statChats').textContent = interactionCount;
+  $('rateVal').textContent = speechRate.toFixed(2);$('pitchSlider').value = speechPitch;
+  $('pitchVal').textContent = speechPitch.toFixed(2);$('statChats').textContent = interactionCount;
   $('panelDashboard').classList.add('show');
 }
 
@@ -4661,22 +4660,19 @@ function closeDashboard() {
   renderLessonCards();
   renderMenuModes();
 }
-$('btnCloseDashboard').addEventListener('click', closeDashboard);
-$('btnCloseSettings').addEventListener('click', closeDashboard);
+$('btnCloseDashboard').addEventListener('click', closeDashboard);$('btnCloseSettings').addEventListener('click', closeDashboard);
 
 $('tabBtnInsights').addEventListener('click', () => {
-  $('tabBtnInsights').classList.add('active'); $('tabBtnSettings').classList.remove('active');
-  $('tabInsights').classList.add('active'); $('tabSettings').classList.remove('active');
+  $('tabBtnInsights').classList.add('active');$('tabBtnSettings').classList.remove('active');
+  $('tabInsights').classList.add('active');$('tabSettings').classList.remove('active');
 });
 $('tabBtnSettings').addEventListener('click', () => {
-  $('tabBtnSettings').classList.add('active'); $('tabBtnInsights').classList.remove('active');
-  $('tabSettings').classList.add('active'); $('tabInsights').classList.remove('active');
+  $('tabBtnSettings').classList.add('active');$('tabBtnInsights').classList.remove('active');
+  $('tabSettings').classList.add('active');$('tabInsights').classList.remove('active');
 });
 
-$('voiceSel').addEventListener('change', onVoiceChange);
-$('rateSlider').addEventListener('input', onRateChange);
-$('pitchSlider').addEventListener('input', onPitchChange);
-$('btnTestVoice').addEventListener('click', testVoice);
+$('voiceSel').addEventListener('change', onVoiceChange);$('rateSlider').addEventListener('input', onRateChange);
+$('pitchSlider').addEventListener('input', onPitchChange);$('btnTestVoice').addEventListener('click', testVoice);
 
 function toggleLock(mode, value) {
   parentLocks[mode] = value;
