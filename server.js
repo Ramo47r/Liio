@@ -36,10 +36,10 @@ app.use(express.json({ limit: '50kb' }));
 app.use(express.static(__dirname));
 
 // ── ELEVENLABS TURBO TTS ENGINE ──
-async function generateTTS(text, isSlow = false) {
+async function generateTTS(text, isSlow = false, lang = 'de') {
   const cleanText = text.trim();
   
-  const hash = crypto.createHash('sha256').update(cleanText + (isSlow ? '_slow' : '')).digest('hex');
+  const hash = crypto.createHash('sha256').update(cleanText + (isSlow ? '_slow' : '') + '_' + lang).digest('hex');
   const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
 
   if (fs.existsSync(cacheMp3)) {
@@ -48,10 +48,10 @@ async function generateTTS(text, isSlow = false) {
   }
 
   try {
-    console.log(`🎙️ ElevenLabs generiert: "${cleanText.substring(0, 30)}..." (Slow-Modus: ${isSlow})`);
+    console.log(`🎙️ ElevenLabs generiert (${lang}): "${cleanText.substring(0, 30)}..." (Slow-Modus: ${isSlow})`);
     
-    // Mannis Voice-ID
-    const voiceId = 'KP4GbmyDmwaoy5dUlvZY'; 
+    // Mannis Voice-ID (DE) vs Charlie (EN) - Akzentfrei!
+    const voiceId = lang === 'en' ? 'IKne3meq5aSn9XLyUdCD' : 'KP4GbmyDmwaoy5dUlvZY'; 
     
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
@@ -85,19 +85,41 @@ async function generateTTS(text, isSlow = false) {
   }
 }
 
-// ── NEU: OPTION 2 — PERSONALISIERTER GUTE-NACHT-GESCHICHTEN GENERATOR ──
+// ── OPTION 2 — PERSONALISIERTER GUTE-NACHT-GESCHICHTEN GENERATOR ──
 app.post('/api/generate-story', async (req, res) => {
   try {
-    const { hero, companion, theme, setting, isBedtime, age } = req.body;
+    const { hero, companion, theme, setting, isBedtime, age, lang } = req.body;
+    const isEn = lang === 'en';
 
-    const heroName = hero || 'Leo';
-    const compName = companion ? `zusammen mit dem besten Freund ${companion}` : 'ganz mutig allein';
-    const worldName = setting || 'einem zauberhaften Zauberwald';
-    const userTheme = theme || 'einer wunderbaren Traumreise';
+    const heroName = hero || (isEn ? 'Leo' : 'Leo');
+    const compName = companion 
+      ? (isEn ? `along with best friend ${companion}` : `zusammen mit dem besten Freund ${companion}`) 
+      : (isEn ? 'bravely all alone' : 'ganz mutig allein');
+    const worldName = setting || (isEn ? 'a magical forest' : 'einem zauberhaften Zauberwald');
+    const userTheme = theme || (isEn ? 'a beautiful dream journey' : 'einer wunderbaren Traumreise');
 
-    console.log(`🌙 Generiere Gute-Nacht-Geschichte für ${heroName} (${worldName}, Thema: ${userTheme})`);
+    console.log(`🌙 Generiere Geschichte für ${heroName} (${worldName}, Thema: ${userTheme}, Lang: ${lang})`);
 
-    const storyPrompt = `Du bist ein weltbester Kinderbuchautor und Experte für kindgerechte Einschlafpsychologie.
+    let storyPrompt = '';
+    if (isEn) {
+      storyPrompt = `You are a world-class children's author and an expert in child bedtime psychology.
+Write a heartwarming, calming read-aloud story for a child named ${heroName}.
+
+PARAMETERS:
+- Main Character: ${heroName} ${compName}
+- Setting: In ${worldName}
+- Core Theme/Experience: ${userTheme}
+- Mode: ${isBedtime ? 'Bedtime Story (Sleep-Fade Principle)' : 'Exciting Daytime Adventure'}
+- Target Audience: Age-appropriate, warm, and loving
+
+RULES:
+1. Length: Exactly 4 to 5 short paragraphs (approx. 220 to 280 words).
+2. Start with ${heroName} and their companions curiously entering the setting.
+3. The theme (${userTheme}) is addressed gently and comfortingly. Fears or challenges are resolved lovingly.
+${isBedtime ? `4. SLEEP-FADE ENDING: The last paragraph must be extremely calm, visual, and sleepy. The world settles down, stars twinkle, a long yawn spreads, and ${heroName} falls asleep peacefully, protected and happy.` : '4. Conclude with a happy, encouraging sense of achievement.'}
+5. No stage directions, no asterisks (*yawns*), no headings in the body text. Write pure, perfect read-aloud text.`;
+    } else {
+      storyPrompt = `Du bist ein weltbester Kinderbuchautor und Experte für kindgerechte Einschlafpsychologie.
 Schreibe eine herzerwärmende, beruhigende Vorlesegeschichte für ein Kind namens ${heroName}.
 
 PARAMETER:
@@ -113,6 +135,7 @@ AUFBAU & REGELN:
 3. Das Thema (${userTheme}) wird sanft und tröstend aufgegriffen. Ängste oder Herausforderungen lösen sich liebevoll auf.
 ${isBedtime ? `4. SLEEP-FADE-ENDE: Der letzte Absatz wird extrem ruhig, bildhaft und schläfrig. Die Welt kommt zur Ruhe, die Sterne funkeln, ein langes Gähnen breitet sich aus, und ${heroName} schläft friedlich, behütet und glücklich ein.` : '4. Schließe mit einem fröhlichen, mutmachenden Erfolgserlebnis ab.'}
 5. Keine Regieanweisungen, keine Sternchen (*gähnt*), keine Überschrift im Fließtext. Schreibe reinen, perfekten Vorlesetext.`;
+    }
 
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -139,17 +162,14 @@ ${isBedtime ? `4. SLEEP-FADE-ENDE: Der letzte Absatz wird extrem ruhig, bildhaft
       throw new Error('Keine Geschichte generiert.');
     }
 
-    // Titel generieren
-    const title = `${heroName} in ${worldName}`;
+    const title = isEn ? `${heroName} in ${worldName}` : `${heroName} in ${worldName}`;
 
-    // Audio für das Vorlesen aufbereiten
     let ttsStoryText = storyText
       .replace(/([0-9]+)/g, ' $1 ')
       .replace(/\s+/g, ' ')
       .trim();
 
     if (isBedtime) {
-      // Einschlafrhythmus: Zusätzliche Atempausen einfügen
       ttsStoryText = ttsStoryText
         .replace(/\./g, '... ')
         .replace(/!/g, '!... ')
@@ -157,7 +177,7 @@ ${isBedtime ? `4. SLEEP-FADE-ENDE: Der letzte Absatz wird extrem ruhig, bildhaft
         .replace(/,/g, ', ... ');
     }
 
-    const audioUrl = await generateTTS(ttsStoryText, isBedtime || age === 'speech-delay');
+    const audioUrl = await generateTTS(ttsStoryText, isBedtime || age === 'speech-delay', lang);
 
     res.json({
       success: true,
@@ -168,7 +188,10 @@ ${isBedtime ? `4. SLEEP-FADE-ENDE: Der letzte Absatz wird extrem ruhig, bildhaft
 
   } catch (error) {
     console.error('Fehler bei Geschichten-Generierung:', error.message);
-    res.status(500).json({ error: 'Die Traumwelt schläft noch. Bitte gleich nochmal probieren!' });
+    const errObj = req.body.lang === 'en' 
+      ? { error: 'The dream world is still sleeping. Please try again in a moment!' } 
+      : { error: 'Die Traumwelt schläft noch. Bitte gleich nochmal probieren!' };
+    res.status(500).json(errObj);
   }
 });
 
@@ -188,15 +211,77 @@ app.post('/api/chat-stream', async (req, res) => {
       topicResolved, 
       subject, 
       emotion, 
-      age 
+      age,
+      lang
     } = req.body;
     
-    const nameStr = childName 
-      ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` 
-      : '';
-    const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
+    const isEn = lang === 'en';
 
-    let systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
+    let systemInstruction = "";
+    if (isEn) {
+      const nameStr = childName ? `The child's name is ${childName}. (IMPORTANT: Use the name VERY RARELY, not in every sentence!) ` : '';
+      const modeStr = mode ? `Current mode: ${mode}. ` : '';
+
+      systemInstruction = `You are Lio, the child's best and most loyal friend. 
+IMPORTANT: Always answer in a warm, direct, and friendly tone using very short sentences. Use simple words. ${nameStr}${modeStr}
+
+LANGUAGE: Speak in English! Write numbers as normal digits (1, 2, 3). 
+
+EMPATHY & TRUST: If the child is sad, angry, scared, or sick, be their best friend. Comfort them, listen actively, and take their feelings seriously. 
+
+ACTIVE MEMORY: If the child told you about a problem or worry earlier, ask about it lovingly later on your own.`;
+
+      if (age === 'speech-delay') {
+        systemInstruction += `\n\nSPECIAL CATEGORY: SPEECH DELAY (MAXIMUM EMPATHY & PATIENCE):
+1. The child may have a speech delay or is just learning to speak. Be the most patient, loving companion in the world.
+2. If the child only says single words or incomplete sentences, be extremely happy about every attempt!
+3. NEVER directly correct the child for mistakes. Lovingly repeat the child's thought as a complete, simple sentence (e.g. "Yes, great! The dog is running there!").
+4. Always answer in only 1 to a maximum of 2 short sentences.
+5. Gently encourage the child constantly ("You are doing great!", "I love listening to you!").`;
+      }
+
+      if (emotion && emotion !== 'normal') {
+        systemInstruction += `\n\nNote: The child is currently feeling ${emotion}. Respond lovingly immediately and comfort them.`;
+      } else if (mood) {
+        systemInstruction += `\n\nChild's mood today: ${mood}.`;
+      }
+      
+      if (mode === 'stories') {
+        systemInstruction += `\n\nSTORY MODE: The child wants a story. Encourage them to open the magical Story Wizard!`;
+      } else if (mode === 'memory') {
+        systemInstruction += `\n\nMEMORY MODE: The child is currently playing a matching game. Cheer them on!`;
+      } else if (mode === 'zeigauf') {
+        systemInstruction += `\n\nPOINT & FIND MODE: The child is playing a picture finding game. Praise them warmly for correct answers!`;
+      } else if (mode === 'merkspiel') {
+        systemInstruction += `\n\nSEQUENCE MODE: The child is playing a memory sequence game. Encourage their memory skills!`;
+      } else if (mode === 'tetris') {
+        systemInstruction += `\n\nTETRIS MODE: The teen is playing Tetris. Cheer them on when they clear lines!`;
+      } else if (mode === 'homework') {
+        systemInstruction += `\n\nHOMEWORK HELP: You are a Socratic learning coach. 
+CRITICAL RULES:
+1. NO SPOILERS: NEVER give away the direct solution or final answer! Guide the child step-by-step with questions.
+2. STRICT CHECKING: Read the child's answers VERY CAREFULLY. If the child writes nonsense, guesses wildly, or the answer is wrong, DO NOT PRAISE THEM! Never say "Good job" to a wrong answer. Say friendly: "That is not quite right yet." and give a new small hint.`;
+
+        if (subject === 'math') {
+          systemInstruction += `\nSUBJECT MATH: Use small thought experiments (gummy bears, apples) to explain calculations.`;
+        } else if (subject === 'english') {
+          systemInstruction += `\nSUBJECT ENGLISH/READING: Pay close attention to spelling! If a word is wrong, don't correct it immediately, but give a hint like the first letter.`;
+        }
+      }
+      
+      if (subject && mode !== 'homework') {
+        systemInstruction += `\nSubject: ${subject}.`;
+      }
+      if (activeTopic) {
+        systemInstruction += `\nTopic: ${activeTopic}. Has the child understood the topic? ${topicResolved ? 'Yes' : 'No'}.`;
+      }
+
+    } else {
+      // DEUTSCHER PROMPT (wie bisher)
+      const nameStr = childName ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` : '';
+      const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
+
+      systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
 WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in sehr kurzen Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
 
 SPRACHE: Sprich auf Deutsch! WICHTIGE AUSNAHME: Wenn ihr Englisch lernt, darfst du englische Vokabeln verwenden. Schreibe Zahlen als ganz normale Ziffern (1, 2, 3). 
@@ -205,50 +290,38 @@ EMPATHIE & VERTRAUEN: Wenn das Kind traurig, wütend, ängstlich oder krank ist,
 
 AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorge erzählt hat, frage später von dir aus liebevoll nach.`;
 
-    // 🚨 SPRACH-START: MAXIMALE EMPATHIE, RUHE UND GEDULD 🚨
-    if (age === 'speech-delay') {
-      systemInstruction += `\n\nBESONDERE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG (MAXIMALE EMPATHIE & GEDULD):
+      if (age === 'speech-delay') {
+        systemInstruction += `\n\nBESONDERE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG (MAXIMALE EMPATHIE & GEDULD):
 1. Das Kind hat möglicherweise eine Sprachverzögerung oder lernt gerade erst sprechen. Sei der geduldigste, liebevollste Begleiter der Welt.
-2. Wenn das Kind nur einzelne Wörter, Laute oder unvollständige Sätze sagt (z. B. "Wauwau da" oder "Ball spielen"), freue dich riesig über jeden Sprechversuch!
-3. Korrigiere das Kind NIEMALS direkt für Fehler. Wiederhole den Gedanken des Kindes liebevoll als vollständigen, einfachen Satz (z. B. "Ja, toll! Da läuft der Hund! Er holt den Ball.").
+2. Wenn das Kind nur einzelne Wörter, Laute oder unvollständige Sätze sagt, freue dich riesig über jeden Sprechversuch!
+3. Korrigiere das Kind NIEMALS direkt für Fehler. Wiederhole den Gedanken des Kindes liebevoll als vollständigen, einfachen Satz.
 4. Antworte immer in nur 1 bis maximal 2 kurzen Sätzen. Sprich in einfachen, warmherzigen Worten.
 5. Ermutige das Kind ständig sanft ("Du machst das prima!", "Ich freue mich, dir zuzuhören!").`;
-    }
+      }
 
-    if (emotion && emotion !== 'normal') {
-      systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade ${emotion}. Gehe sofort liebevoll darauf ein und tröste es.`;
-    } else if (mood) {
-      systemInstruction += `\n\nStimmung des Kindes heute: ${mood}.`;
-    }
-    
-    if (mode === 'stories') {
-      systemInstruction += `\n\nGESCHICHTEN-MODUS: Das Kind wünscht sich eine Geschichte. Ermutige es, den magischen Geschichten-Zauberer zu öffnen!`;
-    } else if (mode === 'memory') {
-      systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory mit Tieren und Fahrzeugen. Feuere es an!`;
-    } else if (mode === 'zeigauf') {
-      systemInstruction += `\n\nZEIG-AUF-MODUS: Das Kind spielt gerade das Bildersuchspiel 'Zeig auf!'. Lobe es herzlich für richtige Treffer!`;
-    } else if (mode === 'merkspiel') {
-      systemInstruction += `\n\nMERKSPIEL-MODUS: Das Kind spielt gerade ein Merkspiel und muss sich die Reihenfolge von 5 Gegenständen merken. Feuere seine Merkfähigkeit an!`;
-    } else if (mode === 'tetris') {
-      systemInstruction += `\n\nTETRIS-MODUS: Der Teenager spielt gerade Tetris. Feuere ihn an, wenn er Zeilen abräumt oder neue Highscores knackt!`;
-    } else if (mode === 'homework') {
-      systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
+      if (emotion && emotion !== 'normal') {
+        systemInstruction += `\n\nHinweis: Das Kind fühlt sich gerade ${emotion}. Gehe sofort liebevoll darauf ein und tröste es.`;
+      } else if (mood) {
+        systemInstruction += `\n\nStimmung des Kindes heute: ${mood}.`;
+      }
+      
+      if (mode === 'stories') systemInstruction += `\n\nGESCHICHTEN-MODUS: Das Kind wünscht sich eine Geschichte. Ermutige es, den magischen Geschichten-Zauberer zu öffnen!`;
+      else if (mode === 'memory') systemInstruction += `\n\nMEMORY-MODUS: Das Kind spielt gerade auf dem Bildschirm Memory mit Tieren und Fahrzeugen. Feuere es an!`;
+      else if (mode === 'zeigauf') systemInstruction += `\n\nZEIG-AUF-MODUS: Das Kind spielt gerade das Bildersuchspiel 'Zeig auf!'. Lobe es herzlich für richtige Treffer!`;
+      else if (mode === 'merkspiel') systemInstruction += `\n\nMERKSPIEL-MODUS: Das Kind spielt gerade ein Merkspiel und muss sich die Reihenfolge von 5 Gegenständen merken. Feuere seine Merkfähigkeit an!`;
+      else if (mode === 'tetris') systemInstruction += `\n\nTETRIS-MODUS: Der Teenager spielt gerade Tetris. Feuere ihn an, wenn er Zeilen abräumt!`;
+      else if (mode === 'homework') {
+        systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
 WICHTIGE REGELN:
 1. LÖSUNGS-VERBOT: Verrate NIEMALS direkt die Lösung oder das Endergebnis! Führe das Kind Schritt für Schritt dorthin.
-2. STRENGE PRÜFUNG: Lese die Antworten des Kindes GANZ GENAU. Wenn das Kind Quatsch schreibt, wild rät oder die Vokabel/Aufgabe falsch ist, LOBE ES NICHT! Sag niemals "Gut gemacht" zu einer falschen Antwort! Sage freundlich: "Das stimmt leider noch nicht ganz." und gib einen neuen kleinen Tipp.`;
+2. STRENGE PRÜFUNG: Lese die Antworten des Kindes GANZ GENAU. Wenn das Kind Quatsch schreibt, wild rät oder die Vokabel/Aufgabe falsch ist, LOBE ES NICHT! Sag freundlich: "Das stimmt leider noch nicht ganz." und gib einen neuen kleinen Tipp.`;
 
-      if (subject === 'mathe') {
-        systemInstruction += `\nFACH MATHE: Nutze kleine Gedankenexperimente (Gummibärchen, Äpfel) zum Erklären der Rechenwege.`;
-      } else if (subject === 'englisch') {
-        systemInstruction += `\nFACH ENGLISCH: Achte ganz genau auf die richtige Vokabel und Rechtschreibung! Wenn das englische Wort falsch ist oder Quatsch getippt wurde, korrigiere es nicht sofort, sondern gib als Tipp z.B. den Anfangsbuchstaben.`;
+        if (subject === 'mathe') systemInstruction += `\nFACH MATHE: Nutze kleine Gedankenexperimente (Gummibärchen, Äpfel) zum Erklären.`;
+        else if (subject === 'englisch') systemInstruction += `\nFACH ENGLISCH: Achte ganz genau auf die richtige Vokabel und Rechtschreibung! Gib als Tipp z.B. den Anfangsbuchstaben.`;
       }
-    }
-    
-    if (subject && mode !== 'homework') {
-      systemInstruction += `\nFach: ${subject}.`;
-    }
-    if (activeTopic) {
-      systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
+      
+      if (subject && mode !== 'homework') systemInstruction += `\nFach: ${subject}.`;
+      if (activeTopic) systemInstruction += `\nThema: ${activeTopic}. Hat das Kind das Thema verstanden? ${topicResolved ? 'Ja' : 'Nein'}.`;
     }
 
     const formattedMessages = [
@@ -311,9 +384,9 @@ WICHTIGE REGELN:
               if (cleanSentence.length > 2) {
                 let ttsText = cleanSentence
                   .replace(/([0-9]+)/g, ' $1 ') 
-                  .replace(/\+/g, ' plus ')
-                  .replace(/\=/g, ' ist gleich ')
-                  .replace(/\*/g, ' mal ')
+                  .replace(/\+/g, isEn ? ' plus ' : ' plus ')
+                  .replace(/\=/g, isEn ? ' equals ' : ' ist gleich ')
+                  .replace(/\*/g, isEn ? ' times ' : ' mal ')
                   .replace(/\s+/g, ' ')
                   .trim();
 
@@ -325,7 +398,7 @@ WICHTIGE REGELN:
                     .replace(/,/g, ', ... ');
                 }
 
-                const audioUrl = await generateTTS(ttsText, age === 'speech-delay');
+                const audioUrl = await generateTTS(ttsText, age === 'speech-delay', lang);
                 res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
               }
               currentSentence = ""; 
@@ -347,9 +420,9 @@ WICHTIGE REGELN:
       if (cleanSentence.length > 2) {
         let ttsText = cleanSentence
           .replace(/([0-9]+)/g, ' $1 ') 
-          .replace(/\+/g, ' plus ')
-          .replace(/\=/g, ' ist gleich ')
-          .replace(/\*/g, ' mal ')
+          .replace(/\+/g, isEn ? ' plus ' : ' plus ')
+          .replace(/\=/g, isEn ? ' equals ' : ' ist gleich ')
+          .replace(/\*/g, isEn ? ' times ' : ' mal ')
           .replace(/\s+/g, ' ')
           .trim();
 
@@ -361,7 +434,7 @@ WICHTIGE REGELN:
             .replace(/,/g, ', ... ');
         }
 
-        const audioUrl = await generateTTS(ttsText, age === 'speech-delay');
+        const audioUrl = await generateTTS(ttsText, age === 'speech-delay', lang);
         res.write(`data: ${JSON.stringify({ text: cleanSentence, audio: audioUrl })}\n\n`);
       }
     }
@@ -371,17 +444,16 @@ WICHTIGE REGELN:
 
   } catch (error) {
     console.error('Streaming Fehler:', error.message);
-    res.write(`data: {"error": "Lio ist kurz eingeschlafen!"}\n\n`);
+    const errObj = req.body.lang === 'en' 
+      ? '{"error": "Lio fell asleep for a second!"}' 
+      : '{"error": "Lio ist kurz eingeschlafen!"}';
+    res.write(`data: ${errObj}\n\n`);
     res.end();
   }
 });
 
-app.post('/api/chat', async (req, res) => {
-  res.json({ reply: "Nutze bitte den neuen Chat-Stream!" });
-});
-
 app.post('/api/speak', async (req, res) => {
-  const { text, isSpeechDelay } = req.body;
+  const { text, isSpeechDelay, lang } = req.body;
   if (!text) return res.status(400).json({ error: 'Kein Text.' });
   try {
     let ttsText = text;
@@ -392,7 +464,7 @@ app.post('/api/speak', async (req, res) => {
         .replace(/\?/g, '?... ')
         .replace(/,/g, ', ... ');
     }
-    const url = await generateTTS(ttsText, !!isSpeechDelay);
+    const url = await generateTTS(ttsText, !!isSpeechDelay, lang);
     const fileName = url.replace('/cache/', ''); 
     const cachePath = path.join(CACHE_DIR, fileName);
     
