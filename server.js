@@ -33,6 +33,70 @@ if (!process.env.ELEVENLABS_API_KEY) {
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
 app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ extended: true })); // WICHTIG FÜR DAS LOGIN-FORMULAR
+
+// ════════════════════════════════════════════════════════════
+// ── VIP PASSWORT-SCHUTZ FÜR INVESTOREN (Elegantes HTML-Fenster)
+// ════════════════════════════════════════════════════════════
+app.post('/vip-login', (req, res) => {
+  if (req.body.password === 'VIPLIO') {
+    // Wenn Passwort stimmt, Cookie für 30 Tage setzen und zur App weiterleiten
+    res.setHeader('Set-Cookie', 'lio_vip=1; Path=/; HttpOnly; Max-Age=2592000');
+    res.redirect('/');
+  } else {
+    // Bei falschem Passwort Warnung zeigen und zurück zum Login
+    res.send('<script>alert("Falsches Passwort!"); window.location.href="/";</script>');
+  }
+});
+
+app.use((req, res, next) => {
+  const url = req.path;
+  // Schütze nur die Hauptseiten und die API (Bilder und CSS dürfen laden)
+  if (url === '/' || url === '/index.html' || url === '/en.html' || url.startsWith('/api/')) {
+    const cookies = req.headers.cookie || '';
+    if (!cookies.includes('lio_vip=1')) {
+      // API-Calls ohne Cookie abblocken
+      if (url.startsWith('/api/')) {
+        return res.status(401).json({ error: 'Nicht autorisiert. Bitte einloggen.' });
+      }
+      // Für Besucher: Schickes Login-Fenster im KidsBot-Design anzeigen
+      return res.send(`
+        <!DOCTYPE html>
+        <html lang="de">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>KidsBot.ai - VIP Access</title>
+          <style>
+            body { background: #0A1017; color: #EAFBF5; font-family: 'Nunito', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .box { background: rgba(14,22,32,0.9); padding: 40px 30px; border-radius: 20px; border: 1px solid rgba(79,227,193,0.3); text-align: center; box-shadow: 0 10px 50px rgba(0,0,0,0.6); max-width: 340px; width: 90%; }
+            h2 { margin-top: 0; margin-bottom: 8px; font-size: 24px; font-family: 'Baloo 2', sans-serif; }
+            p { font-size: 14px; color: rgba(234,251,245,0.6); margin-bottom: 24px; line-height: 1.4; }
+            input { width: 100%; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px; color: #fff; font-size: 16px; text-align: center; margin-bottom: 16px; box-sizing: border-box; outline: none; }
+            input:focus { border-color: #4FE3C1; box-shadow: 0 0 0 3px rgba(79,227,193,0.15); }
+            button { width: 100%; padding: 15px; background: linear-gradient(135deg, #4FE3C1 0%, #B8F24A 100%); color: #04241C; border: none; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.15s; }
+            button:active { transform: translateY(2px); }
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <h2>🔒 Investor Access</h2>
+            <p>Bitte gib das VIP-Passwort ein, um KidsBot.ai zu testen.</p>
+            <form action="/vip-login" method="POST">
+              <input type="password" name="password" placeholder="Passwort eingeben..." required autofocus>
+              <button type="submit">Eintreten</button>
+            </form>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+  }
+  next();
+});
+// ════════════════════════════════════════════════════════════
+
+// Den Ordner für alle statischen Dateien (HTML, CSS, JS, Bilder) freigeben
 app.use(express.static(__dirname));
 
 // ── ELEVENLABS TURBO TTS ENGINE ──
@@ -277,7 +341,7 @@ CRITICAL RULES:
       }
 
     } else {
-      // DEUTSCHER PROMPT (wie bisher)
+      // DEUTSCHER PROMPT
       const nameStr = childName ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN, nicht in jedem Satz!) ` : '';
       const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
 
