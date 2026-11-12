@@ -632,8 +632,8 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
 <script>
 'use strict';
 
-/* ══ Konfiguration & Helfer ══ */
-const CFG = Object.assign({ apiBase: '', appToken: '' }, window.LIO_CONFIG || {});
+/* ══ Konfiguration & Helfer (HIER WURDE DER LINK ZU RENDER EINGETRAGEN) ══ */
+const CFG = Object.assign({ apiBase: 'https://kidsbot.ai', appToken: '' }, window.LIO_CONFIG || {});
 const $ = (id) => document.getElementById(id);
 const LS = {
   get(k, d = '') { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
