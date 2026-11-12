@@ -101,52 +101,9 @@ app.use(express.static(__dirname));
 
 // ── ELEVENLABS TURBO TTS ENGINE ──
 async function generateTTS(text, isSlow = false, lang = 'de') {
-  const cleanText = text.trim();
-  
-  const hash = crypto.createHash('sha256').update(cleanText + (isSlow ? '_slow' : '') + '_' + lang).digest('hex');
-  const cacheMp3 = path.join(CACHE_DIR, `${hash}.mp3`);
-
-  if (fs.existsSync(cacheMp3)) {
-    console.log(`♻️ Aus Cache geladen: "${cleanText.substring(0, 30)}..."`);
-    return `/cache/${hash}.mp3`;
-  }
-
-  try {
-    console.log(`🎙️ ElevenLabs generiert (${lang}): "${cleanText.substring(0, 30)}..." (Slow-Modus: ${isSlow})`);
-    
-    // Mannis Voice-ID (DE) vs Charlie (EN) - Akzentfrei!
-    const voiceId = lang === 'en' ? 'IKne3meq5aSn9XLyUdCD' : 'KP4GbmyDmwaoy5dUlvZY'; 
-    
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'audio/mpeg',
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: cleanText,
-        model_id: 'eleven_turbo_v2_5',
-        voice_settings: { 
-          stability: isSlow ? 0.75 : 0.5, 
-          similarity_boost: 0.75 
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`ElevenLabs Fehler: ${response.status} - ${errText}`);
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    fs.writeFileSync(cacheMp3, buffer);
-    return `/cache/${hash}.mp3`;
-
-  } catch (err) {
-    console.error('TTS Fehler:', err.message);
-    throw new Error('ElevenLabs nicht erreichbar');
-  }
+  // ELEVENLABS ABGESCHALTET! 
+  // Wir geben 'null' zurück, damit deine App automatisch die kostenlosen Browser-Stimmen nimmt.
+  return null;
 }
 
 // ── OPTION 2 — PERSONALISIERTER GUTE-NACHT-GESCHICHTEN GENERATOR ──
@@ -171,13 +128,19 @@ Write a heartwarming, calming read-aloud story for a child named ${heroName}.
 
 PARAMETERS:
 - Main Character: ${heroName} ${compName}
+
 - Setting: In ${worldName}
+
 - Core Theme/Experience: ${userTheme}
+
 - Mode: ${isBedtime ? 'Bedtime Story (Sleep-Fade Principle)' : 'Exciting Daytime Adventure'}
+
 - Target Audience: Age-appropriate, warm, and loving
+
 
 RULES:
 1. Length: Exactly 4 to 5 short paragraphs (approx. 220 to 280 words).
+
 2. Start with ${heroName} and their companions curiously entering the setting.
 3. The theme (${userTheme}) is addressed gently and comfortingly. Fears or challenges are resolved lovingly.
 ${isBedtime ? `4. SLEEP-FADE ENDING: The last paragraph must be extremely calm, visual, and sleepy. The world settles down, stars twinkle, a long yawn spreads, and ${heroName} falls asleep peacefully, protected and happy.` : '4. Conclude with a happy, encouraging sense of achievement.'}
@@ -188,13 +151,19 @@ Schreibe eine herzerwärmende, beruhigende Vorlesegeschichte für ein Kind namen
 
 PARAMETER:
 - Hauptfigur: ${heroName} ${compName}
+
 - Schauplatz / Welt: In ${worldName}
+
 - Kern-Thema / Erlebnis: ${userTheme}
+
 - Modus: ${isBedtime ? 'Einschlaf-Geschichte (Sleep-Fade-Prinzip)' : 'Spannendes Tages-Abenteuer'}
+
 - Zielgruppe: Altersgerecht, warmherzig und liebevoll
+
 
 AUFBAU & REGELN:
 1. Länge: Exakt 4 bis 5 kurze Absätze (ca. 220 bis 280 Wörter).
+
 2. Zu Beginn starten ${heroName} und die Begleiter neugierig in das Setting.
 3. Das Thema (${userTheme}) wird sanft und tröstend aufgegriffen. Ängste oder Herausforderungen lösen sich liebevoll auf.
 ${isBedtime ? `4. SLEEP-FADE-ENDE: Der letzte Absatz wird extrem ruhig, bildhaft und schläfrig. Die Welt kommt zur Ruhe, die Sterne funkeln, ein langes Gähnen breitet sich aus, und ${heroName} schläft friedlich, behütet und glücklich ein.` : '4. Schließe mit einem fröhlichen, mutmachenden Erfolgserlebnis ab.'}
@@ -298,6 +267,7 @@ ACTIVE MEMORY: If the child told you about a problem or worry earlier, ask about
       if (age === 'speech-delay') {
         systemInstruction += `\n\nSPECIAL CATEGORY: SPEECH DELAY (MAXIMUM EMPATHY & PATIENCE):
 1. The child may have a speech delay or is just learning to speak. Be the most patient, loving companion in the world.
+
 2. If the child only says single words or incomplete sentences, be extremely happy about every attempt!
 3. NEVER directly correct the child for mistakes. Lovingly repeat the child's thought as a complete, simple sentence (e.g. "Yes, great! The dog is running there!").
 4. Always answer in only 1 to a maximum of 2 short sentences.
@@ -324,6 +294,7 @@ ACTIVE MEMORY: If the child told you about a problem or worry earlier, ask about
         systemInstruction += `\n\nHOMEWORK HELP: You are a Socratic learning coach. 
 CRITICAL RULES:
 1. NO SPOILERS: NEVER give away the direct solution or final answer! Guide the child step-by-step with questions.
+
 2. STRICT CHECKING: Read the child's answers VERY CAREFULLY. If the child writes nonsense, guesses wildly, or the answer is wrong, DO NOT PRAISE THEM! Never say "Good job" to a wrong answer. Say friendly: "That is not quite right yet." and give a new small hint.`;
 
         if (subject === 'math') {
@@ -357,6 +328,7 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
       if (age === 'speech-delay') {
         systemInstruction += `\n\nBESONDERE KATEGORIE: SPRACHFÖRDERUNG & SPRACHVERZÖGERUNG (MAXIMALE EMPATHIE & GEDULD):
 1. Das Kind hat möglicherweise eine Sprachverzögerung oder lernt gerade erst sprechen. Sei der geduldigste, liebevollste Begleiter der Welt.
+
 2. Wenn das Kind nur einzelne Wörter, Laute oder unvollständige Sätze sagt, freue dich riesig über jeden Sprechversuch!
 3. Korrigiere das Kind NIEMALS direkt für Fehler. Wiederhole den Gedanken des Kindes liebevoll als vollständigen, einfachen Satz.
 4. Antworte immer in nur 1 bis maximal 2 kurzen Sätzen. Sprich in einfachen, warmherzigen Worten.
@@ -378,6 +350,7 @@ AKTIVES GEDÄCHTNIS: Wenn das Kind dir früher von einem Problem oder einer Sorg
         systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. 
 WICHTIGE REGELN:
 1. LÖSUNGS-VERBOT: Verrate NIEMALS direkt die Lösung oder das Endergebnis! Führe das Kind Schritt für Schritt dorthin.
+
 2. STRENGE PRÜFUNG: Lese die Antworten des Kindes GANZ GENAU. Wenn das Kind Quatsch schreibt, wild rät oder die Vokabel/Aufgabe falsch ist, LOBE ES NICHT! Sag freundlich: "Das stimmt leider noch nicht ganz." und gib einen neuen kleinen Tipp.`;
 
         if (subject === 'mathe') systemInstruction += `\nFACH MATHE: Nutze kleine Gedankenexperimente (Gummibärchen, Äpfel) zum Erklären.`;
@@ -529,6 +502,13 @@ app.post('/api/speak', async (req, res) => {
         .replace(/,/g, ', ... ');
     }
     const url = await generateTTS(ttsText, !!isSpeechDelay, lang);
+    
+    // NEU: Wenn ElevenLabs aus ist (url ist null), schicken wir einen absichtlichen 
+    // 404-Fehler. Deine Frontend-App fängt das ab und lädt sofort die Gratis-Stimme!
+    if (!url) {
+      return res.status(404).json({ error: 'ElevenLabs ist deaktiviert, nutze lokales TTS.' });
+    }
+    
     const fileName = url.replace('/cache/', ''); 
     const cachePath = path.join(CACHE_DIR, fileName);
     
