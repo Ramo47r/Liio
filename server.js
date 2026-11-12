@@ -1,5 +1,5 @@
 // ============================================================
-// KidsBot.ai / Lio Backend — Pures KI-Backend (100% ohne ElevenLabs & VIP-Schutz)
+// KidsBot.ai / Lio Backend — 100% Claude (Anthropic) Engine
 // ============================================================
 import express from 'express';
 import cors from 'cors';
@@ -12,119 +12,163 @@ const __dirname  = path.dirname(__filename);
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-latest';
+
 app.set('trust proxy', 1);
 
-// ── API Key Prüfung ──
-if (!process.env.GROQ_API_KEY) {
-  console.error('❌ GROQ_API_KEY fehlt in den Render-Einstellungen!');
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('❌ WICHTIG: ANTHROPIC_API_KEY fehlt in den Render Environment-Variablen!');
 }
 
-// Erlaubt alle Anfragen von deiner GitHub-Website
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
-app.use(express.json({ limit: '50kb' }));
-app.use(express.urlencoded({ extended: true }));
+// 1. CORS komplett öffnen (inklusive x-app-token und x-device-id aus der index.html!)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-app-token', 'x-device-id']
+}));
 
-// Der VIP-Schutz wurde komplett entfernt, damit die API frei erreichbar ist!
+// 2. Limit auf 10mb erhöht, damit Hausaufgaben-Fotos problemlos durchgehen!
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(express.static(__dirname));
 
-// ── API: Chat-Stream (Wasserhahn - Nur Text) ──
+// ── API: Chat-Stream mit Claude (Text & Foto-Erkennung) ──
 app.post('/api/chat-stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const { messages, childName, mode, mood, activeTopic, topicResolved, subject, emotion, age, lang } = req.body;
-    const isEn = lang === 'en';
+    const {
+      messages = [],
+      grade,
+      subject,
+      mode,
+      memory,
+      childName,
+      image
+    } = req.body;
 
-    let systemInstruction = "";
-    if (isEn) {
-      const nameStr = childName ? `The child's name is ${childName}. (IMPORTANT: Use the name VERY RARELY!) ` : '';
-      const modeStr = mode ? `Current mode: ${mode}. ` : '';
-      systemInstruction = `You are Lio, the child's best and most loyal friend. 
-IMPORTANT: Always answer in a warm, direct, and friendly tone using very short sentences. Use simple words. ${nameStr}${modeStr}
-LANGUAGE: Speak in English! Write numbers as normal digits (1, 2, 3).`;
-      
-      if (mode === 'homework') {
-        systemInstruction += `\n\nHOMEWORK HELP: You are a Socratic learning coach. NEVER give away the direct solution! Guide the child step-by-step.`;
-      }
-    } else {
-      const nameStr = childName ? `Das Kind heißt ${childName}. (WICHTIG: Nutze den Namen nur GANZ SELTEN!) ` : '';
-      const modeStr = mode ? `Aktueller Modus: ${mode}. ` : '';
-      systemInstruction = `Du bist Lio, der beste und loyalste Freund des Kindes. 
-WICHTIG: Antworte immer warmherzig, direkt und kumpelhaft in sehr kurzen Sätzen. Nutze einfache Wörter. ${nameStr}${modeStr}
-SPRACHE: Sprich auf Deutsch! Schreibe Zahlen als ganz normale Ziffern (1, 2, 3).`;
+    const nameStr = childName ? `Das Kind heißt ${childName}. (Nutze den Namen selten und natürlich.) ` : '';
+    const gradeStr = grade ? `Klassenstufe: ${grade}. ` : '';
+    const subjStr = subject ? `Aktuelles Fach: ${subject}. ` : '';
+    const modeStr = mode ? `Lernmodus: ${mode}. ` : '';
 
-      if (mode === 'homework') {
-        systemInstruction += `\n\nHAUSAUFGABEN-HILFE: Du bist ein Lern-Coach. Verrate NIEMALS direkt die Lösung! Führe das Kind Schritt für Schritt dorthin.`;
-      }
+    let systemInstruction = `Du bist Lio, ein herzlicher, geduldiger und kluger Lernbegleiter für Kinder.
+WICHTIG: Antworte immer warmherzig, direkt, ermutigend und in kurzen, kindgerechten Sätzen (ideal zum Vorlesen).
+${nameStr}${gradeStr}${subjStr}${modeStr}
+SPRACHE: Antworte auf Deutsch (außer ihr übt eine Fremdsprache wie Englisch). Schreibe Zahlen als normale Ziffern (1, 2, 3). Keine Sternchen-Regieanweisungen (*lächelt*) verwenden.
+
+PÄDAGOGIK & HAUSAUFGABEN:
+1. Verrate bei Aufgaben NIEMALS direkt die fertige Endlösung! Führe das Kind Schritt für Schritt mit kleinen Fragen und Hinweisen zur Lösung.
+2. Prüfe Antworten des Kindes genau. Wenn etwas falsch ist, lobe es nicht als richtig, sondern sage freundlich, was noch nicht ganz passt, und gib einen kleinen Tipp.`;
+
+    if (memory) {
+      systemInstruction += `\n\nBISHERIGER LERNSTAND DES KINDES:\n${memory}`;
     }
 
-    const formattedMessages = [
-      { role: 'system', content: systemInstruction },
-      ...messages.map(msg => ({ role: msg.role, content: msg.content }))
-    ];
+    // Nachrichten für Claude formatieren (inkl. Bild auf der aktuellsten Nutzer-Nachricht)
+    const claudeMessages = messages.map((msg, idx) => {
+      const isLastUser = (idx === messages.length - 1) && msg.role === 'user';
+      if (isLastUser && image) {
+        return {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/jpeg',
+                data: image
+              }
+            },
+            {
+              type: 'text',
+              text: String(msg.content || 'Bitte hilf mir bei dieser Aufgabe.')
+            }
+          ]
+        };
+      }
+      return {
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: String(msg.content || '')
+      };
+    });
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
-        messages: formattedMessages,
-        temperature: 0.7, 
+        model: CLAUDE_MODEL,
+        max_tokens: 600,
+        temperature: 0.6,
+        system: systemInstruction,
+        messages: claudeMessages,
         stream: true
       })
     });
 
-    if (!groqResponse.ok) {
-      throw new Error(`Groq Fehler ${groqResponse.status}`);
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('❌ Claude API Fehler:', response.status, errText);
+      throw new Error(`Claude API Fehler ${response.status}`);
     }
 
-    const reader = groqResponse.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let currentSentence = "";
-    let streamBuffer = "";
-    
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let currentSentence = '';
+    let streamBuffer = '';
+
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
-      
+
       streamBuffer += decoder.decode(value, { stream: true });
       const lines = streamBuffer.split('\n');
       streamBuffer = lines.pop();
-      
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-          const dataStr = trimmedLine.slice(6).trim();
-          if (!dataStr) continue;
 
-          try {
-            const data = JSON.parse(dataStr);
-            const token = data.choices[0]?.delta?.content || "";
-            currentSentence += token;
-            
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        const dataStr = trimmed.slice(6).trim();
+        if (!dataStr || dataStr === '[DONE]') continue;
+
+        try {
+          const event = JSON.parse(dataStr);
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            currentSentence += event.delta.text;
+
             if (/[.!?]\s*$/.test(currentSentence)) {
-              let cleanSentence = currentSentence.trim().replace(/\[.*?\]/g, '').replace(/\*.*?\*/g, '').replace(/\(.*?\)/g, '').trim();
-              if (cleanSentence.length > 2) {
+              const cleanSentence = currentSentence
+                .trim()
+                .replace(/\[.*?\]/g, '')
+                .replace(/\*.*?\*/g, '')
+                .trim();
+
+              if (cleanSentence.length > 1) {
                 res.write(`data: ${JSON.stringify({ text: cleanSentence })}\n\n`);
               }
-              currentSentence = ""; 
+              currentSentence = '';
             }
-          } catch (e) {
-            console.error('[Puffer] Repariert.');
           }
+        } catch (e) {
+          // Unvollständige JSON-Zeile ignorieren
         }
       }
     }
-    
+
     if (currentSentence.trim().length > 0) {
-      let cleanSentence = currentSentence.trim().replace(/\[.*?\]/g, '').replace(/\*.*?\*/g, '').replace(/\(.*?\)/g, '').trim();
-      if (cleanSentence.length > 2) {
+      const cleanSentence = currentSentence
+        .trim()
+        .replace(/\[.*?\]/g, '')
+        .replace(/\*.*?\*/g, '')
+        .trim();
+      if (cleanSentence.length > 0) {
         res.write(`data: ${JSON.stringify({ text: cleanSentence })}\n\n`);
       }
     }
@@ -134,16 +178,65 @@ SPRACHE: Sprich auf Deutsch! Schreibe Zahlen als ganz normale Ziffern (1, 2, 3).
 
   } catch (error) {
     console.error('Streaming Fehler:', error.message);
-    res.write(`data: {"error": "Lio ist kurz eingeschlafen!"}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
     res.end();
   }
 });
 
-// ── Dummy Endpunkt ──
+// ── API: Lernstand zusammenfassen (mit Claude) ──
+app.post('/api/summarize', async (req, res) => {
+  try {
+    const { messages = [], subject, grade } = req.body;
+    const summaryPrompt = `Fasse dieses Lerngespräch mit einem Kind (Klasse ${grade || 'unbekannt'}) kurz als JSON zusammen.
+Antworte NUR mit einem gültigen JSON-Objekt in diesem Format:
+{"subject":"mathe","topic":"Kurzes Thema","summary":"1 Satz Zusammenfassung","status":"verstanden","strengths":"Was klappte gut","difficulties":"Was fiel schwer"}
+Erlaubte Werte für status: "verstanden", "unsicher", "offen".`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 300,
+        temperature: 0.3,
+        system: summaryPrompt,
+        messages: [
+          {
+            role: 'user',
+            content: JSON.stringify(messages)
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) throw new Error('Summarize API Error');
+    const data = await response.json();
+    const rawText = data.content?.[0]?.text || '{}';
+    const match = rawText.match(/\{[\s\S]*\}/);
+    const parsed = match ? JSON.parse(match[0]) : {};
+
+    res.json({
+      subject: subject || parsed.subject || 'sonstiges',
+      topic: parsed.topic || 'Übung',
+      summary: parsed.summary || '',
+      status: parsed.status || 'offen',
+      strengths: parsed.strengths || '',
+      difficulties: parsed.difficulties || ''
+    });
+  } catch (e) {
+    res.json({ subject: req.body.subject || 'sonstiges', topic: 'Übung', summary: '', status: 'offen' });
+  }
+});
+
+// ── Dummy Endpunkt für alte TTS-Aufrufe ──
 app.post('/api/speak', (req, res) => {
-  res.status(404).json({ error: 'TTS wurde im Server deaktiviert.' });
+  res.status(404).json({ error: 'Lokales Browser-TTS aktiv.' });
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 KidsBot.ai Server läuft auf Port ${PORT} (API frei erreichbar)`);
+  console.log(`\n🚀 KidsBot.ai Server läuft mit Claude (${CLAUDE_MODEL}) auf Port ${PORT}`);
 });
