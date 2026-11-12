@@ -407,7 +407,7 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
         <b>Was passiert mit den Daten?</b><br>
         Spitzname, Klasse, Punkte und der Lernstand (kurze Notizen, was geübt wurde) werden nur auf diesem Gerät gespeichert.
         Fragen, Fotos von Aufgaben und eine kurze Zusammenfassung des Lernstands werden zur Beantwortung an unseren KI-Dienstleister (Anthropic) übermittelt,
-        die Sprachausgabe (falls aktiv) an ElevenLabs. Wir speichern keine Chatverläufe, Fotos oder Lernstände auf unserem Server.
+        die Sprachausgabe (falls aktiv) läuft rein lokal auf deinem Gerät. Wir speichern keine Chatverläufe, Fotos oder Lernstände auf unserem Server.
         <b>Bitte keine Gesichter, Namen oder Adressen fotografieren.</b>
         Details in der <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.
       </p>
@@ -656,8 +656,7 @@ function apiFetch(path, body) {
   });
 }
 
-/* ══ Fächer-Katalog (Deutschland) ══
-   min/max = Klassenstufen, in denen das Fach üblicherweise unterrichtet wird (Oberstufe = 11). */
+/* ══ Fächer-Katalog (Deutschland) ══ */
 const GROUPS = {
   kern: 'Hauptfächer', nawi: 'Naturwissenschaften & Technik', gesell: 'Gesellschaft & Werte',
   sprachen: 'Sprachen', kreativ: 'Kreativ & Sport', mehr: 'Mehr',
@@ -758,6 +757,7 @@ let skipAudio = false;
 let sessionPts = 0;
 let soundOn = LS.get('lio_sound', '1') === '1';
 let interactions = parseInt(LS.get('kb_interactions', '0'), 10) || 0;
+let currentSpeechId = 0; // WICHTIG FÜR TTS-STEUERUNG
 
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1258,81 +1258,68 @@ function clearTask(silent) {
 $('btnTaskX').addEventListener('click', (e) => { e.stopPropagation(); clearTask(); });
 $('taskImg').addEventListener('click', () => $('taskCard').classList.toggle('big'));
 
-/* ══ Sprachausgabe ══ */
-let speechGen = 0;
-let queue = [];
-let playing = false;
-let currentAudio = null;
-let currentResolve = null;
-
+/* ══ REINE GERÄTE-STIMME (TTS ohne Audio-Dateien) ══ */
 function setTalking(on) { $('robot').classList.toggle('talking', on); }
+
 function stopSpeaking() {
-  speechGen++;
-  queue = [];
-  playing = false;
-  if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
-  if (currentResolve) { currentResolve(); currentResolve = null; }
+  currentSpeechId++; // Bricht alle laufenden Queues ab
   if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} }
   setTalking(false);
 }
-function playAudio(src) {
+
+async function speakDevice(text, thisSpeechId) {
+  if (!soundOn || skipAudio || !('speechSynthesis' in window)) return;
+  
+  // Emoji & Klammern ausblenden fürs Vorlesen
+  let cleanText = text.trim()
+    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') 
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') 
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') 
+    .replace(/\[.*?\]/g, '')
+    .replace(/\*.*?\*/g, '')
+    .trim();
+
+  if (!cleanText) return;
+
   return new Promise((resolve) => {
-    currentResolve = resolve;
-    const a = new Audio(src);
-    currentAudio = a;
-    a.onended = a.onerror = () => { currentAudio = null; currentResolve = null; resolve(); };
-    a.play().catch(() => { currentAudio = null; currentResolve = null; resolve(); });
-  });
-}
-function speakDevice(text) {
-  return new Promise((resolve) => {
-    if (!('speechSynthesis' in window)) { resolve(); return; }
-    currentResolve = resolve;
-    const u = new SpeechSynthesisUtterance(text);
+    if (thisSpeechId !== currentSpeechId) { resolve(); return; }
+    
+    const u = new SpeechSynthesisUtterance(cleanText);
     const de = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('de'));
-    if (de.length) u.voice = de[0];
+    if (de.length) {
+      // Bevorzuge Systemstimmen, wenn möglich (oft schöner)
+      const preferred = de.find(v => v.name.includes('Anna') || v.name.includes('Google') || v.name.includes('Katja'));
+      u.voice = preferred || de[0];
+    }
+    
     u.lang = 'de-DE';
     u.rate = 1.0;
     u.pitch = 1.1;
-    u.onend = u.onerror = () => { currentResolve = null; resolve(); };
+    
+    u.onstart = () => {
+      if (thisSpeechId === currentSpeechId) setTalking(true);
+    };
+    
+    u.onend = u.onerror = () => {
+      if (thisSpeechId === currentSpeechId && !speechSynthesis.speaking) setTalking(false);
+      resolve();
+    };
+    
     speechSynthesis.speak(u);
   });
 }
-async function playNext(gen) {
-  if (gen !== speechGen) return;
-  const item = queue.shift();
-  if (!item) { playing = false; setTalking(false); return; }
-  playing = true;
-  setTalking(true);
-  if (item.audio) await playAudio(item.audio);
-  else await speakDevice(item.text);
-  playNext(gen);
-}
-function enqueue(item) {
-  if (!soundOn || skipAudio) return;
-  queue.push(item);
-  if (!playing) playNext(speechGen);
-}
-async function speakText(text) {
-  if (!soundOn || !text) return;
-  stopSpeaking();
-  skipAudio = false;
-  try {
-    const res = await apiFetch('/api/speak', { text });
-    if (!res.ok) throw new Error('kein Audio');
-    const url = URL.createObjectURL(await res.blob());
-    enqueue({ audio: url, text });
-  } catch (e) {
-    enqueue({ text });
-  }
-}
+
 function lioSay(text) {
   setBubble(text);
   lastReply = text;
-  speakText(text);
+  if (!soundOn || skipAudio) return;
+  stopSpeaking();
+  const thisSpeechId = currentSpeechId;
+  speakDevice(text, thisSpeechId);
 }
+
 $('robot').addEventListener('click', () => { skipAudio = true; stopSpeaking(); });
-$('btnRepeat').addEventListener('click', () => { if (lastReply) { skipAudio = false; speakText(lastReply); } });
+$('btnRepeat').addEventListener('click', () => { if (lastReply) { skipAudio = false; lioSay(lastReply); } });
 if ('speechSynthesis' in window) speechSynthesis.getVoices();
 
 /* ══ Spracheingabe ══ */
@@ -1411,14 +1398,16 @@ function logNotice(category) {
   } catch (e) {}
 }
 
-/* ══ Nachricht senden (Streaming von Claude) ══ */
+/* ══ Nachricht senden (Reines Text-Streaming von Claude & lokales Vorlesen) ══ */
 async function sendMessage(userText) {
   if (!userText || !userText.trim() || busy || !me) return;
   userText = userText.trim().slice(0, 500);
 
   busy = true;
   skipAudio = false;
-  stopSpeaking();
+  stopSpeaking(); // Stoppt laufende Sprache und erhöht currentSpeechId
+  const thisSpeechId = currentSpeechId; 
+  
   renderQuick([]);
   $('micBtn').disabled = true;
   $('robot').classList.add('thinking');
@@ -1453,23 +1442,38 @@ async function sendMessage(userText) {
     let buf = '';
     let full = '';
 
+    setBubble("");
+
     while (true) {
+      if (thisSpeechId !== currentSpeechId) break;
+
       const { done, value } = await reader.read();
       if (done) break;
+      
       buf += dec.decode(value, { stream: true });
       let i;
       while ((i = buf.indexOf('\n\n')) >= 0) {
         const ev = buf.slice(0, i);
         buf = buf.slice(i + 2);
         if (!ev.startsWith('data: ')) continue;
+        
         const d = ev.slice(6).trim();
         if (!d || d === '[DONE]') continue;
-        const p = JSON.parse(d);
-        if (p.error) throw new Error(p.error);
-        full += (full ? ' ' : '') + p.text;
-        setBubble(full);
-        $('robot').classList.remove('thinking');
-        enqueue({ audio: p.audio || null, text: p.text });
+        
+        try {
+          const p = JSON.parse(d);
+          if (p.error) throw new Error(p.error);
+          
+          full += (full ? ' ' : '') + p.text;
+          setBubble(full.trim());
+          $('robot').classList.remove('thinking');
+          
+          // Direktes Vorlesen des Satzes über den Browser (ohne Audio-Link!)
+          speakDevice(p.text, thisSpeechId);
+
+        } catch (e) {
+          console.error('[Streaming-JSON-Error]', e);
+        }
       }
     }
 
@@ -1481,6 +1485,7 @@ async function sendMessage(userText) {
     renderQuick(FOLLOWUPS);
     if (sessionPts < SESSION_POINTS_CAP) { sessionPts += 2; addPoints(2, '+2 ⭐'); }
     if (signal) setTimeout(() => $('panelHelp').classList.add('show'), 900);
+
   } catch (err) {
     console.error('[sendMessage]', err.message);
     messages.pop();
