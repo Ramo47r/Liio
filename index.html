@@ -632,7 +632,7 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
 <script>
 'use strict';
 
-/* ══ Konfiguration & Helfer (HIER WURDE DER LINK ZU RENDER EINGETRAGEN) ══ */
+/* ══ Konfiguration & Helfer (FESTE VERKNÜPFUNG ZU RENDER) ══ */
 const CFG = Object.assign({ apiBase: 'https://kidsbot.ai', appToken: '' }, window.LIO_CONFIG || {});
 const $ = (id) => document.getElementById(id);
 const LS = {
@@ -1287,7 +1287,6 @@ async function speakDevice(text, thisSpeechId) {
     const u = new SpeechSynthesisUtterance(cleanText);
     const de = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('de'));
     if (de.length) {
-      // Bevorzuge Systemstimmen, wenn möglich (oft schöner)
       const preferred = de.find(v => v.name.includes('Anna') || v.name.includes('Google') || v.name.includes('Katja'));
       u.voice = preferred || de[0];
     }
@@ -1468,7 +1467,7 @@ async function sendMessage(userText) {
           setBubble(full.trim());
           $('robot').classList.remove('thinking');
           
-          // Direktes Vorlesen des Satzes über den Browser (ohne Audio-Link!)
+          // Direktes Vorlesen des Satzes über den Browser
           speakDevice(p.text, thisSpeechId);
 
         } catch (e) {
@@ -1682,8 +1681,11 @@ function boot() {
 }
 document.addEventListener('DOMContentLoaded', boot);
 
+// Entfernt alte Service-Worker-Caches automatisch
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    for (let reg of regs) reg.unregister();
+  });
 }
 window.addEventListener('unhandledrejection', e => console.warn('[promise]', e.reason));
 </script>
