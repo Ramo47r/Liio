@@ -1,1693 +1,229 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Lio – Dein Lernabenteuer</title>
-<meta name="theme-color" content="#BFE3FF">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Lio">
-<meta name="description" content="Lio hilft dir Schritt für Schritt bei Hausaufgaben und Nachhilfe.">
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/assets/icon-180.png">
-<style>
-:root{
-  --navy:#0B2A5B;--navy-2:#3F5F8F;--navy-3:#6F88B0;
-  --blue-1:#38A0FF;--blue-2:#0B5ED7;
-  --glass:rgba(255,255,255,.72);--glass-2:rgba(255,255,255,.88);
-  --line:rgba(255,255,255,.95);--line-2:rgba(11,42,91,.12);
-  --coral:#FF6B7F;--gold:#FFB52E;--green:#12805F;
-  --shadow:0 12px 30px rgba(31,95,170,.18);
-  --font:'Nunito',ui-rounded,'SF Pro Rounded','Segoe UI',system-ui,sans-serif;
-  --r-md:20px;--r-lg:30px;
-
-  /* Zimmer & Tisch: Höhe der Tischkante, Größe/Position des Roboters */
-  --top-h:76px;
-  --desk-top:clamp(250px,35vh,390px);
-  --robot-w:120%;
-  --robot-sink:-24%;
-  --room-img:none;
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;font-family:var(--font);color:var(--navy)}
-body{
-  height:100vh;height:100dvh;position:relative;
-  background:
-    radial-gradient(60% 50% at 8% 30%,rgba(120,200,140,.28) 0%,transparent 60%),
-    radial-gradient(50% 45% at 22% 0%,rgba(255,255,255,.95) 0%,transparent 70%),
-    radial-gradient(45% 40% at 95% 25%,rgba(255,255,255,.7) 0%,transparent 70%),
-    linear-gradient(180deg,#BFE3FF 0%,#E6F3FF 40%,#D9ECFF 62%,#8ED4F5 100%)
-}
-body::after{
-  content:'';position:fixed;left:0;right:0;bottom:0;height:20vh;z-index:0;pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 200' preserveAspectRatio='none'%3E%3Cpath fill='%2352C4F0' fill-opacity='.55' d='M0 90C240 20 480 150 720 90S1200 30 1440 100V200H0Z'/%3E%3Cpath fill='%232E9BE6' fill-opacity='.45' d='M0 130C300 70 520 180 780 130S1220 90 1440 140V200H0Z'/%3E%3C/svg%3E") center bottom/100% 100% no-repeat
-}
-.screen{display:none;flex-direction:column;align-items:center;position:absolute;inset:0;z-index:1}
-.screen.active{display:flex}
-button{font-family:inherit;color:inherit}
-select{font-family:inherit}
-
-/* ── Zimmer-Hintergrund (nur im Menü und im Chat sichtbar) ── */
-#bgScene{
-  position:fixed;left:0;right:0;top:0;height:calc(var(--desk-top) + env(safe-area-inset-top,0px) + 30px);
-  z-index:0;pointer-events:none;overflow:hidden;display:none;
-  background:var(--room-img) center top/cover no-repeat
-}
-body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block}
-#bgScene .d{position:absolute;filter:blur(1.4px);opacity:.95}
-.d-light{
-  inset:0;filter:blur(22px)!important;opacity:.8;
-  background:linear-gradient(90deg,transparent 0 26%,rgba(255,255,255,.55) 26% 34%,transparent 34% 47%,rgba(255,255,255,.5) 47% 56%,transparent 56% 70%,rgba(255,255,255,.45) 70% 79%,transparent 79%)
-}
-.d-books{left:0;bottom:0;height:clamp(56px,9vh,96px);aspect-ratio:240/120}
-.d-plant-l{left:3vw;bottom:clamp(30px,6vh,60px);height:clamp(150px,27vh,270px);aspect-ratio:220/300}
-.d-globe{right:1vw;bottom:0;height:clamp(110px,22vh,210px);aspect-ratio:170/210}
-.d-cup{right:calc(1vw + clamp(90px,18vh,170px) + 10px);bottom:0;height:clamp(80px,14vh,140px);aspect-ratio:130/170}
-@media (max-width:1500px){.d-cup{display:none}}
-@media (max-width:1100px){.d-globe{display:none}}
-@media (max-width:760px){.d-books{display:none}.d-plant-l{opacity:.45;left:-4vw}}
-
-/* ── Karten, Buttons, Eingaben (Gate, Panels) ── */
-.card{
-  background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 22px;
-  width:380px;max-width:94%;max-height:92vh;overflow-y:auto;text-align:center;box-shadow:0 26px 60px rgba(20,70,160,.28)
-}
-.card.wide{width:620px}
-.card h2{font-size:21px;margin-bottom:12px;color:var(--navy);font-weight:900}
-.card p{font-size:14.5px;color:var(--navy-2);line-height:1.5;margin-bottom:14px;font-weight:700}
-.note{font-size:12.5px!important;background:#EEF5FF;border:1px solid #D5E5FB;padding:12px;border-radius:14px;text-align:left}
-.note a{color:var(--blue-2)}
-.card input[type=text],.card input[type=number],.card input[type=password]{
-  width:100%;padding:13px;background:#F4F8FF;border:2px solid #D5E5FB;border-radius:14px;margin-bottom:12px;
-  font-size:17px;text-align:center;font-weight:800;color:var(--navy);font-family:inherit
-}
-.card input:focus{outline:none;border-color:var(--blue-1)}
-.btn{
-  width:100%;padding:15px 20px;border:none;border-radius:16px;cursor:pointer;color:#fff;
-  background:linear-gradient(135deg,var(--blue-1),var(--blue-2));font-size:15px;font-weight:900;
-  letter-spacing:.4px;box-shadow:0 8px 22px rgba(11,94,215,.32);margin-top:6px
-}
-.btn:disabled{opacity:.5}
-.btn.ghost{background:#fff;color:var(--navy-2);border:2px solid #D5E5FB;box-shadow:none}
-.btn.small{padding:9px 12px;font-size:12px;width:auto;margin:0}
-.consent{display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:13px;font-weight:700;color:var(--navy-2);margin-bottom:12px}
-.consent input{width:22px;height:22px;flex-shrink:0;accent-color:var(--blue-2)}
-.hold{position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-.hold i{position:absolute;inset:0;background:rgba(255,255,255,.4);width:0}
-.hold span{position:relative}
-.circle{
-  width:48px;height:48px;border-radius:50%;background:var(--glass-2);border:1px solid var(--line);
-  font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)
-}
-.circle:active{transform:scale(.94)}
-.circle.dark{background:#2D4B7A;color:#fff;border:none}
-
-/* ── Gate / Wer lernt / Klassen ── */
-#screen-gate{justify-content:center;padding:20px}
-.big-title{font-size:clamp(28px,6vw,40px);font-weight:900;color:var(--navy);line-height:1.1;text-align:center}
-.big-title b{color:var(--blue-2)}
-.sub-title{color:var(--navy-2);font-weight:800;margin:8px 0 14px;text-align:center}
-#screen-who,#screen-grade{justify-content:flex-start;padding:calc(env(safe-area-inset-top,0px) + 24px) 16px 16px}
-.scroll{flex:1;width:100%;max-width:420px;overflow-y:auto;padding-bottom:24vh}
-.group-label{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--navy-3);font-weight:900;margin:16px 0 8px;text-align:left}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.grid1{display:grid;grid-template-columns:1fr;gap:10px}
-.grade-card,.who-card{
-  background:var(--glass-2);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 6px;cursor:pointer;
-  font-weight:900;font-size:15px;color:var(--navy);text-align:center;box-shadow:var(--shadow)
-}
-.who-card{font-size:20px;padding:20px 10px}
-.who-card small{display:block;font-size:12px;font-weight:800;color:var(--navy-2);margin-top:4px}
-.grade-card:active,.who-card:active{transform:scale(.96);border-color:var(--blue-1)}
-
-/* ── Gemeinsames Layout für Menü & Chat: Kopfzeile, Zimmer (Roboter), Tisch ── */
-#screen-hub,#screen-main{justify-content:flex-start}
-.hub-top,.chat-top{
-  width:100%;max-width:1500px;flex-shrink:0;position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;
-  height:calc(var(--top-h) + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) clamp(14px,3vw,48px) 0
-}
-.room{position:relative;z-index:1;width:100%;height:calc(var(--desk-top) - var(--top-h));flex-shrink:0}
-.room-inner{max-width:1100px;height:100%;margin:0 auto;padding:0 clamp(14px,3vw,40px);display:flex;align-items:center;justify-content:space-between;gap:12px}
-.headline{
-  font-size:clamp(26px,5.6vh,56px);font-weight:900;line-height:1.05;letter-spacing:-.5px;color:var(--navy);
-  text-shadow:0 2px 20px rgba(255,255,255,.95),0 0 5px rgba(255,255,255,.7)
-}
-.robot-box{position:relative;height:100%;aspect-ratio:1.05/1;flex-shrink:0}
-.desk{
-  position:relative;z-index:2;width:100%;flex:1;min-height:0;display:flex;flex-direction:column;
-  background:linear-gradient(180deg,#F7FBFF 0%,#EAF4FF 45%,rgba(190,226,250,.92) 100%);
-  box-shadow:0 -8px 28px rgba(255,255,255,.75),inset 0 2px 0 #fff
-}
-.desk-scroll{flex:1;min-height:0;overflow-y:auto}
-.desk-inner{max-width:1100px;margin:0 auto;padding:clamp(12px,2vh,20px) clamp(14px,3vw,40px) 12px}
-
-/* ── Hub-Kopfzeile ── */
-.who{display:flex;align-items:center;gap:14px;min-width:0}
-.avatar{
-  width:clamp(46px,7.4vh,62px);height:clamp(46px,7.4vh,62px);border-radius:50%;border:none;cursor:pointer;flex-shrink:0;
-  background:linear-gradient(160deg,#B9C5D6,#8F9EB5);box-shadow:var(--shadow);display:flex;align-items:flex-end;justify-content:center;overflow:hidden
-}
-.avatar svg{width:70%;height:70%}
-.hello{min-width:0}
-.hello b{display:block;font-size:clamp(20px,3.4vh,32px);font-weight:900;color:var(--navy);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hello span{display:block;font-size:clamp(13px,1.9vh,17px);font-weight:700;color:var(--navy-2)}
-.top-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.grade-pill{
-  position:relative;display:flex;align-items:center;gap:8px;background:var(--glass-2);border:1px solid var(--line);
-  border-radius:50px;padding:0 16px 0 14px;height:clamp(44px,6.4vh,52px);box-shadow:var(--shadow);font-weight:900;font-size:clamp(14px,2.1vh,18px)
-}
-.grade-pill select{appearance:none;-webkit-appearance:none;border:none;background:transparent;font-size:inherit;font-weight:900;color:var(--navy);padding-right:18px;cursor:pointer;outline:none}
-.grade-pill::after{content:'⌄';position:absolute;right:14px;top:50%;transform:translateY(-62%);pointer-events:none;color:var(--navy-2)}
-
-/* ── Fach-Kacheln (klein und schmal) ── */
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,1.2vw,14px);margin-bottom:clamp(8px,1.4vh,12px)}
-.tile{
-  position:relative;border:none;border-radius:22px;padding:clamp(10px,1.4vw,16px);color:#fff;text-align:left;cursor:pointer;
-  min-height:clamp(84px,13vh,128px);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;
-  box-shadow:0 10px 22px rgba(20,70,160,.26),inset 0 1px 0 rgba(255,255,255,.5)
-}
-.tile:active{transform:scale(.97)}
-.tile .ti{position:absolute;top:clamp(8px,1.4vh,12px);left:clamp(12px,1.4vw,16px);font-size:clamp(26px,4vh,40px);line-height:1;filter:drop-shadow(0 3px 5px rgba(0,0,0,.18))}
-.tile h3{font-size:clamp(17px,2.5vh,24px);font-weight:900;line-height:1.1}
-.tile small{display:block;font-size:clamp(11px,1.5vh,14px);font-weight:700;opacity:.93;margin-top:1px;padding-right:34px}
-.tile .go{position:absolute;right:10px;bottom:10px;width:clamp(28px,4vh,36px);height:clamp(28px,4vh,36px);border-radius:50%;background:rgba(255,255,255,.34);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900}
-.t-blue{background:linear-gradient(145deg,#3FA6FF,#0B5ED7)}
-.t-purple{background:linear-gradient(145deg,#B684FF,#6E3FE0)}
-.t-teal{background:linear-gradient(145deg,#45DDCB,#14958C)}
-.t-orange{background:linear-gradient(145deg,#FFCF5C,#FF9A1F)}
-
-/* ── Hinweis-Karte unter den Kacheln ── */
-.hint-card{
-  display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;background:rgba(255,255,255,.78);border:1px solid #fff;
-  border-radius:22px;padding:clamp(8px,1.4vh,12px) 18px;margin-bottom:clamp(8px,1.4vh,12px);box-shadow:0 6px 16px rgba(31,95,170,.1)
-}
-.hint-card p{flex:1 1 260px;font-size:clamp(13px,1.9vh,16px);font-weight:800;color:var(--navy-2);line-height:1.35}
-.mode-row{display:flex;flex-wrap:wrap;gap:8px}
-.mode{background:#fff;border:2px solid #DCE9FB;border-radius:50px;padding:7px 13px;font-weight:800;color:var(--navy);font-size:clamp(12px,1.7vh,14px);cursor:pointer}
-.mode.sel{border-color:var(--blue-1);background:#E6F1FF}
-#resumeBox{flex-basis:100%}
-#resumeBox:empty{display:none}
-.resume{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#FFCB57,#FF9A1F);color:#fff;border:none;border-radius:50px;padding:9px 16px;font-weight:900;font-size:13.5px;cursor:pointer;box-shadow:0 8px 18px rgba(255,154,31,.35);max-width:100%;text-align:left}
-
-.other-row{
-  width:100%;display:flex;align-items:center;gap:14px;background:var(--glass-2);border:1px solid var(--line);border-radius:26px;
-  padding:clamp(8px,1.5vh,14px) 20px;cursor:pointer;text-align:left;box-shadow:var(--shadow);margin-bottom:clamp(8px,1.4vh,12px)
-}
-.other-row .oi{width:clamp(36px,5.4vh,48px);height:clamp(36px,5.4vh,48px);border-radius:50%;background:linear-gradient(145deg,#B684FF,#7C4DE8);display:flex;align-items:center;justify-content:center;font-size:clamp(18px,2.8vh,24px);flex-shrink:0}
-.other-row b{display:block;font-size:clamp(15px,2.2vh,20px);font-weight:900}
-.other-row small{display:block;font-size:clamp(11px,1.6vh,14px);font-weight:700;color:var(--navy-2)}
-.other-row .chev{margin-left:auto;font-size:26px;color:var(--navy-2);font-weight:900}
-
-.input-card{
-  display:flex;align-items:center;gap:clamp(10px,1.6vw,22px);background:rgba(255,255,255,.86);border:1px solid var(--line);
-  border-radius:30px;padding:clamp(8px,1.6vh,14px) clamp(14px,2vw,24px);box-shadow:var(--shadow)
-}
-.input-card .lbl{font-weight:900;font-size:clamp(14px,2.2vh,19px);line-height:1.2;flex:0 0 auto;max-width:24%}
-.opts{display:flex;gap:clamp(8px,1.4vw,16px);flex:1;min-width:0}
-.opt{
-  flex:1;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:50px;border:2px solid;cursor:pointer;
-  padding:clamp(9px,1.8vh,15px) 8px;font-weight:900;font-size:clamp(14px,2.2vh,20px);white-space:nowrap
-}
-.opt:active{transform:scale(.97)}
-.opt.round{flex:0 0 auto;width:clamp(46px,6.6vh,58px);height:clamp(46px,6.6vh,58px);padding:0;border-color:#D5E5FB;background:#fff}
-.opt .oi{font-size:1.45em;line-height:1}
-.opt.photo{background:linear-gradient(180deg,#EEF5FF,#D9EAFF);color:#1E5FD1;border-color:#BCD7FF}
-.opt.speak{background:linear-gradient(180deg,#EDFBF5,#D2F4E6);color:var(--green);border-color:#A9E5CD}
-.opt.write{background:linear-gradient(180deg,#F5EEFF,#E6DAFF);color:#5B35C9;border-color:#CDB8FF}
-.opt.speak.listening{background:linear-gradient(180deg,#FFE4E8,#FFC9D1);color:#C2243C;border-color:#FF9FAE;animation:ring 1.2s ease-out infinite}
-.opt:disabled{opacity:.5}
-@keyframes ring{0%{box-shadow:0 0 0 0 rgba(255,107,127,.45)}100%{box-shadow:0 0 0 18px rgba(255,107,127,0)}}
-
-.hub-foot{
-  width:100%;max-width:1500px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;position:relative;z-index:3;
-  padding:6px clamp(14px,3vw,48px) calc(12px + env(safe-area-inset-bottom,0px))
-}
-.points{display:inline-flex;align-items:center;gap:10px;background:#1F4F91;color:#fff;border:none;border-radius:50px;padding:9px 20px 9px 12px;font-weight:900;font-size:clamp(14px,2.1vh,18px);cursor:pointer;box-shadow:0 10px 22px rgba(15,60,130,.4)}
-.points .st{font-size:1.5em;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))}
-.points.bump{animation:bump .5s ease}
-@keyframes bump{0%,100%{transform:scale(1)}40%{transform:scale(1.14)}}
-.cheer{font-family:'Segoe Script','Bradley Hand','Comic Sans MS',cursive;font-style:italic;font-weight:700;color:#fff;font-size:clamp(15px,2.5vh,23px);text-shadow:0 2px 6px rgba(20,70,160,.45);transform:rotate(-4deg)}
-
-/* ── Chat ── */
-.subj-pill{background:var(--glass-2);border:1px solid var(--line);border-radius:50px;padding:10px 18px;font-weight:900;font-size:clamp(13px,2vh,17px);box-shadow:var(--shadow);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.chat-room .room-inner{justify-content:flex-end}
-.chat-inner{max-width:1100px;width:100%;margin:0 auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:clamp(10px,1.8vh,16px) clamp(14px,3vw,40px) calc(10px + env(safe-area-inset-bottom,0px))}
-.chat-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:8px}
-.task-card{display:none;position:relative;background:var(--glass-2);border:2px solid #BCD7FF;border-radius:var(--r-md);padding:8px;box-shadow:var(--shadow);flex-shrink:0}
-.task-card.show{display:block}
-.task-card img{display:block;width:100%;max-height:24vh;object-fit:contain;border-radius:12px;background:#fff;cursor:zoom-in}
-.task-card .x{position:absolute;top:-10px;right:-6px;width:32px;height:32px;border-radius:50%;border:1px solid #D5E5FB;background:#fff;font-size:14px;cursor:pointer;box-shadow:var(--shadow)}
-.task-card.big{position:fixed;inset:0;z-index:50;border-radius:0;background:rgba(11,42,91,.92);display:flex;align-items:center;justify-content:center;padding:16px;border:none}
-.task-card.big img{max-height:92vh;cursor:zoom-out}
-.bubble{
-  background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 22px;box-shadow:var(--shadow);
-  font-size:clamp(16px,2.5vh,23px);font-weight:800;line-height:1.45;color:var(--navy);min-height:56px;flex-shrink:0
-}
-.dots span{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--blue-1);margin:0 3px;animation:dot 1.4s ease-in-out infinite}
-.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
-@keyframes dot{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1.25)}}
-.chips{display:flex;flex-wrap:wrap;gap:8px;min-height:4px}
-.chip{background:#fff;border:2px solid #D5E5FB;border-radius:50px;padding:10px 16px;font-size:14px;font-weight:900;cursor:pointer;color:var(--navy);box-shadow:0 6px 14px rgba(31,95,170,.12)}
-.chip:active{transform:scale(.96);border-color:var(--blue-1)}
-.chat-input{flex-shrink:0;flex-direction:column;align-items:stretch;gap:6px}
-.chat-input .opts{width:100%}
-.hint{text-align:center;font-size:12.5px;color:var(--navy-2);font-weight:800;min-height:16px}
-
-/* Roboter (gemeinsam) – sitzt hinter der Tischkante */
-.robot-wrap{
-  position:absolute;bottom:var(--robot-sink);left:50%;transform:translateX(-50%);width:var(--robot-w);cursor:pointer;
-  filter:drop-shadow(0 16px 26px rgba(20,70,160,.35));animation:float 3.6s ease-in-out infinite
-}
-.robot-wrap.talking{animation:talk 1.1s ease-in-out infinite}
-.robot-wrap.thinking{animation:think 2s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
-@keyframes talk{0%,100%{transform:translateX(-50%) translateY(-4px)}50%{transform:translateX(-50%) translateY(-13px)}}
-@keyframes think{0%,100%{transform:translateX(-50%) rotate(-1.5deg)}50%{transform:translateX(-50%) rotate(1.5deg)}}
-.robot-container{position:relative;width:100%;margin-left:22%}
-.robot-container img{display:block;width:100%;height:auto;pointer-events:none}
-.robot-container .lio-zu{position:absolute;top:0;left:0;height:100%;object-fit:contain;opacity:0}
-.robot-container.is-blinking .lio-offen{opacity:0}
-.robot-container.is-blinking .lio-zu{opacity:1}
-
-.pop{
-  position:fixed;top:calc(env(safe-area-inset-top,0px) + 76px);right:20px;z-index:60;background:#fff;color:#B7791F;font-weight:900;
-  padding:8px 16px;border-radius:50px;box-shadow:var(--shadow);opacity:0;pointer-events:none
-}
-.pop.show{animation:popUp 1.3s ease forwards}
-@keyframes popUp{0%{opacity:0;transform:translateY(10px)}20%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
-
-.text-overlay{
-  position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.97);
-  border-top:1px solid var(--line-2);border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:0 -12px 40px rgba(20,70,160,.25);
-  padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(110%);transition:transform .3s
-}
-.text-overlay.show{transform:translateY(0)}
-.text-overlay input{flex:1;min-width:0;padding:14px 18px;border:2px solid #D5E5FB;background:#F4F8FF;border-radius:50px;font-size:16px;color:var(--navy);font-family:inherit;font-weight:700}
-.text-overlay input:focus{outline:none;border-color:var(--blue-1)}
-.text-overlay .send{width:50px;height:50px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--blue-1),var(--blue-2));color:#fff;font-size:20px;cursor:pointer}
-
-/* ── Panels ── */
-.panel{position:fixed;inset:0;background:rgba(11,42,91,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
-.panel.show{display:flex}
-.panel .card{text-align:left}
-.panel label{display:block;margin:12px 0 6px;font-size:13px;font-weight:900;color:var(--navy-2)}
-.stat{background:#EEF5FF;border:1px solid #D5E5FB;border-radius:16px;padding:14px;text-align:center;margin-bottom:12px}
-.stat b{display:block;font-size:28px;color:var(--blue-2);font-weight:900}
-.stat span{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--navy-2);font-weight:800}
-.note-row{padding:9px 0;border-bottom:1px solid var(--line-2);font-size:14px;color:var(--navy-2);font-weight:700}
-.note-time{color:var(--navy-3);font-size:12px;margin-top:2px}
-.help-box{font-size:14.5px;line-height:1.7;background:#EEF5FF;border:1px solid #D5E5FB;border-radius:16px;padding:15px;color:var(--navy-2);font-weight:700}
-.help-box a{color:var(--blue-2);font-weight:900;text-decoration:none}
-.help-box a.em{color:#D8324B}
-.kid-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line-2);font-weight:900;font-size:14px;flex-wrap:wrap}
-.kid-row div{display:flex;gap:6px}
-.prog-subject{background:#F4F8FF;border:1px solid #D5E5FB;border-radius:14px;padding:12px;margin-bottom:10px}
-.prog-subject h3{font-size:15px;color:var(--navy);margin-bottom:6px}
-.prog-subject .t{font-size:13.5px;color:var(--navy-2);line-height:1.45;margin-top:4px;font-weight:700}
-.prog-subject .meta{font-size:12.5px;color:var(--green);margin-top:6px;font-weight:800}
-.sub-card{
-  background:#fff;border:2px solid #E0ECFF;border-radius:var(--r-md);padding:12px 4px;cursor:pointer;text-align:center;font-weight:900;
-  font-size:12.5px;line-height:1.2;min-height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--navy)
-}
-.sub-card .ic{font-size:24px}
-.sub-card small{font-size:10.5px;color:var(--blue-2);font-weight:800}
-.sub-card:active{transform:scale(.96);border-color:var(--blue-1)}
-hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
-
-/* ── Schmale Bildschirme (Handy hochkant) ── */
-@media (max-width:760px){
-  :root{--top-h:66px;--desk-top:clamp(230px,31vh,300px)}
-  .tiles{grid-template-columns:repeat(2,1fr)}
-  .headline{font-size:clamp(22px,3.8vh,30px)}
-  .robot-box{width:44vw;aspect-ratio:auto}
-  .chat-room .room-inner{justify-content:center}
-  .input-card{flex-direction:column;align-items:stretch;gap:8px;border-radius:26px}
-  .input-card .lbl{max-width:none;font-size:15px}
-  .hello span{display:none}
-  .top-actions{gap:6px}
-  .circle{width:42px;height:42px}
-  .opt{padding:12px 4px;gap:6px}
-  .opt .ol{font-size:13px}
-  .cheer{display:none}
-}
-</style>
-</head>
-<body>
-
-<!-- Zimmer-Hintergrund: Fensterlicht, Pflanze, Bücher, Globus, Stiftebecher -->
-<div id="bgScene" aria-hidden="true">
-  <div class="d d-light"></div>
-
-  <svg class="d d-plant-l" viewBox="0 0 220 300">
-    <defs><linearGradient id="gLeaf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8BDB93"/><stop offset="1" stop-color="#2F9E5B"/></linearGradient></defs>
-    <g transform="translate(110 250)" fill="url(#gLeaf)">
-      <ellipse cx="0" cy="-90" rx="22" ry="84" transform="rotate(-58)"/>
-      <ellipse cx="0" cy="-96" rx="24" ry="92" transform="rotate(-36)"/>
-      <ellipse cx="0" cy="-100" rx="24" ry="96" transform="rotate(-14)"/>
-      <ellipse cx="0" cy="-100" rx="24" ry="96" transform="rotate(10)"/>
-      <ellipse cx="0" cy="-94" rx="24" ry="90" transform="rotate(32)"/>
-      <ellipse cx="0" cy="-88" rx="22" ry="82" transform="rotate(56)"/>
-    </g>
-    <path d="M72 240h76l-10 58H82z" fill="#F4F7FB"/>
-    <rect x="64" y="232" width="92" height="14" rx="7" fill="#fff"/>
-  </svg>
-
-  <svg class="d d-books" viewBox="0 0 240 120">
-    <rect x="10" y="78" width="200" height="38" rx="6" fill="#C7B3FF"/><rect x="10" y="88" width="200" height="4" fill="#fff" fill-opacity=".5"/>
-    <rect x="24" y="42" width="180" height="34" rx="6" fill="#FFD3A1"/><rect x="24" y="52" width="180" height="4" fill="#fff" fill-opacity=".5"/>
-    <rect x="4" y="8" width="190" height="32" rx="6" fill="#A9D6FF"/><rect x="4" y="18" width="190" height="4" fill="#fff" fill-opacity=".5"/>
-  </svg>
-
-  <svg class="d d-cup" viewBox="0 0 130 170">
-    <g stroke-linecap="round" stroke-width="9" fill="none">
-      <line x1="38" y1="72" x2="26" y2="14" stroke="#FF7A8A"/>
-      <line x1="54" y1="72" x2="50" y2="8" stroke="#FFC24A"/>
-      <line x1="70" y1="72" x2="74" y2="10" stroke="#38A0FF"/>
-      <line x1="86" y1="72" x2="98" y2="16" stroke="#3FD9C8"/>
-      <line x1="98" y1="72" x2="114" y2="30" stroke="#8E6BFF"/>
-    </g>
-    <rect x="22" y="70" width="86" height="96" rx="16" fill="#B9A6F5"/>
-    <rect x="22" y="70" width="86" height="14" rx="7" fill="#fff" fill-opacity=".35"/>
-  </svg>
-
-  <svg class="d d-globe" viewBox="0 0 170 210">
-    <defs><radialGradient id="gGlobe" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#8FD0FF"/><stop offset="1" stop-color="#1D6FD8"/></radialGradient></defs>
-    <path d="M22 96A64 70 0 0 0 148 96" fill="none" stroke="#7A8CA8" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="85" cy="82" r="62" fill="url(#gGlobe)"/>
-    <path d="M50 60c10-12 26-14 34-6s-2 16-12 18-8 14-18 10-12-12-4-22z" fill="#6CCB7A" fill-opacity=".9"/>
-    <path d="M100 86c10-4 24 0 26 12s-10 22-20 20-12-14-6-32z" fill="#6CCB7A" fill-opacity=".9"/>
-    <ellipse cx="85" cy="82" rx="26" ry="62" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="2"/>
-    <ellipse cx="68" cy="52" rx="16" ry="9" fill="#fff" fill-opacity=".35" transform="rotate(-30 68 52)"/>
-    <rect x="80" y="146" width="10" height="34" fill="#7A8CA8"/>
-    <ellipse cx="85" cy="188" rx="40" ry="10" fill="#7A8CA8"/>
-  </svg>
-</div>
-
-<!-- Eltern-Gate / Ersteinrichtung -->
-<div id="screen-gate" class="screen">
-  <div class="card">
-    <h2>🔒 Nur für Erwachsene</h2>
-
-    <div id="mathBox">
-      <p>Diese App wird von Erwachsenen eingerichtet. Bitte rechne:</p>
-      <span id="mathQ" style="font-size:26px;font-weight:900;display:block;margin-bottom:12px"></span>
-      <input type="number" id="mathA" inputmode="numeric" placeholder="Ergebnis" autocomplete="off">
-      <button class="btn" id="btnMath">Weiter</button>
-      <p id="mathLock" style="display:none;font-size:13px;color:#D8324B;margin-top:10px"></p>
-    </div>
-
-    <div id="holdBox" style="display:none">
-      <p>Fast geschafft. Halte den Knopf 3 Sekunden gedrückt.</p>
-      <button class="btn hold" id="holdBtn" type="button"><i id="holdBar"></i><span id="holdLbl">Gedrückt halten…</span></button>
-    </div>
-
-    <div id="setupBox" style="display:none">
-      <p class="note">
-        <b>Was passiert mit den Daten?</b><br>
-        Spitzname, Klasse, Punkte und der Lernstand (kurze Notizen, was geübt wurde) werden nur auf diesem Gerät gespeichert.
-        Fragen, Fotos von Aufgaben und eine kurze Zusammenfassung des Lernstands werden zur Beantwortung an unseren KI-Dienstleister (Anthropic) übermittelt,
-        die Sprachausgabe (falls aktiv) läuft rein lokal auf deinem Gerät. Wir speichern keine Chatverläufe, Fotos oder Lernstände auf unserem Server.
-        <b>Bitte keine Gesichter, Namen oder Adressen fotografieren.</b>
-        Details in der <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.
-      </p>
-      <input type="text" id="nameIn" placeholder="Spitzname des Kindes (z. B. Leo)" maxlength="24" autocomplete="off">
-      <p class="note" style="margin-bottom:10px">Vergib eine Eltern-PIN (4–6 Ziffern) für den Eltern-Bereich.</p>
-      <input type="password" id="pinIn" inputmode="numeric" placeholder="Eltern-PIN" maxlength="6" autocomplete="new-password">
-      <label class="consent"><input type="checkbox" id="consent"><span>Ich bin Elternteil bzw. sorgeberechtigt und stimme der beschriebenen Verarbeitung zu.</span></label>
-      <button class="btn" id="btnSetup">Speichern &amp; loslegen</button>
-    </div>
-  </div>
-</div>
-
-<!-- Wer lernt heute? -->
-<div id="screen-who" class="screen">
-  <div class="big-title">Wer lernt<br><b>heute?</b></div>
-  <div class="sub-title">Tippe auf deinen Namen</div>
-  <div class="scroll"><div class="grid1" id="whoList"></div></div>
-</div>
-
-<!-- Klassenauswahl (beim ersten Start) -->
-<div id="screen-grade" class="screen">
-  <div class="big-title">Hallo!<br>Ich bin <b>Lio</b></div>
-  <div class="sub-title">In welcher Klasse bist du?</div>
-  <div class="scroll" id="gradeList"></div>
-</div>
-
-<!-- Menü (Hub) -->
-<div id="screen-hub" class="screen">
-  <div class="hub-top">
-    <div class="who">
-      <button class="avatar" id="btnAvatar" aria-label="Kind wechseln">
-        <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="22" r="12" fill="#fff"/><path d="M8 64c0-14 11-24 24-24s24 10 24 24z" fill="#fff"/></svg>
-      </button>
-      <div class="hello"><b id="hubHello"></b><span>Schön, dass du da bist!</span></div>
-    </div>
-    <div class="top-actions">
-      <label class="grade-pill">🎓 <select id="gradeSel" aria-label="Klasse"></select></label>
-      <button class="circle" id="btnHelpHub" aria-label="Ich brauche Hilfe">💙</button>
-      <button class="circle dark" id="btnParentHub" aria-label="Eltern-Bereich">⚙️</button>
-    </div>
-  </div>
-
-  <div class="room">
-    <div class="room-inner">
-      <h1 class="headline">Was möchtest du<br>heute lernen?</h1>
-      <div class="robot-box">
-        <div class="robot-wrap">
-          <div class="robot-container">
-            <img src="assets/lio_offen.png" class="lio-offen" alt="Lio">
-            <img src="assets/lio_zu.png" class="lio-zu" alt="">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="desk">
-    <div class="desk-scroll">
-      <div class="desk-inner">
-        <section class="tiles" id="tiles"></section>
-
-        <section class="hint-card">
-          <p>Wähle ein Fach aus oder nutze eine der Eingabeoptionen unten.</p>
-          <div class="mode-row" id="modeRow"></div>
-          <div id="resumeBox"></div>
-        </section>
-
-        <button class="other-row" id="btnOther">
-          <span class="oi">🎨</span>
-          <span><b>Anderes</b><small>Weitere spannende Themen und Fächer</small></span>
-          <span class="chev">›</span>
-        </button>
-
-        <section class="input-card">
-          <div class="lbl">Wie möchtest du<br>deine Aufgabe eingeben?</div>
-          <div class="opts">
-            <button class="opt photo" id="optPhoto"><span class="oi">📷</span><span class="ol">Foto</span></button>
-            <button class="opt speak" id="optSpeak"><span class="oi">🎤</span><span class="ol">Sprechen</span></button>
-            <button class="opt write" id="optWrite"><span class="oi">⌨️</span><span class="ol">Schreiben</span></button>
-          </div>
-        </section>
-      </div>
-    </div>
-  </div>
-
-  <div class="hub-foot">
-    <button class="points" id="btnPoints" aria-label="Mein Lernstand"><span class="st">⭐</span><span><span id="pts">0</span> Punkte</span></button>
-    <div class="cheer" id="cheer">Du schaffst das! ☆</div>
-  </div>
-</div>
-
-<!-- Hauptbildschirm (Chat mit Lio) -->
-<div id="screen-main" class="screen">
-  <div class="chat-top">
-    <button class="circle" id="btnHome" aria-label="Zurück zum Menü">🏠</button>
-    <span class="subj-pill" id="subjBadge"></span>
-    <div class="top-actions">
-      <button class="circle" id="btnHelp" aria-label="Ich brauche Hilfe">💙</button>
-      <button class="circle dark" id="btnParent" aria-label="Eltern-Bereich">⚙️</button>
-    </div>
-  </div>
-
-  <div class="room chat-room">
-    <div class="room-inner">
-      <div class="robot-box">
-        <div class="robot-wrap" id="robot" title="Antippen, um Lio zu stoppen">
-          <div class="robot-container">
-            <img src="assets/lio_offen.png" class="lio-offen" alt="Lio">
-            <img src="assets/lio_zu.png" class="lio-zu" alt="">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="desk">
-    <div class="chat-inner">
-      <div class="chat-scroll">
-        <div class="task-card" id="taskCard">
-          <img id="taskImg" alt="Deine Aufgabe">
-          <button class="x" id="btnTaskX" aria-label="Foto entfernen">✕</button>
-        </div>
-        <div class="bubble" id="bubble" aria-live="polite">Hi!</div>
-        <div class="chips" id="quick"></div>
-      </div>
-
-      <div class="input-card chat-input">
-        <div class="opts">
-          <button class="opt photo" id="btnPhoto" aria-label="Aufgabe fotografieren"><span class="oi">📷</span><span class="ol">Foto</span></button>
-          <button class="opt speak" id="micBtn" aria-label="Sprechen"><span class="oi">🎤</span><span class="ol" id="micLbl">Sprechen</span></button>
-          <button class="opt write" id="btnKeyboard" aria-label="Tippen"><span class="oi">⌨️</span><span class="ol">Schreiben</span></button>
-          <button class="opt round" id="btnRepeat" aria-label="Wiederholen">🔁</button>
-        </div>
-        <div class="hint" id="hint">📷 Foto machen, 🎤 sprechen oder ⌨️ schreiben</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="pop" id="pop"></div>
-<input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
-
-<div class="text-overlay" id="textOverlay">
-  <button class="circle" id="btnCloseText" aria-label="Schließen">✕</button>
-  <input type="text" id="textIn" placeholder="Schreib Lio…" maxlength="500" autocomplete="off">
-  <button class="send" id="btnSendText" aria-label="Senden">➤</button>
-</div>
-
-<!-- Alle Fächer -->
-<div class="panel" id="panelAll">
-  <div class="card wide">
-    <h2>🎨 Alle Fächer</h2>
-    <div id="allBody"></div>
-    <button class="btn ghost" id="btnAllClose" style="margin-top:12px">Schließen</button>
-  </div>
-</div>
-
-<!-- Mein Lernstand -->
-<div class="panel" id="panelProgress">
-  <div class="card">
-    <h2>⭐ Mein Lernstand</h2>
-    <div class="stat"><b id="ptsBig">0</b><span>Punkte gesammelt</span></div>
-    <div id="progressBody"></div>
-    <button class="btn ghost" id="btnProgressClose" style="margin-top:10px">Schließen</button>
-  </div>
-</div>
-
-<!-- PIN -->
-<div class="panel" id="panelPin">
-  <div class="card">
-    <h2>🔒 Eltern-Bereich</h2>
-    <p>Bitte PIN eingeben.</p>
-    <input type="password" id="pinCheck" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="current-password">
-    <button class="btn" id="btnPinOk">Bestätigen</button>
-    <button class="btn ghost" id="btnPinCancel">Abbrechen</button>
-  </div>
-</div>
-
-<!-- Eltern-Bereich -->
-<div class="panel" id="panelParent">
-  <div class="card">
-    <h2>⚙️ Eltern-Bereich</h2>
-    <div class="stat"><b id="statChats">0</b><span>Nachrichten an Lio</span></div>
-
-    <h2 style="font-size:16px">👧 Kinder</h2>
-    <div id="kidList"></div>
-    <label for="newKid">Kind hinzufügen</label>
-    <input type="text" id="newKid" maxlength="24" placeholder="Spitzname">
-    <button class="btn" id="btnAddKid">Hinzufügen</button>
-    <hr>
-
-    <h2 style="font-size:16px">🚨 Hinweise</h2>
-    <div id="notices" style="margin-bottom:8px"></div>
-    <hr>
-    <label class="consent" style="margin:0"><input type="checkbox" id="soundToggle"><span>Sprachausgabe an</span></label>
-    <hr>
-    <label for="newPin">🔑 Neue PIN</label>
-    <input type="text" id="newPin" inputmode="numeric" maxlength="6" placeholder="z. B. 4321">
-    <button class="btn" id="btnNewPin">PIN ändern</button>
-    <hr>
-    <p style="font-size:13px;margin-bottom:6px">Löscht alle Kinder, Lernstände, Punkte, Hinweise und die PIN von diesem Gerät.</p>
-    <button class="btn ghost" id="btnWipe">Alle Daten löschen</button>
-    <button class="btn ghost" id="btnParentClose">Schließen</button>
-  </div>
-</div>
-
-<!-- Hilfe -->
-<div class="panel" id="panelHelp">
-  <div class="card">
-    <h2>💙 Ich brauche Hilfe</h2>
-    <p>Wenn dich jemand ärgert, dir wehtut oder du dich nicht sicher fühlst: Das ist <b>nicht deine Schuld</b>. Sprich mit einem Erwachsenen, dem du vertraust.</p>
-    <div class="help-box">
-      📞 <b>Kinder- und Jugendtelefon</b><br>
-      <a href="tel:116111" style="font-size:22px">116 111</a><br>kostenlos und anonym<br><br>
-      📞 <b>Elterntelefon</b><br><a href="tel:08001110550">0800 111 0 550</a><br><br>
-      🚨 <b>Notruf</b> <a href="tel:112" class="em">112</a>
-    </div>
-    <button class="btn ghost" id="btnHelpClose" style="margin-top:14px">Zurück</button>
-  </div>
-</div>
-
-<script>
-'use strict';
-
-/* ══ Konfiguration & Helfer (FESTE VERKNÜPFUNG ZU RENDER) ══ */
-const CFG = Object.assign({ apiBase: 'https://kidsbot.ai', appToken: '' }, window.LIO_CONFIG || {});
-const $ = (id) => document.getElementById(id);
-const LS = {
-  get(k, d = '') { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
-  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
-};
-function getDeviceId() {
-  let id = LS.get('lio_device');
-  if (!id) {
-    id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
-    LS.set('lio_device', id);
-  }
-  return id;
-}
-function apiFetch(path, body) {
-  return fetch(CFG.apiBase + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-app-token': CFG.appToken, 'x-device-id': getDeviceId() },
-    body: JSON.stringify(body),
-  });
-}
-
-/* ══ Fächer-Katalog (Deutschland) ══ */
-const GROUPS = {
-  kern: 'Hauptfächer', nawi: 'Naturwissenschaften & Technik', gesell: 'Gesellschaft & Werte',
-  sprachen: 'Sprachen', kreativ: 'Kreativ & Sport', mehr: 'Mehr',
-};
-const CATALOG = [
-  { k: 'deutsch', i: '📖', l: 'Deutsch', g: 'kern', min: 1, max: 13 },
-  { k: 'mathe', i: '➕', l: 'Mathe', g: 'kern', min: 1, max: 13 },
-  { k: 'englisch', i: '🌍', l: 'Englisch', g: 'kern', min: 1, max: 13 },
-  { k: 'sachunterricht', i: '🌱', l: 'Sachunterricht', g: 'kern', min: 1, max: 4 },
-
-  { k: 'natur_technik', i: '🔬', l: 'Natur & Technik', g: 'nawi', min: 5, max: 6 },
-  { k: 'biologie', i: '🌱', l: 'Biologie', g: 'nawi', min: 5, max: 13 },
-  { k: 'physik', i: '⚛️', l: 'Physik', g: 'nawi', min: 6, max: 13 },
-  { k: 'chemie', i: '🧪', l: 'Chemie', g: 'nawi', min: 7, max: 13 },
-  { k: 'informatik', i: '💻', l: 'Informatik', g: 'nawi', min: 5, max: 13 },
-
-  { k: 'geschichte', i: '🏛️', l: 'Geschichte', g: 'gesell', min: 5, max: 13 },
-  { k: 'erdkunde', i: '🗺️', l: 'Erdkunde / Geografie', g: 'gesell', min: 5, max: 13 },
-  { k: 'politik', i: '⚖️', l: 'Politik / Sozialkunde', g: 'gesell', min: 7, max: 13 },
-  { k: 'wirtschaft', i: '💶', l: 'Wirtschaft & Arbeitslehre', g: 'gesell', min: 5, max: 13 },
-  { k: 'religion', i: '🕊️', l: 'Religion / Ethik', g: 'gesell', min: 1, max: 13 },
-  { k: 'philosophie', i: '💭', l: 'Philosophie', g: 'gesell', min: 10, max: 13 },
-  { k: 'psychologie', i: '🧠', l: 'Psychologie', g: 'gesell', min: 11, max: 13 },
-  { k: 'paedagogik', i: '🍎', l: 'Pädagogik', g: 'gesell', min: 11, max: 13 },
-
-  { k: 'daz', i: '💬', l: 'Deutsch als Zweitsprache', g: 'sprachen', min: 1, max: 13 },
-  { k: 'franzoesisch', i: '🥐', l: 'Französisch', g: 'sprachen', min: 5, max: 13 },
-  { k: 'spanisch', i: '💃', l: 'Spanisch', g: 'sprachen', min: 6, max: 13 },
-  { k: 'latein', i: '📜', l: 'Latein', g: 'sprachen', min: 5, max: 13 },
-
-  { k: 'kunst', i: '🎨', l: 'Kunst', g: 'kreativ', min: 1, max: 13 },
-  { k: 'musik', i: '🎵', l: 'Musik', g: 'kreativ', min: 1, max: 13 },
-  { k: 'sport', i: '⚽', l: 'Sport (Theorie)', g: 'kreativ', min: 1, max: 13 },
-  { k: 'werken', i: '🔨', l: 'Werken / Textiles Gestalten', g: 'kreativ', min: 1, max: 6 },
-  { k: 'hauswirtschaft', i: '🍳', l: 'Hauswirtschaft / Ernährung', g: 'kreativ', min: 5, max: 10 },
-
-  { k: 'sonstiges', i: '✏️', l: 'Etwas anderes', g: 'mehr', min: 1, max: 13 },
-];
-const MODES = [
-  { k: 'hausaufgabe', i: '📝', l: 'Hausaufgaben' },
-  { k: 'erklaeren', i: '💡', l: 'Thema erklären' },
-  { k: 'ueben', i: '🏋️', l: 'Üben' },
-  { k: 'pruefung', i: '🎯', l: 'Klassenarbeit' },
-];
-const GRADES = [
-  { g: 'Grundschule', items: ['1', '2', '3', '4'] },
-  { g: 'Weiterführende Schule', items: ['5', '6', '7', '8', '9', '10'] },
-  { g: 'Oberstufe', items: ['11-13'] },
-];
-// Die vier Kacheln im Menü
-const TILE_META = {
-  mathe: { sub: 'Zahlen entdecken', cls: 't-blue', icon: '➕' },
-  deutsch: { sub: 'Lesen und schreiben', cls: 't-purple', icon: '📖' },
-  englisch: { sub: 'Words entdecken', cls: 't-teal', icon: '🌍' },
-  sachunterricht: { sub: 'Die Welt erforschen', cls: 't-orange', icon: '🌱' },
-  biologie: { sub: 'Natur und Leben', cls: 't-orange', icon: '🌱' },
-};
-const CHEERS = ['Du schaffst das! ☆', 'Weiter so! ☆', 'Super gemacht! ☆', 'Schritt für Schritt! ☆'];
-const STATUS_ICON = { verstanden: '✅', unsicher: '⚠️', offen: '⏳' };
-
-function catItem(k) { return CATALOG.find(c => c.k === k); }
-function subjLabel(k) { const c = catItem(k); return c ? c.l : 'Anderes'; }
-function gradeNum(g) { return g === '11-13' ? 11 : (parseInt(g, 10) || 5); }
-function gradeLabel(g) { return g === '11-13' ? 'Oberstufe' : 'Klasse ' + g; }
-function fmtDate(d) { try { return new Date(d).toLocaleDateString('de-DE'); } catch (e) { return ''; } }
-function mainTiles(n) { return ['mathe', 'deutsch', 'englisch', n <= 4 ? 'sachunterricht' : 'biologie']; }
-
-/* ══ Profile (ein Profil pro Kind, alles lokal auf dem Gerät) ══ */
-let profiles = [];
-let me = null;
-
-function loadProfiles() { try { profiles = JSON.parse(LS.get('lio_profiles', '[]')) || []; } catch (e) { profiles = []; } }
-function saveProfiles() { LS.set('lio_profiles', JSON.stringify(profiles)); }
-function newProfile(name, grade) {
-  return { id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, grade: grade || '', subjects: {}, open: null, points: 0 };
-}
-function pendingKey(p) { return 'lio_pending_' + p.id; }
-
-function migrateOldSingleProfile() {
-  if (profiles.length || !LS.get('lio_name') || !LS.get('lio_consent')) return;
-  const p = newProfile(LS.get('lio_name'), LS.get('lio_grade'));
-  profiles.push(p);
-  saveProfiles();
-  ['lio_name', 'lio_grade'].forEach(k => LS.del(k));
-}
-
-/* ══ Zustand der Sitzung ══ */
-const MAX_HISTORY = 20;
-const SESSION_POINTS_CAP = 20;
-let subject = null;          // Fach-Key oder null (= automatisch erkennen)
-let mode = 'hausaufgabe';
-let hubMode = 'hausaufgabe';
-let messages = [];
-let taskImage = null;
-let lastReply = '';
-let busy = false;
-let skipAudio = false;
-let sessionPts = 0;
-let soundOn = LS.get('lio_sound', '1') === '1';
-let interactions = parseInt(LS.get('kb_interactions', '0'), 10) || 0;
-let currentSpeechId = 0; // WICHTIG FÜR TTS-STEUERUNG
-
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  $('screen-' + name).classList.add('active');
-  document.body.dataset.screen = name;
-}
-function setBubble(t) { $('bubble').textContent = t; }
-function setBubbleLoading() { $('bubble').innerHTML = '<span class="dots"><span></span><span></span><span></span></span>'; }
-function setHint(t) { $('hint').textContent = t; }
-
-/* ══ Eltern-Gate (Ersteinrichtung) ══ */
-let mathSolution = 0;
-let gateFails = 0;
-function newMath() {
-  const a = 5 + Math.floor(Math.random() * 6), b = 5 + Math.floor(Math.random() * 6);
-  mathSolution = a * b;
-  $('mathQ').textContent = a + ' × ' + b + ' = ?';
-}
-function gateLockedUntil() { return parseInt(LS.get('lio_gate_lock', '0'), 10) || 0; }
-function updateGateLock() {
-  const rest = gateLockedUntil() - Date.now();
-  const on = rest > 0;
-  $('mathLock').style.display = on ? 'block' : 'none';
-  $('btnMath').disabled = on;
-  $('mathA').disabled = on;
-  if (on) {
-    $('mathLock').textContent = 'Zu viele falsche Versuche. Bitte warte ' + Math.ceil(rest / 1000) + ' Sekunden.';
-    setTimeout(updateGateLock, 1000);
-  }
-}
-function checkMath() {
-  if (gateLockedUntil() > Date.now()) return;
-  if (Number($('mathA').value) === mathSolution) {
-    gateFails = 0;
-    $('mathBox').style.display = 'none';
-    $('holdBox').style.display = 'block';
-  } else {
-    gateFails++;
-    $('mathA').value = '';
-    newMath();
-    if (gateFails >= 3) {
-      LS.set('lio_gate_lock', String(Date.now() + 30000));
-      gateFails = 0;
-      updateGateLock();
-    }
-  }
-}
-$('btnMath').addEventListener('click', checkMath);
-$('mathA').addEventListener('keydown', e => { if (e.key === 'Enter') checkMath(); });
-
-const HOLD_MS = 3000;
-let holdRaf = null, holdStart = 0;
-function holdTick() {
-  const pct = Math.min(100, ((Date.now() - holdStart) / HOLD_MS) * 100);
-  $('holdBar').style.width = pct + '%';
-  if (pct >= 100) {
-    $('holdLbl').textContent = 'Bestätigt ✓';
-    setTimeout(() => { $('holdBox').style.display = 'none'; $('setupBox').style.display = 'block'; }, 200);
-    return;
-  }
-  holdRaf = requestAnimationFrame(holdTick);
-}
-function holdEnd() {
-  if (holdRaf) cancelAnimationFrame(holdRaf);
-  holdRaf = null;
-  $('holdBar').style.width = '0';
-  $('holdLbl').textContent = 'Gedrückt halten…';
-}
-$('holdBtn').addEventListener('pointerdown', e => { e.preventDefault(); holdStart = Date.now(); holdTick(); });
-['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('holdBtn').addEventListener(ev, holdEnd));
-
-async function hashPin(pin) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('lio:' + pin));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-$('btnSetup').addEventListener('click', async () => {
-  const name = $('nameIn').value.trim();
-  const pin = $('pinIn').value.trim();
-  if (!name) { alert('Bitte einen Spitznamen eingeben.'); return; }
-  if (!/^\d{4,6}$/.test(pin)) { alert('Bitte eine PIN mit 4–6 Ziffern vergeben.'); return; }
-  if (!$('consent').checked) { alert('Bitte bestätige die Einwilligung.'); return; }
-  LS.set('lio_pin', await hashPin(pin));
-  LS.set('lio_consent', new Date().toISOString());
-  const p = newProfile(name.slice(0, 24), '');
-  profiles.push(p);
-  saveProfiles();
-  loginAs(p.id);
-});
-
-/* ══ Login: Wer lernt heute? ══ */
-function renderWho() {
-  const box = $('whoList');
-  box.innerHTML = '';
-  profiles.forEach(p => {
-    const b = document.createElement('button');
-    b.className = 'who-card';
-    b.textContent = '🧒 ' + p.name;
-    if (p.grade) {
-      const s = document.createElement('small');
-      s.textContent = gradeLabel(p.grade);
-      b.appendChild(s);
-    }
-    b.addEventListener('click', () => loginAs(p.id));
-    box.appendChild(b);
-  });
-}
-
-function loginAs(id) {
-  const p = profiles.find(x => x.id === id);
-  if (!p) return;
-  me = p;
-  if (typeof me.points !== 'number') me.points = 0;
-  LS.set('lio_active', p.id);
-  messages = [];
-  processPending();
-  if (!me.grade) { showScreen('grade'); return; }
-  enterHub();
-}
-
-$('btnAvatar').addEventListener('click', () => {
-  if (profiles.length < 2) return;
-  stopSpeaking();
-  processPending();
-  renderWho();
-  showScreen('who');
-});
-
-/* ══ Klassenauswahl (beim ersten Start) & Klassen-Dropdown im Menü ══ */
-function renderGrades() {
-  const box = $('gradeList');
-  box.innerHTML = '';
-  GRADES.forEach(group => {
-    const h = document.createElement('div');
-    h.className = 'group-label';
-    h.textContent = group.g;
-    const grid = document.createElement('div');
-    grid.className = 'grid3';
-    group.items.forEach(v => {
-      const b = document.createElement('button');
-      b.className = 'grade-card';
-      b.innerHTML = v === '11-13' ? 'Klasse<br>11–13' : 'Klasse ' + v;
-      b.addEventListener('click', () => {
-        me.grade = v;
-        saveProfiles();
-        enterHub();
-      });
-      grid.appendChild(b);
-    });
-    box.append(h, grid);
-  });
-
-  const sel = $('gradeSel');
-  sel.innerHTML = '';
-  GRADES.forEach(group => group.items.forEach(v => {
-    const o = document.createElement('option');
-    o.value = v;
-    o.textContent = v === '11-13' ? 'Oberstufe (11–13)' : 'Klasse ' + v;
-    sel.appendChild(o);
-  }));
-}
-$('gradeSel').addEventListener('change', (e) => {
-  if (!me) return;
-  processPending();
-  me.grade = e.target.value;
-  saveProfiles();
-  renderHub();
-});
-
-/* ══ Menü (Hub) ══ */
-function enterHub() {
-  stopSpeaking();
-  clearTask(true);
-  messages = [];
-  processPending();
-  renderHub();
-  showScreen('hub');
-}
-
-function updatePoints(bump) {
-  const v = (me && me.points) || 0;
-  $('pts').textContent = v;
-  $('ptsBig').textContent = v;
-  if (bump) {
-    const b = $('btnPoints');
-    b.classList.remove('bump');
-    void b.offsetWidth;
-    b.classList.add('bump');
-  }
-}
-
-function renderHub() {
-  $('hubHello').textContent = 'Hallo ' + me.name + '! 👋';
-  $('gradeSel').value = me.grade;
-  $('cheer').textContent = CHEERS[Math.floor(Math.random() * CHEERS.length)];
-  $('btnAvatar').style.cursor = profiles.length > 1 ? 'pointer' : 'default';
-  updatePoints(false);
-
-  // Lernarten
-  const mr = $('modeRow');
-  mr.innerHTML = '';
-  MODES.forEach(m => {
-    const b = document.createElement('button');
-    b.className = 'mode' + (hubMode === m.k ? ' sel' : '');
-    b.textContent = m.i + ' ' + m.l;
-    b.addEventListener('click', () => { hubMode = m.k; renderHub(); });
-    mr.appendChild(b);
-  });
-
-  // Weitermachen
-  const rb = $('resumeBox');
-  rb.innerHTML = '';
-  if (me.open && me.open.topic) {
-    const b = document.createElement('button');
-    b.className = 'resume';
-    b.textContent = '▶️ Weitermachen: ' + (me.open.subject ? subjLabel(me.open.subject) + ' – ' : '') + me.open.topic;
-    b.addEventListener('click', () => startSession(me.open.subject || null, me.open.mode || 'hausaufgabe'));
-    rb.appendChild(b);
-  }
-
-  // Vier Kacheln
-  const tiles = $('tiles');
-  tiles.innerHTML = '';
-  mainTiles(gradeNum(me.grade)).forEach(k => {
-    const meta = TILE_META[k];
-    const b = document.createElement('button');
-    b.className = 'tile ' + meta.cls;
-    b.innerHTML = '<span class="ti"></span><span><h3></h3><small></small></span><span class="go">›</span>';
-    b.querySelector('.ti').textContent = meta.icon;
-    b.querySelector('h3').textContent = subjLabel(k);
-    b.querySelector('small').textContent = meta.sub;
-    b.addEventListener('click', () => startSession(k, hubMode));
-    tiles.appendChild(b);
-  });
-}
-
-/* Alle Fächer dieser Klassenstufe */
-$('btnOther').addEventListener('click', () => {
-  const n = gradeNum(me.grade);
-  const box = $('allBody');
-  box.innerHTML = '';
-  Object.entries(GROUPS).forEach(([gk, gl]) => {
-    const subs = CATALOG.filter(c => c.g === gk && n >= c.min && n <= c.max);
-    if (!subs.length) return;
-    const h = document.createElement('div');
-    h.className = 'group-label';
-    h.textContent = gl;
-    const grid = document.createElement('div');
-    grid.className = 'grid3';
-    subs.forEach(c => {
-      const b = document.createElement('button');
-      b.className = 'sub-card';
-      b.innerHTML = '<span class="ic"></span><span class="nm"></span><small></small>';
-      b.querySelector('.ic').textContent = c.i;
-      b.querySelector('.nm').textContent = c.l;
-      const rec = me.subjects[c.k];
-      b.querySelector('small').textContent = rec && rec.sessions ? rec.sessions + '× geübt' : '';
-      b.addEventListener('click', () => { $('panelAll').classList.remove('show'); startSession(c.k, hubMode); });
-      grid.appendChild(b);
-    });
-    box.append(h, grid);
-  });
-  $('panelAll').classList.add('show');
-});
-$('btnAllClose').addEventListener('click', () => $('panelAll').classList.remove('show'));
-
-/* Eingabeoptionen im Menü: Fach wird automatisch erkannt */
-$('optPhoto').addEventListener('click', () => { startSession(null, hubMode, { quiet: true }); $('photoInput').click(); });
-$('optSpeak').addEventListener('click', () => { startSession(null, hubMode, { quiet: true }); toggleMic(); });
-$('optWrite').addEventListener('click', () => { startSession(null, hubMode, { quiet: true }); openText(); });
-
-/* ══ Lern-Sitzung starten ══ */
-const MODE_GREET = {
-  hausaufgabe: 'Mach ein Foto von deiner Aufgabe oder erzähl mir, worum es geht.',
-  erklaeren: 'Welches Thema soll ich dir erklären?',
-  ueben: 'Zu welchem Thema möchtest du üben?',
-  pruefung: 'Wann ist die Arbeit und welches Thema kommt dran?',
-};
-
-function startSession(sk, mk, opts) {
-  opts = opts || {};
-  processPending();
-  stopSpeaking();
-  messages = [];
-  clearTask(true);
-  subject = sk;
-  mode = mk || 'hausaufgabe';
-  sessionPts = 0;
-
-  const c = catItem(sk);
-  const m = MODES.find(x => x.k === mode);
-  $('subjBadge').textContent = (c ? c.i + ' ' + c.l : '✨ Alle Fächer') + (m ? ' · ' + m.l : '');
-  renderQuick([]);
-  showScreen('main');
-
-  const say = (t) => { if (opts.quiet) { setBubble(t); lastReply = t; } else lioSay(t); };
-  const rec = sk && me.subjects[sk];
-  if (rec && rec.topics && rec.topics.length) {
-    say('Willkommen zurück, ' + me.name + '! Beim letzten Mal ging es in ' + subjLabel(sk) + ' um ' + rec.topics[0].topic +
-      '. Machen wir da weiter oder hast du etwas Neues?');
-    renderQuick([
-      { label: '▶️ Weitermachen', prompt: 'Ja, lass uns da weitermachen, wo wir aufgehört haben.' },
-      { label: '🆕 Etwas Neues', prompt: 'Ich habe etwas Neues.' },
-    ]);
-  } else {
-    say('Hallo ' + me.name + '! ' + MODE_GREET[mode]);
-  }
-}
-$('btnHome').addEventListener('click', enterHub);
-
-/* ══ Punkte ══ */
-function addPoints(n, label) {
-  if (!me || !n) return;
-  me.points = (me.points || 0) + n;
-  saveProfiles();
-  updatePoints(true);
-  if (label) {
-    const p = $('pop');
-    p.textContent = label;
-    p.classList.remove('show');
-    void p.offsetWidth;
-    p.classList.add('show');
-  }
-}
-
-/* ══ Lernstand merken (Zusammenfassung per Claude, gespeichert auf dem Gerät) ══ */
-function savePending() {
-  if (!me || messages.length < 2) return;
-  LS.set(pendingKey(me), JSON.stringify({
-    pid: Date.now(),
-    date: new Date().toISOString(),
-    subject, mode, grade: me.grade,
-    messages: messages.slice(-12),
-  }));
-}
-
-let summarizing = false;
-async function processPending() {
-  if (summarizing || !me) return;
-  const owner = me;
-  const key = pendingKey(owner);
-  let pend = null;
-  try { pend = JSON.parse(LS.get(key, 'null')); } catch (e) {}
-  if (!pend || !Array.isArray(pend.messages) || pend.messages.length < 2) { if (pend) LS.del(key); return; }
-
-  summarizing = true;
-  try {
-    const res = await apiFetch('/api/summarize', { messages: pend.messages, subject: pend.subject || undefined, mode: pend.mode, grade: pend.grade });
-    if (!res.ok) throw new Error('summarize ' + res.status);
-    mergeSummary(owner, pend, await res.json());
-    let cur = null;
-    try { cur = JSON.parse(LS.get(key, 'null')); } catch (e) {}
-    if (cur && cur.pid === pend.pid) LS.del(key);
-  } catch (e) {
-    console.warn('[Lernstand]', e.message || e);
-  } finally {
-    summarizing = false;
-  }
-}
-
-function mergeSummary(p, pend, s) {
-  const key = pend.subject || (catItem(s.subject) ? s.subject : 'sonstiges');
-  const rec = p.subjects[key] = p.subjects[key] || { sessions: 0, topics: [], strengths: '', difficulties: '', last: '' };
-  const status = ['offen', 'verstanden', 'unsicher'].includes(s.status) ? s.status : 'offen';
-  const topic = String(s.topic || 'Aufgabe').slice(0, 80);
-  rec.sessions++;
-  rec.last = pend.date;
-  rec.topics.unshift({ topic, summary: String(s.summary || '').slice(0, 240), status, date: pend.date });
-  rec.topics = rec.topics.slice(0, 8);
-  if (s.strengths) rec.strengths = String(s.strengths).slice(0, 200);
-  if (s.difficulties) rec.difficulties = String(s.difficulties).slice(0, 200);
-  if (status === 'offen') p.open = { subject: key, mode: pend.mode || 'hausaufgabe', topic, date: pend.date };
-  else if (p.open && p.open.subject === key) p.open = null;
-  if (status === 'verstanden') p.points = (p.points || 0) + 10;   // Bonus für verstandene Aufgaben
-  saveProfiles();
-  if (me === p) {
-    updatePoints(status === 'verstanden');
-    if ($('screen-hub').classList.contains('active')) renderHub();
-  }
-}
-
-function buildMemory() {
-  if (!me) return '';
-  const lines = [];
-  const cur = subject && me.subjects[subject];
-  if (cur && cur.topics.length) {
-    lines.push(subjLabel(subject) + ' (' + cur.sessions + ' Sitzungen, zuletzt ' + fmtDate(cur.last) + '):');
-    cur.topics.slice(0, 4).forEach(t => lines.push('- ' + fmtDate(t.date) + ' ' + t.topic + ' [' + t.status + ']: ' + t.summary));
-    if (cur.strengths) lines.push('Stärken: ' + cur.strengths);
-    if (cur.difficulties) lines.push('Schwierigkeiten: ' + cur.difficulties);
-  }
-  Object.entries(me.subjects).forEach(([k, r]) => {
-    if (k === subject || !r.topics || !r.topics.length) return;
-    lines.push(subjLabel(k) + ': zuletzt ' + r.topics[0].topic + ' [' + r.topics[0].status + ']');
-  });
-  if (me.open && me.open.topic) lines.push('Offene Aufgabe: ' + (me.open.subject ? subjLabel(me.open.subject) + ' – ' : '') + me.open.topic);
-  return lines.join('\n').slice(0, 1400);
-}
-
-/* ══ Mein Lernstand (Anzeige) ══ */
-function renderProgress() {
-  updatePoints(false);
-  const box = $('progressBody');
-  box.innerHTML = '';
-  const entries = Object.entries(me.subjects).filter(([, r]) => r.topics && r.topics.length);
-  if (!entries.length) {
-    box.innerHTML = '<p>Noch nichts gespeichert. Lerne mit Lio, dann siehst du hier, was du schon geschafft hast.</p>';
-    return;
-  }
-  entries.forEach(([k, r]) => {
-    const d = document.createElement('div');
-    d.className = 'prog-subject';
-    const h = document.createElement('h3');
-    h.textContent = (catItem(k) ? catItem(k).i + ' ' : '') + subjLabel(k) + ' · ' + r.sessions + '× geübt';
-    d.appendChild(h);
-    r.topics.slice(0, 4).forEach(t => {
-      const x = document.createElement('div');
-      x.className = 't';
-      x.textContent = (STATUS_ICON[t.status] || '') + ' ' + fmtDate(t.date) + ' – ' + t.topic + (t.summary ? ': ' + t.summary : '');
-      d.appendChild(x);
-    });
-    if (r.strengths) { const m = document.createElement('div'); m.className = 'meta'; m.textContent = '💪 ' + r.strengths; d.appendChild(m); }
-    if (r.difficulties) { const m = document.createElement('div'); m.className = 'meta'; m.style.color = '#B7791F'; m.textContent = '🎯 Üben: ' + r.difficulties; d.appendChild(m); }
-    box.appendChild(d);
-  });
-}
-$('btnPoints').addEventListener('click', () => { renderProgress(); $('panelProgress').classList.add('show'); });
-$('btnProgressClose').addEventListener('click', () => $('panelProgress').classList.remove('show'));
-
-/* ══ Schnellantworten ══ */
-const FOLLOWUPS = [
-  { label: '👍 Verstanden', prompt: 'Ich habe es verstanden. Was kommt als Nächstes?' },
-  { label: '🔁 Langsamer', prompt: 'Kannst du das bitte nochmal langsamer und einfacher erklären?' },
-  { label: '💡 Tipp', prompt: 'Gib mir bitte einen kleinen Tipp, aber verrate nicht die Lösung.' },
-  { label: '📝 Neue Aufgabe', action: () => { processPending(); clearTask(); lioSay('Okay! Mach ein Foto von der nächsten Aufgabe oder erzähl mir davon.'); } },
-];
-function renderQuick(items) {
-  const box = $('quick');
-  box.innerHTML = '';
-  items.forEach(it => {
-    const c = document.createElement('button');
-    c.className = 'chip';
-    c.textContent = it.label;
-    c.addEventListener('click', () => {
-      renderQuick([]);
-      if (it.action) it.action(); else sendMessage(it.prompt);
-    });
-    box.appendChild(c);
-  });
-}
-
-/* ══ Foto-Funktion ══ */
-const MAX_IMG = 1400;
-async function compressImage(file) {
-  let bmp;
-  try {
-    bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
-  } catch (e) {
-    bmp = await new Promise((res, rej) => {
-      const img = new Image();
-      img.onload = () => res(img);
-      img.onerror = rej;
-      img.src = URL.createObjectURL(file);
-    });
-  }
-  const scale = Math.min(1, MAX_IMG / Math.max(bmp.width, bmp.height));
-  const c = document.createElement('canvas');
-  c.width = Math.round(bmp.width * scale);
-  c.height = Math.round(bmp.height * scale);
-  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-  return c.toDataURL('image/jpeg', 0.82);
-}
-$('btnPhoto').addEventListener('click', () => { if (!busy) $('photoInput').click(); });
-$('photoInput').addEventListener('change', async (e) => {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  try {
-    const dataUrl = await compressImage(file);
-    processPending();
-    taskImage = dataUrl.split(',')[1];
-    $('taskImg').src = dataUrl;
-    $('taskCard').classList.add('show');
-    messages = [];
-    renderQuick([]);
-    sendMessage('Hier ist meine Aufgabe auf dem Foto. Lies sie kurz zusammen und fang bitte mit mir an.');
-  } catch (err) {
-    lioSay('Mit dem Foto hat es nicht geklappt. Versuch es bitte nochmal.');
-  }
-});
-function clearTask(silent) {
-  taskImage = null;
-  messages = [];
-  $('taskImg').removeAttribute('src');
-  $('taskCard').classList.remove('show', 'big');
-  if (!silent) renderQuick([]);
-}
-$('btnTaskX').addEventListener('click', (e) => { e.stopPropagation(); clearTask(); });
-$('taskImg').addEventListener('click', () => $('taskCard').classList.toggle('big'));
-
-/* ══ REINE GERÄTE-STIMME (TTS ohne Audio-Dateien) ══ */
-function setTalking(on) { $('robot').classList.toggle('talking', on); }
-
-function stopSpeaking() {
-  currentSpeechId++; // Bricht alle laufenden Queues ab
-  if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} }
-  setTalking(false);
-}
-
-async function speakDevice(text, thisSpeechId) {
-  if (!soundOn || skipAudio || !('speechSynthesis' in window)) return;
-  
-  // Emoji & Klammern ausblenden fürs Vorlesen
-  let cleanText = text.trim()
-    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') 
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') 
-    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') 
-    .replace(/\[.*?\]/g, '')
-    .replace(/\*.*?\*/g, '')
-    .trim();
-
-  if (!cleanText) return;
-
-  return new Promise((resolve) => {
-    if (thisSpeechId !== currentSpeechId) { resolve(); return; }
-    
-    const u = new SpeechSynthesisUtterance(cleanText);
-    const de = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('de'));
-    if (de.length) {
-      const preferred = de.find(v => v.name.includes('Anna') || v.name.includes('Google') || v.name.includes('Katja'));
-      u.voice = preferred || de[0];
-    }
-    
-    u.lang = 'de-DE';
-    u.rate = 1.0;
-    u.pitch = 1.1;
-    
-    u.onstart = () => {
-      if (thisSpeechId === currentSpeechId) setTalking(true);
-    };
-    
-    u.onend = u.onerror = () => {
-      if (thisSpeechId === currentSpeechId && !speechSynthesis.speaking) setTalking(false);
-      resolve();
-    };
-    
-    speechSynthesis.speak(u);
-  });
-}
-
-function lioSay(text) {
-  setBubble(text);
-  lastReply = text;
-  if (!soundOn || skipAudio) return;
-  stopSpeaking();
-  const thisSpeechId = currentSpeechId;
-  speakDevice(text, thisSpeechId);
-}
-
-$('robot').addEventListener('click', () => { skipAudio = true; stopSpeaking(); });
-$('btnRepeat').addEventListener('click', () => { if (lastReply) { skipAudio = false; lioSay(lastReply); } });
-if ('speechSynthesis' in window) speechSynthesis.getVoices();
-
-/* ══ Spracheingabe ══ */
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-let recognition = null;
-let listening = false;
-if (SR) {
-  recognition = new SR();
-  recognition.lang = 'de-DE';
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.onresult = (ev) => {
-    const t = ev.results[0][0].transcript;
-    stopListening();
-    if (t && t.trim()) sendMessage(t.trim());
-  };
-  recognition.onerror = (ev) => {
-    stopListening();
-    if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
-      setBubble('Ich darf dein Mikrofon nicht benutzen. Frag einen Erwachsenen oder tipp einfach!');
-    } else if (ev.error === 'no-speech') {
-      setHint('Ich hab nichts gehört. Nochmal?');
-    }
-  };
-  recognition.onend = () => { if (listening) stopListening(); };
-}
-function startListening() {
-  listening = true;
-  $('micBtn').classList.add('listening');
-  $('micLbl').textContent = 'Ich höre…';
-  setHint('Ich höre dich… 👂');
-}
-function stopListening() {
-  listening = false;
-  $('micBtn').classList.remove('listening');
-  $('micLbl').textContent = 'Sprechen';
-  setHint('📷 Foto machen, 🎤 sprechen oder ⌨️ schreiben');
-}
-function toggleMic() {
-  stopSpeaking();
-  if (!recognition) { setBubble('Sprechen geht hier nicht. Tipp einfach!'); openText(); return; }
-  if (listening) { try { recognition.stop(); } catch (e) {} return; }
-  try { recognition.start(); startListening(); } catch (e) { stopListening(); }
-}
-$('micBtn').addEventListener('click', toggleMic);
-
-/* ══ Texteingabe ══ */
-function openText() { $('textOverlay').classList.add('show'); setTimeout(() => $('textIn').focus(), 100); }
-function closeText() { $('textOverlay').classList.remove('show'); $('textIn').value = ''; }
-function sendText() {
-  const v = $('textIn').value.trim();
-  if (!v) return;
-  closeText();
-  sendMessage(v);
-}
-$('btnKeyboard').addEventListener('click', openText);
-$('btnCloseText').addEventListener('click', closeText);
-$('btnSendText').addEventListener('click', sendText);
-$('textIn').addEventListener('keydown', e => { if (e.key === 'Enter') sendText(); });
-
-/* ══ Sicherheitsnetz im Client ══ */
-const SIGNALS = {
-  self_harm: [/nicht mehr leben/i, /(will|möchte|wäre lieber) (sterben|tot)/i, /umbringen/i, /mir (weh ?tun|etwas antun)/i, /ritz/i],
-  abuse: [/(schlägt|haut|schlagen) mich (zu hause|daheim)/i, /fasst mich an/i, /darf (es )?niemandem (sagen|erzählen)/i],
-  bullying: [/mobb/i, /gehänselt|hänseln/i, /ausgelacht/i, /ausgeschlossen/i, /keiner mag mich|niemand mag mich/i, /haben mich fertig ?gemacht/i],
-};
-function detectSignal(text) {
-  for (const [cat, list] of Object.entries(SIGNALS)) if (list.some(p => p.test(text))) return cat;
-  return null;
-}
-function logNotice(category) {
-  try {
-    const n = JSON.parse(LS.get('lio_notices', '[]'));
-    n.push({ category, date: new Date().toISOString(), name: me ? me.name : '' });
-    LS.set('lio_notices', JSON.stringify(n.slice(-20)));
-  } catch (e) {}
-}
-
-/* ══ Nachricht senden (Reines Text-Streaming von Claude & lokales Vorlesen) ══ */
-async function sendMessage(userText) {
-  if (!userText || !userText.trim() || busy || !me) return;
-  userText = userText.trim().slice(0, 500);
-
-  busy = true;
-  skipAudio = false;
-  stopSpeaking(); // Stoppt laufende Sprache und erhöht currentSpeechId
-  const thisSpeechId = currentSpeechId; 
-  
-  renderQuick([]);
-  $('micBtn').disabled = true;
-  $('robot').classList.add('thinking');
-
-  interactions++;
-  LS.set('kb_interactions', String(interactions));
-
-  const signal = detectSignal(userText);
-  if (signal) logNotice(signal);
-
-  setBubbleLoading();
-  setHint('Lio denkt nach… 🤔');
-
-  messages.push({ role: 'user', content: userText });
-  if (messages.length > MAX_HISTORY) messages = messages.slice(-MAX_HISTORY);
+// ============================================================
+// KidsBot.ai / Lio Backend — 100% Claude (Anthropic) Engine
+// ============================================================
+import express from 'express';
+import cors from 'cors';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import 'dotenv/config';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+const app  = express();
+const PORT = process.env.PORT || 3000;
+
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-latest';
+
+app.set('trust proxy', 1);
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('❌ WICHTIG: ANTHROPIC_API_KEY fehlt in den Render Environment-Variablen!');
+}
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-app-token', 'x-device-id']
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use(express.static(__dirname));
+
+app.post('/api/chat-stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
 
   try {
-    const res = await apiFetch('/api/chat-stream', {
-      messages,
-      grade: me.grade,
-      subject: subject || undefined,
+    const {
+      messages = [],
+      grade,
+      subject,
       mode,
-      memory: buildMemory() || undefined,
-      childName: me.name,
-      image: taskImage || undefined,
-      tts: soundOn,
+      memory,
+      childName,
+      image
+    } = req.body;
+
+    const nameStr = childName ? `Das Kind heißt ${childName}. (Nutze den Namen selten und natürlich.) ` : '';
+    const gradeStr = grade ? `Klassenstufe: ${grade}. ` : '';
+    const subjStr = subject ? `Aktuelles Fach: ${subject}. ` : '';
+    const modeStr = mode ? `Lernmodus: ${mode}. ` : '';
+
+    let systemInstruction = `Du bist Lio, ein herzlicher, geduldiger und kluger Lernbegleiter für Kinder.
+WICHTIG: Antworte immer warmherzig, direkt, ermutigend und in kurzen, kindgerechten Sätzen (ideal zum Vorlesen).
+${nameStr}${gradeStr}${subjStr}${modeStr}
+SPRACHE: Antworte auf Deutsch (außer ihr übt eine Fremdsprache wie Englisch). Schreibe Zahlen als normale Ziffern (1, 2, 3). Keine Sternchen-Regieanweisungen (*lächelt*) verwenden.
+
+PÄDAGOGIK & HAUSAUFGABEN:
+1. Verrate bei Aufgaben NIEMALS direkt die fertige Endlösung! Führe das Kind Schritt für Schritt mit kleinen Fragen und Hinweisen zur Lösung.
+2. Prüfe Antworten des Kindes genau. Wenn etwas falsch ist, lobe es nicht als richtig, sondern sage freundlich, was noch nicht ganz passt, und gib einen kleinen Tipp.`;
+
+    if (memory) {
+      systemInstruction += `\n\nBISHERIGER LERNSTAND DES KINDES:\n${memory}`;
+    }
+
+    const claudeMessages = messages.map((msg, idx) => {
+      const isLastUser = (idx === messages.length - 1) && msg.role === 'user';
+      if (isLastUser && image) {
+        return {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/jpeg',
+                data: image
+              }
+            },
+            {
+              type: 'text',
+              text: String(msg.content || 'Bitte hilf mir bei dieser Aufgabe.')
+            }
+          ]
+        };
+      }
+      return {
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: String(msg.content || '')
+      };
     });
-    if (!res.ok) throw new Error('Server ' + res.status);
 
-    const reader = res.body.getReader();
-    const dec = new TextDecoder('utf-8');
-    let buf = '';
-    let full = '';
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 600,
+        temperature: 0.6,
+        system: systemInstruction,
+        messages: claudeMessages,
+        stream: true
+      })
+    });
 
-    setBubble("");
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('❌ Claude API Fehler:', response.status, errText);
+      throw new Error(`Claude API Fehler ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let currentSentence = '';
+    let streamBuffer = '';
 
     while (true) {
-      if (thisSpeechId !== currentSpeechId) break;
-
-      const { done, value } = await reader.read();
+      const { value, done } = await reader.read();
       if (done) break;
-      
-      buf += dec.decode(value, { stream: true });
-      let i;
-      while ((i = buf.indexOf('\n\n')) >= 0) {
-        const ev = buf.slice(0, i);
-        buf = buf.slice(i + 2);
-        if (!ev.startsWith('data: ')) continue;
-        
-        const d = ev.slice(6).trim();
-        if (!d || d === '[DONE]') continue;
-        
-        try {
-          const p = JSON.parse(d);
-          if (p.error) throw new Error(p.error);
-          
-          full += (full ? ' ' : '') + p.text;
-          setBubble(full.trim());
-          $('robot').classList.remove('thinking');
-          
-          // Direktes Vorlesen des Satzes über den Browser
-          speakDevice(p.text, thisSpeechId);
 
-        } catch (e) {
-          console.error('[Streaming-JSON-Error]', e);
-        }
+      streamBuffer += decoder.decode(value, { stream: true });
+      const lines = streamBuffer.split('\n');
+      streamBuffer = lines.pop();
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        const dataStr = trimmed.slice(6).trim();
+        if (!dataStr || dataStr === '[DONE]') continue;
+
+        try {
+          const event = JSON.parse(dataStr);
+          if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+            currentSentence += event.delta.text;
+
+            if (/[.!?]\s*$/.test(currentSentence)) {
+              const cleanSentence = currentSentence
+                .trim()
+                .replace(/\[.*?\]/g, '')
+                .replace(/\*.*?\*/g, '')
+                .trim();
+
+              if (cleanSentence.length > 1) {
+                res.write(`data: ${JSON.stringify({ text: cleanSentence })}\n\n`);
+              }
+              currentSentence = '';
+            }
+          }
+        } catch (e) {}
       }
     }
 
-    if (!full) throw new Error('leere Antwort');
-    messages.push({ role: 'assistant', content: full });
-    lastReply = full;
-    savePending();
-    setHint('📷 Foto machen, 🎤 sprechen oder ⌨️ schreiben');
-    renderQuick(FOLLOWUPS);
-    if (sessionPts < SESSION_POINTS_CAP) { sessionPts += 2; addPoints(2, '+2 ⭐'); }
-    if (signal) setTimeout(() => $('panelHelp').classList.add('show'), 900);
+    if (currentSentence.trim().length > 0) {
+      const cleanSentence = currentSentence
+        .trim()
+        .replace(/\[.*?\]/g, '')
+        .replace(/\*.*?\*/g, '')
+        .trim();
+      if (cleanSentence.length > 0) {
+        res.write(`data: ${JSON.stringify({ text: cleanSentence })}\n\n`);
+      }
+    }
 
-  } catch (err) {
-    console.error('[sendMessage]', err.message);
-    messages.pop();
-    const fb = 'Hoppla, da hat etwas nicht geklappt. Versuch es bitte gleich nochmal!';
-    setBubble(fb);
-    lastReply = fb;
-    setHint('Nochmal versuchen?');
-    if (taskImage) renderQuick([{ label: '🔄 Nochmal', prompt: userText }]);
-  } finally {
-    busy = false;
-    $('micBtn').disabled = false;
-    $('robot').classList.remove('thinking');
+    res.write('data: [DONE]\n\n');
+    res.end();
+
+  } catch (error) {
+    console.error('Streaming Fehler:', error.message);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
   }
-}
+});
 
-/* ══ Hilfe ══ */
-['btnHelp', 'btnHelpHub'].forEach(id => $(id).addEventListener('click', () => $('panelHelp').classList.add('show')));
-$('btnHelpClose').addEventListener('click', () => $('panelHelp').classList.remove('show'));
+app.post('/api/summarize', async (req, res) => {
+  try {
+    const { messages = [], subject, grade } = req.body;
+    const summaryPrompt = `Fasse dieses Lerngespräch mit einem Kind (Klasse ${grade || 'unbekannt'}) kurz als JSON zusammen.
+Antworte NUR mit einem gültigen JSON-Objekt in diesem Format:
+{"subject":"mathe","topic":"Kurzes Thema","summary":"1 Satz Zusammenfassung","status":"verstanden","strengths":"Was klappte gut","difficulties":"Was fiel schwer"}
+Erlaubte Werte für status: "verstanden", "unsicher", "offen".`;
 
-/* ══ Eltern-Bereich ══ */
-function openPin() {
-  stopSpeaking();
-  $('panelPin').classList.add('show');
-  $('pinCheck').value = '';
-  setTimeout(() => $('pinCheck').focus(), 100);
-}
-['btnParent', 'btnParentHub'].forEach(id => $(id).addEventListener('click', openPin));
-$('btnPinCancel').addEventListener('click', () => $('panelPin').classList.remove('show'));
-$('pinCheck').addEventListener('keydown', e => { if (e.key === 'Enter') checkPin(); });
-$('btnPinOk').addEventListener('click', checkPin);
-
-async function checkPin() {
-  const stored = LS.get('lio_pin');
-  if (!stored) { alert('Es ist noch keine PIN vergeben. Bitte die App neu einrichten.'); return; }
-  if ((await hashPin($('pinCheck').value)) === stored) {
-    $('panelPin').classList.remove('show');
-    openParent();
-  } else {
-    alert('Falsche PIN.');
-    $('pinCheck').value = '';
-  }
-}
-
-function openParent() {
-  $('statChats').textContent = interactions;
-  $('soundToggle').checked = soundOn;
-  renderKids();
-  renderNotices();
-  $('panelParent').classList.add('show');
-}
-
-function renderKids() {
-  const box = $('kidList');
-  box.innerHTML = '';
-  profiles.forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'kid-row';
-    const nm = document.createElement('span');
-    nm.textContent = '🧒 ' + p.name + (p.grade ? ' · ' + gradeLabel(p.grade) : '') + ' · ⭐ ' + (p.points || 0);
-    const act = document.createElement('div');
-
-    const reset = document.createElement('button');
-    reset.className = 'btn ghost small';
-    reset.textContent = 'Lernstand löschen';
-    reset.addEventListener('click', () => {
-      if (!confirm('Lernstand und Punkte von ' + p.name + ' wirklich löschen?')) return;
-      p.subjects = {};
-      p.open = null;
-      p.points = 0;
-      LS.del(pendingKey(p));
-      saveProfiles();
-      if (me && me.id === p.id) updatePoints(false);
-      renderKids();
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 300,
+        temperature: 0.3,
+        system: summaryPrompt,
+        messages: [{ role: 'user', content: JSON.stringify(messages) }]
+      })
     });
 
-    const del = document.createElement('button');
-    del.className = 'btn ghost small';
-    del.textContent = 'Entfernen';
-    del.addEventListener('click', () => {
-      if (!confirm(p.name + ' und den gesamten Lernstand wirklich entfernen?')) return;
-      LS.del(pendingKey(p));
-      profiles = profiles.filter(x => x.id !== p.id);
-      saveProfiles();
-      if (!profiles.length) {
-        LS.del('lio_consent');
-        location.reload();
-        return;
-      }
-      if (me && me.id === p.id) {
-        $('panelParent').classList.remove('show');
-        me = null;
-        renderWho();
-        showScreen('who');
-      }
-      renderKids();
+    if (!response.ok) throw new Error('Summarize API Error');
+    const data = await response.json();
+    const rawText = data.content?.[0]?.text || '{}';
+    const match = rawText.match(/\{[\s\S]*\}/);
+    const parsed = match ? JSON.parse(match[0]) : {};
+
+    res.json({
+      subject: subject || parsed.subject || 'sonstiges',
+      topic: parsed.topic || 'Übung',
+      summary: parsed.summary || '',
+      status: parsed.status || 'offen',
+      strengths: parsed.strengths || '',
+      difficulties: parsed.difficulties || ''
     });
-
-    act.append(reset, del);
-    row.append(nm, act);
-    box.appendChild(row);
-  });
-}
-
-$('btnAddKid').addEventListener('click', () => {
-  const name = $('newKid').value.trim().slice(0, 24);
-  if (!name) { alert('Bitte einen Spitznamen eingeben.'); return; }
-  profiles.push(newProfile(name, ''));
-  saveProfiles();
-  $('newKid').value = '';
-  renderKids();
-  if (me) $('btnAvatar').style.cursor = 'pointer';
-});
-
-function renderNotices() {
-  const box = $('notices');
-  let list = [];
-  try { list = JSON.parse(LS.get('lio_notices', '[]')); } catch (e) {}
-  box.innerHTML = '';
-  if (!list.length) {
-    box.innerHTML = '<div class="note-row">Keine besonderen Hinweise.</div>';
-    return;
+  } catch (e) {
+    res.json({ subject: req.body.subject || 'sonstiges', topic: 'Übung', summary: '', status: 'offen' });
   }
-  const labels = {
-    self_harm: '⚠️ Ein Gespräch deutete auf große Traurigkeit oder Hoffnungslosigkeit hin',
-    abuse: '⚠️ Ein Gespräch deutete darauf hin, dass jemand dem Kind wehtut',
-    bullying: '⚠️ Ein Gespräch deutete auf Mobbing oder Ausgrenzung hin',
-  };
-  list.slice().reverse().forEach(n => {
-    const d = new Date(n.date);
-    const row = document.createElement('div');
-    row.className = 'note-row';
-    row.textContent = (n.name ? n.name + ': ' : '') + (labels[n.category] || n.category);
-    const t = document.createElement('div');
-    t.className = 'note-time';
-    t.textContent = d.toLocaleDateString('de-DE') + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    row.appendChild(t);
-    box.appendChild(row);
-  });
-  const clear = document.createElement('button');
-  clear.className = 'btn ghost';
-  clear.textContent = 'Hinweise löschen';
-  clear.addEventListener('click', () => { LS.del('lio_notices'); renderNotices(); });
-  box.appendChild(clear);
-}
-
-$('soundToggle').addEventListener('change', (e) => {
-  soundOn = e.target.checked;
-  LS.set('lio_sound', soundOn ? '1' : '0');
-  if (!soundOn) stopSpeaking();
 });
-$('btnNewPin').addEventListener('click', async () => {
-  const pin = $('newPin').value.trim();
-  if (!/^\d{4,6}$/.test(pin)) { alert('Die PIN muss 4–6 Ziffern haben.'); return; }
-  LS.set('lio_pin', await hashPin(pin));
-  $('newPin').value = '';
-  alert('PIN geändert.');
+
+app.post('/api/speak', (req, res) => {
+  res.status(404).json({ error: 'Lokales Browser-TTS aktiv.' });
 });
-$('btnWipe').addEventListener('click', () => {
-  if (!confirm('Wirklich alle Daten von diesem Gerät löschen?')) return;
-  profiles.forEach(p => LS.del(pendingKey(p)));
-  ['lio_profiles', 'lio_active', 'lio_name', 'lio_grade', 'lio_pin', 'lio_notices', 'lio_consent', 'lio_device',
-   'lio_gate_lock', 'lio_sound', 'kb_interactions'].forEach(k => LS.del(k));
-  location.reload();
+
+app.listen(PORT, () => {
+  console.log(`\n🚀 KidsBot.ai Server läuft mit Claude (${CLAUDE_MODEL}) auf Port ${PORT}`);
 });
-$('btnParentClose').addEventListener('click', () => $('panelParent').classList.remove('show'));
-
-/* ══ Blinzeln (beide Roboter) ══ */
-function blinkLoop() {
-  const all = document.querySelectorAll('.robot-container');
-  all.forEach(c => c.classList.add('is-blinking'));
-  setTimeout(() => {
-    all.forEach(c => c.classList.remove('is-blinking'));
-    setTimeout(blinkLoop, 2500 + Math.random() * 3000);
-  }, 280);
-}
-
-/* ══ Start ══ */
-function boot() {
-  loadProfiles();
-  migrateOldSingleProfile();
-  setTimeout(blinkLoop, 2000);
-  newMath();
-  updateGateLock();
-  renderGrades();
-
-  if (!LS.get('lio_consent') || !profiles.length) {
-    showScreen('gate');
-  } else if (profiles.length === 1) {
-    loginAs(profiles[0].id);
-  } else {
-    renderWho();
-    showScreen('who');
-  }
-}
-document.addEventListener('DOMContentLoaded', boot);
-
-// Entfernt alte Service-Worker-Caches automatisch
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    for (let reg of regs) reg.unregister();
-  });
-}
-window.addEventListener('unhandledrejection', e => console.warn('[promise]', e.reason));
-</script>
-</body>
-</html>
