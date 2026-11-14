@@ -22,11 +22,13 @@
   --font:'Nunito',ui-rounded,'SF Pro Rounded','Segoe UI',system-ui,sans-serif;
   --r-md:20px;--r-lg:30px;
 
-  /* Zimmer & Tisch: Höhe der Tischkante, Größe/Position des Roboters */
+  /* Zimmer & Schreibtisch: Höhe der Tischkante, Größe, Höhe und Neigung von Lio */
   --top-h:76px;
-  --desk-top:clamp(250px,35vh,390px);
-  --robot-w:120%;
-  --robot-sink:-24%;
+  --desk-top:clamp(275px,38vh,420px);
+  --robot-w:135%;
+  --robot-sink:-6%;
+  --robot-up:24px;
+  --lean:-4deg;
   --room-img:none;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -46,15 +48,16 @@ body::after{
 .screen{display:none;flex-direction:column;align-items:center;position:absolute;inset:0;z-index:1}
 .screen.active{display:flex}
 button{font-family:inherit;color:inherit}
-select{font-family:inherit}
+select,input{font-family:inherit}
+a{color:var(--blue-2)}
 
-/* ── Zimmer-Hintergrund (nur im Menü und im Chat sichtbar) ── */
+/* ── Zimmer-Hintergrund (Start, Menü und Chat) ── */
 #bgScene{
   position:fixed;left:0;right:0;top:0;height:calc(var(--desk-top) + env(safe-area-inset-top,0px) + 30px);
   z-index:0;pointer-events:none;overflow:hidden;display:none;
   background:var(--room-img) center top/cover no-repeat
 }
-body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block}
+body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene,body[data-screen="welcome"] #bgScene{display:block}
 #bgScene .d{position:absolute;filter:blur(1.4px);opacity:.95}
 .d-light{
   inset:0;filter:blur(22px)!important;opacity:.8;
@@ -68,19 +71,20 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 @media (max-width:1100px){.d-globe{display:none}}
 @media (max-width:760px){.d-books{display:none}.d-plant-l{opacity:.45;left:-4vw}}
 
-/* ── Karten, Buttons, Eingaben (Gate, Panels) ── */
+/* ── Karten, Buttons, Eingaben ── */
 .card{
   background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 22px;
   width:380px;max-width:94%;max-height:92vh;overflow-y:auto;text-align:center;box-shadow:0 26px 60px rgba(20,70,160,.28)
 }
 .card.wide{width:620px}
+.card.xl{width:780px;text-align:left}
 .card h2{font-size:21px;margin-bottom:12px;color:var(--navy);font-weight:900}
 .card p{font-size:14.5px;color:var(--navy-2);line-height:1.5;margin-bottom:14px;font-weight:700}
 .note{font-size:12.5px!important;background:#EEF5FF;border:1px solid #D5E5FB;padding:12px;border-radius:14px;text-align:left}
-.note a{color:var(--blue-2)}
+.field{display:block;text-align:left;margin:12px 0 6px;font-size:13px;font-weight:900;color:var(--navy-2)}
 .card input[type=text],.card input[type=number],.card input[type=password]{
-  width:100%;padding:13px;background:#F4F8FF;border:2px solid #D5E5FB;border-radius:14px;margin-bottom:12px;
-  font-size:17px;text-align:center;font-weight:800;color:var(--navy);font-family:inherit
+  width:100%;padding:13px;background:#F4F8FF;border:2px solid #D5E5FB;border-radius:14px;margin-bottom:8px;
+  font-size:17px;text-align:center;font-weight:800;color:var(--navy)
 }
 .card input:focus{outline:none;border-color:var(--blue-1)}
 .btn{
@@ -91,20 +95,20 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 .btn:disabled{opacity:.5}
 .btn.ghost{background:#fff;color:var(--navy-2);border:2px solid #D5E5FB;box-shadow:none}
 .btn.small{padding:9px 12px;font-size:12px;width:auto;margin:0}
-.consent{display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:13px;font-weight:700;color:var(--navy-2);margin-bottom:12px}
-.consent input{width:22px;height:22px;flex-shrink:0;accent-color:var(--blue-2)}
-.hold{position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-.hold i{position:absolute;inset:0;background:rgba(255,255,255,.4);width:0}
-.hold span{position:relative}
+.btn.big{font-size:17px;padding:17px 20px}
+.linkbtn{background:none;border:none;color:var(--navy-2);font-weight:800;font-size:13px;text-decoration:underline;cursor:pointer;margin-top:12px;width:100%}
+.consent{display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:13px;font-weight:700;color:var(--navy-2);margin:10px 0 12px;line-height:1.45}
+.consent input{width:22px;height:22px;flex-shrink:0;accent-color:var(--blue-2);margin-top:2px}
 .circle{
   width:48px;height:48px;border-radius:50%;background:var(--glass-2);border:1px solid var(--line);
   font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)
 }
 .circle:active{transform:scale(.94)}
 .circle.dark{background:#2D4B7A;color:#fff;border:none}
+.circle.sm{width:38px;height:38px;font-size:16px}
 
-/* ── Gate / Wer lernt / Klassen ── */
-#screen-gate{justify-content:center;padding:20px}
+/* ── Wer lernt / Klassen / Einrichtung ── */
+#screen-setup{justify-content:center;padding:20px}
 .big-title{font-size:clamp(28px,6vw,40px);font-weight:900;color:var(--navy);line-height:1.1;text-align:center}
 .big-title b{color:var(--blue-2)}
 .sub-title{color:var(--navy-2);font-weight:800;margin:8px 0 14px;text-align:center}
@@ -121,8 +125,8 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 .who-card small{display:block;font-size:12px;font-weight:800;color:var(--navy-2);margin-top:4px}
 .grade-card:active,.who-card:active{transform:scale(.96);border-color:var(--blue-1)}
 
-/* ── Gemeinsames Layout für Menü & Chat: Kopfzeile, Zimmer (Roboter), Tisch ── */
-#screen-hub,#screen-main{justify-content:flex-start}
+/* ── Gemeinsames Layout: Kopfzeile, Zimmer (Lio), Schreibtisch ── */
+#screen-hub,#screen-main,#screen-welcome{justify-content:flex-start}
 .hub-top,.chat-top{
   width:100%;max-width:1500px;flex-shrink:0;position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;
   height:calc(var(--top-h) + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) clamp(14px,3vw,48px) 0
@@ -133,14 +137,26 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
   font-size:clamp(26px,5.6vh,56px);font-weight:900;line-height:1.05;letter-spacing:-.5px;color:var(--navy);
   text-shadow:0 2px 20px rgba(255,255,255,.95),0 0 5px rgba(255,255,255,.7)
 }
-.robot-box{position:relative;height:100%;aspect-ratio:1.05/1;flex-shrink:0}
+.robot-box{position:relative;height:calc(100% + var(--robot-up));align-self:flex-end;aspect-ratio:1.05/1;flex-shrink:0}
 .desk{
   position:relative;z-index:2;width:100%;flex:1;min-height:0;display:flex;flex-direction:column;
   background:linear-gradient(180deg,#F7FBFF 0%,#EAF4FF 45%,rgba(190,226,250,.92) 100%);
   box-shadow:0 -8px 28px rgba(255,255,255,.75),inset 0 2px 0 #fff
 }
+/* Schatten der Tischkante auf Lio und leichte Tischkanten-Dicke */
+.desk::before{content:'';position:absolute;left:0;right:0;top:-18px;height:18px;pointer-events:none;background:linear-gradient(180deg,rgba(31,95,170,0),rgba(31,95,170,.16))}
+.desk::after{content:'';position:absolute;left:0;right:0;top:0;height:8px;pointer-events:none;background:linear-gradient(180deg,#fff,rgba(214,232,250,.0))}
 .desk-scroll{flex:1;min-height:0;overflow-y:auto}
-.desk-inner{max-width:1100px;margin:0 auto;padding:clamp(12px,2vh,20px) clamp(14px,3vw,40px) 12px}
+.desk-inner{max-width:1100px;margin:0 auto;padding:clamp(14px,2.2vh,22px) clamp(14px,3vw,40px) 12px}
+
+/* ── Startbildschirm ── */
+.brand{font-size:24px;font-weight:900;color:var(--navy)}
+.lead{font-size:clamp(15px,2.2vh,19px);font-weight:800;color:var(--navy-2);line-height:1.4;max-width:46em;margin-bottom:12px}
+.features{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.feat{background:#fff;border:1px solid #E0ECFF;border-radius:20px;padding:14px;box-shadow:var(--shadow);font-weight:700;font-size:13.5px;color:var(--navy-2);line-height:1.4}
+.feat b{display:block;font-size:15px;color:var(--navy);margin:6px 0 2px}
+.feat .fi{font-size:28px}
+.fine{text-align:center;font-size:12.5px;color:var(--navy-2);font-weight:800;margin-top:12px}
 
 /* ── Hub-Kopfzeile ── */
 .who{display:flex;align-items:center;gap:14px;min-width:0}
@@ -160,7 +176,7 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 .grade-pill select{appearance:none;-webkit-appearance:none;border:none;background:transparent;font-size:inherit;font-weight:900;color:var(--navy);padding-right:18px;cursor:pointer;outline:none}
 .grade-pill::after{content:'⌄';position:absolute;right:14px;top:50%;transform:translateY(-62%);pointer-events:none;color:var(--navy-2)}
 
-/* ── Fach-Kacheln (klein und schmal) ── */
+/* ── Fach-Kacheln ── */
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,1.2vw,14px);margin-bottom:clamp(8px,1.4vh,12px)}
 .tile{
   position:relative;border:none;border-radius:22px;padding:clamp(10px,1.4vw,16px);color:#fff;text-align:left;cursor:pointer;
@@ -177,7 +193,6 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 .t-teal{background:linear-gradient(145deg,#45DDCB,#14958C)}
 .t-orange{background:linear-gradient(145deg,#FFCF5C,#FF9A1F)}
 
-/* ── Hinweis-Karte unter den Kacheln ── */
 .hint-card{
   display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;background:rgba(255,255,255,.78);border:1px solid #fff;
   border-radius:22px;padding:clamp(8px,1.4vh,12px) 18px;margin-bottom:clamp(8px,1.4vh,12px);box-shadow:0 6px 16px rgba(31,95,170,.1)
@@ -232,7 +247,7 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 /* ── Chat ── */
 .subj-pill{background:var(--glass-2);border:1px solid var(--line);border-radius:50px;padding:10px 18px;font-weight:900;font-size:clamp(13px,2vh,17px);box-shadow:var(--shadow);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .chat-room .room-inner{justify-content:flex-end}
-.chat-inner{max-width:1100px;width:100%;margin:0 auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:clamp(10px,1.8vh,16px) clamp(14px,3vw,40px) calc(10px + env(safe-area-inset-bottom,0px))}
+.chat-inner{max-width:1100px;width:100%;margin:0 auto;flex:1;min-height:0;display:flex;flex-direction:column;padding:clamp(12px,2vh,18px) clamp(14px,3vw,40px) calc(10px + env(safe-area-inset-bottom,0px))}
 .chat-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:8px}
 .task-card{display:none;position:relative;background:var(--glass-2);border:2px solid #BCD7FF;border-radius:var(--r-md);padding:8px;box-shadow:var(--shadow);flex-shrink:0}
 .task-card.show{display:block}
@@ -254,16 +269,17 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 .chat-input .opts{width:100%}
 .hint{text-align:center;font-size:12.5px;color:var(--navy-2);font-weight:800;min-height:16px}
 
-/* Roboter (gemeinsam) – sitzt hinter der Tischkante */
+/* Lio: lehnt am Schreibtisch, Unterkörper hinter der Tischkante */
 .robot-wrap{
-  position:absolute;bottom:var(--robot-sink);left:50%;transform:translateX(-50%);width:var(--robot-w);cursor:pointer;
+  position:absolute;bottom:var(--robot-sink);left:50%;width:var(--robot-w);cursor:pointer;transform-origin:50% 100%;
+  transform:translateX(-50%) rotate(var(--lean));
   filter:drop-shadow(0 16px 26px rgba(20,70,160,.35));animation:float 3.6s ease-in-out infinite
 }
 .robot-wrap.talking{animation:talk 1.1s ease-in-out infinite}
 .robot-wrap.thinking{animation:think 2s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
-@keyframes talk{0%,100%{transform:translateX(-50%) translateY(-4px)}50%{transform:translateX(-50%) translateY(-13px)}}
-@keyframes think{0%,100%{transform:translateX(-50%) rotate(-1.5deg)}50%{transform:translateX(-50%) rotate(1.5deg)}}
+@keyframes float{0%,100%{transform:translateX(-50%) translateY(0) rotate(var(--lean))}50%{transform:translateX(-50%) translateY(-8px) rotate(var(--lean))}}
+@keyframes talk{0%,100%{transform:translateX(-50%) translateY(-3px) rotate(var(--lean))}50%{transform:translateX(-50%) translateY(-11px) rotate(var(--lean))}}
+@keyframes think{0%,100%{transform:translateX(-50%) rotate(calc(var(--lean) - 1.5deg))}50%{transform:translateX(-50%) rotate(calc(var(--lean) + 1.5deg))}}
 .robot-container{position:relative;width:100%;margin-left:22%}
 .robot-container img{display:block;width:100%;height:auto;pointer-events:none}
 .robot-container .lio-zu{position:absolute;top:0;left:0;height:100%;object-fit:contain;opacity:0}
@@ -283,7 +299,7 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
   padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(110%);transition:transform .3s
 }
 .text-overlay.show{transform:translateY(0)}
-.text-overlay input{flex:1;min-width:0;padding:14px 18px;border:2px solid #D5E5FB;background:#F4F8FF;border-radius:50px;font-size:16px;color:var(--navy);font-family:inherit;font-weight:700}
+.text-overlay input{flex:1;min-width:0;padding:14px 18px;border:2px solid #D5E5FB;background:#F4F8FF;border-radius:50px;font-size:16px;color:var(--navy);font-weight:700}
 .text-overlay input:focus{outline:none;border-color:var(--blue-1)}
 .text-overlay .send{width:50px;height:50px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--blue-1),var(--blue-2));color:#fff;font-size:20px;cursor:pointer}
 
@@ -291,17 +307,13 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 .panel{position:fixed;inset:0;background:rgba(11,42,91,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
 .panel.show{display:flex}
 .panel .card{text-align:left}
-.panel label{display:block;margin:12px 0 6px;font-size:13px;font-weight:900;color:var(--navy-2)}
+.panel label.field{margin:12px 0 6px}
 .stat{background:#EEF5FF;border:1px solid #D5E5FB;border-radius:16px;padding:14px;text-align:center;margin-bottom:12px}
 .stat b{display:block;font-size:28px;color:var(--blue-2);font-weight:900}
 .stat span{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--navy-2);font-weight:800}
-.note-row{padding:9px 0;border-bottom:1px solid var(--line-2);font-size:14px;color:var(--navy-2);font-weight:700}
-.note-time{color:var(--navy-3);font-size:12px;margin-top:2px}
 .help-box{font-size:14.5px;line-height:1.7;background:#EEF5FF;border:1px solid #D5E5FB;border-radius:16px;padding:15px;color:var(--navy-2);font-weight:700}
 .help-box a{color:var(--blue-2);font-weight:900;text-decoration:none}
 .help-box a.em{color:#D8324B}
-.kid-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line-2);font-weight:900;font-size:14px;flex-wrap:wrap}
-.kid-row div{display:flex;gap:6px}
 .prog-subject{background:#F4F8FF;border:1px solid #D5E5FB;border-radius:14px;padding:12px;margin-bottom:10px}
 .prog-subject h3{font-size:15px;color:var(--navy);margin-bottom:6px}
 .prog-subject .t{font-size:13.5px;color:var(--navy-2);line-height:1.45;margin-top:4px;font-weight:700}
@@ -315,10 +327,48 @@ body[data-screen="hub"] #bgScene,body[data-screen="main"] #bgScene{display:block
 .sub-card:active{transform:scale(.96);border-color:var(--blue-1)}
 hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
 
+/* ── Eltern-Bereich (Auswertung) ── */
+.pp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.pp-head h2{margin:0}
+.kid-tabs,.p-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.p-tab{border:2px solid #D5E5FB;background:#fff;border-radius:50px;padding:8px 14px;font-weight:900;font-size:13.5px;cursor:pointer;color:var(--navy-2)}
+.p-tab.sel{background:linear-gradient(135deg,var(--blue-1),var(--blue-2));color:#fff;border-color:transparent}
+.psec{margin:16px 0 8px;font-size:15px;font-weight:900;color:var(--navy)}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+.sbox{background:#EEF5FF;border:1px solid #D5E5FB;border-radius:16px;padding:12px 6px;text-align:center}
+.sbox b{display:block;font-size:24px;color:var(--blue-2);font-weight:900}
+.sbox span{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--navy-2);font-weight:800}
+.bars{display:flex;align-items:flex-end;gap:8px;height:130px;padding:8px 8px 6px;background:#F4F8FF;border:1px solid #D5E5FB;border-radius:16px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;font-size:11px;font-weight:800;color:var(--navy-2)}
+.bar-col i{font-style:normal;font-size:10px;color:var(--navy-3)}
+.bar{width:70%;max-width:36px;border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,var(--blue-1),var(--blue-2));min-height:4px}
+.bar.today{background:linear-gradient(180deg,#FFCF5C,#FF9A1F)}
+.hrow{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13.5px;font-weight:800}
+.hrow .nm{width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow .track{flex:1;height:10px;background:#E4EEFB;border-radius:10px;overflow:hidden}
+.hrow .fill{height:100%;background:linear-gradient(90deg,var(--blue-1),#45DDCB)}
+.hrow .ct{width:34px;text-align:right;color:var(--navy-2)}
+.entry{padding:9px 0;border-bottom:1px solid var(--line-2);font-size:13.5px;font-weight:700;color:var(--navy-2);line-height:1.45}
+.entry b{color:var(--navy)}
+.entry small{display:block;color:var(--navy-3);font-weight:700;font-size:12px}
+.infobox{background:#EEF5FF;border:1px solid #D5E5FB;border-radius:14px;padding:12px 14px;font-size:13.5px;color:var(--navy-2);font-weight:700;line-height:1.55;margin:8px 0}
+.infobox.tip{background:#FFF7E3;border-color:#FFE0A3}
+.infobox p{font-size:13.5px;margin:0 0 6px}
+.infobox p:last-child{margin-bottom:0}
+.subj-card{background:#F4F8FF;border:1px solid #D5E5FB;border-radius:16px;padding:14px;margin-bottom:12px}
+.subj-card h3{font-size:16px;color:var(--navy);margin-bottom:2px}
+.subj-card .counts{font-size:12.5px;font-weight:800;color:var(--navy-2);margin-bottom:6px}
+.kid-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line-2);font-weight:900;font-size:14px;flex-wrap:wrap}
+.kid-row .act{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.msel{padding:8px 10px;border:2px solid #D5E5FB;border-radius:12px;background:#fff;font-weight:800;color:var(--navy);font-size:13px}
+.inline{display:flex;gap:8px;align-items:center;margin-top:8px}
+.inline input{flex:1;margin:0!important;text-align:left!important;font-size:15px!important;padding:10px 12px!important}
+
 /* ── Schmale Bildschirme (Handy hochkant) ── */
 @media (max-width:760px){
-  :root{--top-h:66px;--desk-top:clamp(230px,31vh,300px)}
+  :root{--top-h:66px;--desk-top:clamp(250px,34vh,320px);--robot-w:125%}
   .tiles{grid-template-columns:repeat(2,1fr)}
+  .features{grid-template-columns:repeat(2,1fr)}
   .headline{font-size:clamp(22px,3.8vh,30px)}
   .robot-box{width:44vw;aspect-ratio:auto}
   .chat-room .room-inner{justify-content:center}
@@ -330,6 +380,8 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
   .opt{padding:12px 4px;gap:6px}
   .opt .ol{font-size:13px}
   .cheer{display:none}
+  .sgrid{grid-template-columns:repeat(2,1fr)}
+  .card.xl{padding:20px 14px}
 }
 </style>
 </head>
@@ -384,39 +436,65 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
   </svg>
 </div>
 
-<!-- Eltern-Gate / Ersteinrichtung -->
-<div id="screen-gate" class="screen">
+<!-- Startbildschirm (neu auf diesem Gerät) -->
+<div id="screen-welcome" class="screen">
+  <div class="hub-top">
+    <div class="brand">🤖 Lio</div>
+    <div class="top-actions"><a class="circle" style="width:auto;padding:0 16px;font-weight:900;font-size:14px;text-decoration:none;color:var(--navy)" href="/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></div>
+  </div>
+
+  <div class="room">
+    <div class="room-inner">
+      <h1 class="headline">Willkommen<br>bei Lio!</h1>
+      <div class="robot-box">
+        <div class="robot-wrap">
+          <div class="robot-container">
+            <img src="assets/lio_offen.png" class="lio-offen" alt="Lio">
+            <img src="assets/lio_zu.png" class="lio-zu" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="desk">
+    <div class="desk-scroll">
+      <div class="desk-inner">
+        <p class="lead">Dein KI-Lernbegleiter für Hausaufgaben und Nachhilfe. Lio erklärt Schritt für Schritt und gibt keine fertigen Lösungen vor.</p>
+        <section class="features">
+          <div class="feat"><span class="fi">📷</span><b>Aufgabe fotografieren</b>Lio liest die Aufgabe und geht sie mit dem Kind durch.</div>
+          <div class="feat"><span class="fi">🧠</span><b>Verstehen statt abschreiben</b>Lio fragt nach, gibt Tipps und prüft Antworten.</div>
+          <div class="feat"><span class="fi">📈</span><b>Überblick für Eltern</b>Lernzeit, Fächer, Fortschritte und Hinweise auf einen Blick.</div>
+          <div class="feat"><span class="fi">🔒</span><b>Datensparsam</b>Lernstände bleiben auf dem Gerät, keine Chatverläufe auf unseren Servern.</div>
+        </section>
+        <button class="btn big" id="btnStart">Los geht's: Einrichtung für Eltern</button>
+        <p class="fine"><a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · <a href="/impressum.html" target="_blank" rel="noopener">Impressum</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Einrichtung für Eltern -->
+<div id="screen-setup" class="screen">
   <div class="card">
-    <h2>🔒 Nur für Erwachsene</h2>
+    <h2>👨‍👩‍👧 Einrichtung für Eltern</h2>
+    <p>In zwei Minuten startklar. Diese Angaben bleiben auf diesem Gerät.</p>
 
-    <div id="mathBox">
-      <p>Diese App wird von Erwachsenen eingerichtet. Bitte rechne:</p>
-      <span id="mathQ" style="font-size:26px;font-weight:900;display:block;margin-bottom:12px"></span>
-      <input type="number" id="mathA" inputmode="numeric" placeholder="Ergebnis" autocomplete="off">
-      <button class="btn" id="btnMath">Weiter</button>
-      <p id="mathLock" style="display:none;font-size:13px;color:#D8324B;margin-top:10px"></p>
-    </div>
+    <label class="field" for="nameIn">Spitzname des Kindes</label>
+    <input type="text" id="nameIn" placeholder="z. B. Leo" maxlength="24" autocomplete="off">
 
-    <div id="holdBox" style="display:none">
-      <p>Fast geschafft. Halte den Knopf 3 Sekunden gedrückt.</p>
-      <button class="btn hold" id="holdBtn" type="button"><i id="holdBar"></i><span id="holdLbl">Gedrückt halten…</span></button>
-    </div>
+    <label class="field" for="pinIn">Eltern-PIN (4–6 Ziffern)</label>
+    <input type="password" id="pinIn" inputmode="numeric" placeholder="PIN" maxlength="6" autocomplete="new-password">
+    <input type="password" id="pinIn2" inputmode="numeric" placeholder="PIN wiederholen" maxlength="6" autocomplete="new-password">
+    <p class="note">Die PIN schützt den Eltern-Bereich mit Lernstand, Hinweisen und Einstellungen. Bitte merken: ohne PIN lässt sich der Bereich nur zurücksetzen, indem alle Daten gelöscht werden.</p>
 
-    <div id="setupBox" style="display:none">
-      <p class="note">
-        <b>Was passiert mit den Daten?</b><br>
-        Spitzname, Klasse, Punkte und der Lernstand (kurze Notizen, was geübt wurde) werden nur auf diesem Gerät gespeichert.
-        Fragen, Fotos von Aufgaben und eine kurze Zusammenfassung des Lernstands werden zur Beantwortung an unseren KI-Dienstleister (Anthropic) übermittelt,
-        die Sprachausgabe (falls aktiv) läuft rein lokal auf deinem Gerät. Wir speichern keine Chatverläufe, Fotos oder Lernstände auf unserem Server.
-        <b>Bitte keine Gesichter, Namen oder Adressen fotografieren.</b>
-        Details in der <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a>.
-      </p>
-      <input type="text" id="nameIn" placeholder="Spitzname des Kindes (z. B. Leo)" maxlength="24" autocomplete="off">
-      <p class="note" style="margin-bottom:10px">Vergib eine Eltern-PIN (4–6 Ziffern) für den Eltern-Bereich.</p>
-      <input type="password" id="pinIn" inputmode="numeric" placeholder="Eltern-PIN" maxlength="6" autocomplete="new-password">
-      <label class="consent"><input type="checkbox" id="consent"><span>Ich bin Elternteil bzw. sorgeberechtigt und stimme der beschriebenen Verarbeitung zu.</span></label>
-      <button class="btn" id="btnSetup">Speichern &amp; loslegen</button>
-    </div>
+    <label class="consent">
+      <input type="checkbox" id="consent">
+      <span>Ich bin Elternteil bzw. sorgeberechtigt, habe die <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen und stimme zu, dass Fragen, Fotos von Aufgaben und kurze Lernstand-Zusammenfassungen an unseren KI-Dienstleister (Anthropic) und, bei aktiver Sprachausgabe, die Texte an ElevenLabs übermittelt werden. Ich fotografiere keine Gesichter, Namen oder Adressen.</span>
+    </label>
+
+    <button class="btn" id="btnSetup">Speichern &amp; loslegen</button>
+    <button class="btn ghost" id="btnSetupBack">Zurück</button>
   </div>
 </div>
 
@@ -565,7 +643,7 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
   </div>
 </div>
 
-<!-- Mein Lernstand -->
+<!-- Mein Lernstand (für das Kind) -->
 <div class="panel" id="panelProgress">
   <div class="card">
     <h2>⭐ Mein Lernstand</h2>
@@ -583,34 +661,18 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
     <input type="password" id="pinCheck" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="current-password">
     <button class="btn" id="btnPinOk">Bestätigen</button>
     <button class="btn ghost" id="btnPinCancel">Abbrechen</button>
+    <button class="linkbtn" id="btnForgotPin">PIN vergessen?</button>
   </div>
 </div>
 
 <!-- Eltern-Bereich -->
 <div class="panel" id="panelParent">
-  <div class="card">
-    <h2>⚙️ Eltern-Bereich</h2>
-    <div class="stat"><b id="statChats">0</b><span>Nachrichten an Lio</span></div>
-
-    <h2 style="font-size:16px">👧 Kinder</h2>
-    <div id="kidList"></div>
-    <label for="newKid">Kind hinzufügen</label>
-    <input type="text" id="newKid" maxlength="24" placeholder="Spitzname">
-    <button class="btn" id="btnAddKid">Hinzufügen</button>
-    <hr>
-
-    <h2 style="font-size:16px">🚨 Hinweise</h2>
-    <div id="notices" style="margin-bottom:8px"></div>
-    <hr>
-    <label class="consent" style="margin:0"><input type="checkbox" id="soundToggle"><span>Sprachausgabe an</span></label>
-    <hr>
-    <label for="newPin">🔑 Neue PIN</label>
-    <input type="text" id="newPin" inputmode="numeric" maxlength="6" placeholder="z. B. 4321">
-    <button class="btn" id="btnNewPin">PIN ändern</button>
-    <hr>
-    <p style="font-size:13px;margin-bottom:6px">Löscht alle Kinder, Lernstände, Punkte, Hinweise und die PIN von diesem Gerät.</p>
-    <button class="btn ghost" id="btnWipe">Alle Daten löschen</button>
-    <button class="btn ghost" id="btnParentClose">Schließen</button>
+  <div class="card xl">
+    <div class="pp-head"><h2>⚙️ Eltern-Bereich</h2><button class="circle sm" id="btnParentClose2" aria-label="Schließen">✕</button></div>
+    <div class="kid-tabs" id="kidTabs"></div>
+    <div class="p-tabs" id="pTabs"></div>
+    <div id="pBody"></div>
+    <button class="btn ghost" id="btnParentClose" style="margin-top:14px">Schließen</button>
   </div>
 </div>
 
@@ -632,14 +694,20 @@ hr{border:none;border-top:1px solid var(--line-2);margin:14px 0}
 <script>
 'use strict';
 
-/* ══ Konfiguration & Helfer (FESTE VERKNÜPFUNG ZU RENDER) ══ */
-const CFG = Object.assign({ apiBase: 'https://kidsbot.ai', appToken: '' }, window.LIO_CONFIG || {});
+/* ══ Konfiguration & Helfer ══ */
+const CFG = Object.assign({ apiBase: '', appToken: '' }, window.LIO_CONFIG || {});
 const $ = (id) => document.getElementById(id);
 const LS = {
   get(k, d = '') { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
   del(k) { try { localStorage.removeItem(k); } catch (e) {} },
 };
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
 function getDeviceId() {
   let id = LS.get('lio_device');
   if (!id) {
@@ -656,7 +724,8 @@ function apiFetch(path, body) {
   });
 }
 
-/* ══ Fächer-Katalog (Deutschland) ══ */
+/* ══ Fächer-Katalog (Deutschland) ══
+   min/max = Klassenstufen, in denen das Fach üblicherweise unterrichtet wird (Oberstufe = 11). */
 const GROUPS = {
   kern: 'Hauptfächer', nawi: 'Naturwissenschaften & Technik', gesell: 'Gesellschaft & Werte',
   sprachen: 'Sprachen', kreativ: 'Kreativ & Sport', mehr: 'Mehr',
@@ -706,7 +775,6 @@ const GRADES = [
   { g: 'Weiterführende Schule', items: ['5', '6', '7', '8', '9', '10'] },
   { g: 'Oberstufe', items: ['11-13'] },
 ];
-// Die vier Kacheln im Menü
 const TILE_META = {
   mathe: { sub: 'Zahlen entdecken', cls: 't-blue', icon: '➕' },
   deutsch: { sub: 'Lesen und schreiben', cls: 't-purple', icon: '📖' },
@@ -716,12 +784,16 @@ const TILE_META = {
 };
 const CHEERS = ['Du schaffst das! ☆', 'Weiter so! ☆', 'Super gemacht! ☆', 'Schritt für Schritt! ☆'];
 const STATUS_ICON = { verstanden: '✅', unsicher: '⚠️', offen: '⏳' };
+const STATUS_TEXT = { verstanden: 'verstanden', unsicher: 'noch unsicher', offen: 'offen' };
 
 function catItem(k) { return CATALOG.find(c => c.k === k); }
 function subjLabel(k) { const c = catItem(k); return c ? c.l : 'Anderes'; }
 function gradeNum(g) { return g === '11-13' ? 11 : (parseInt(g, 10) || 5); }
 function gradeLabel(g) { return g === '11-13' ? 'Oberstufe' : 'Klasse ' + g; }
 function fmtDate(d) { try { return new Date(d).toLocaleDateString('de-DE'); } catch (e) { return ''; } }
+function fmtDateTime(d) {
+  try { const x = new Date(d); return x.toLocaleDateString('de-DE') + ', ' + x.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
+}
 function mainTiles(n) { return ['mathe', 'deutsch', 'englisch', n <= 4 ? 'sachunterricht' : 'biologie']; }
 
 /* ══ Profile (ein Profil pro Kind, alles lokal auf dem Gerät) ══ */
@@ -731,7 +803,11 @@ let me = null;
 function loadProfiles() { try { profiles = JSON.parse(LS.get('lio_profiles', '[]')) || []; } catch (e) { profiles = []; } }
 function saveProfiles() { LS.set('lio_profiles', JSON.stringify(profiles)); }
 function newProfile(name, grade) {
-  return { id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, grade: grade || '', subjects: {}, open: null, points: 0 };
+  return {
+    id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name, grade: grade || '', subjects: {}, open: null, points: 0,
+    activity: {}, msgs: 0, created: new Date().toISOString(), lastActive: '', lastTs: 0,
+  };
 }
 function pendingKey(p) { return 'lio_pending_' + p.id; }
 
@@ -756,8 +832,6 @@ let busy = false;
 let skipAudio = false;
 let sessionPts = 0;
 let soundOn = LS.get('lio_sound', '1') === '1';
-let interactions = parseInt(LS.get('kb_interactions', '0'), 10) || 0;
-let currentSpeechId = 0; // WICHTIG FÜR TTS-STEUERUNG
 
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -768,77 +842,22 @@ function setBubble(t) { $('bubble').textContent = t; }
 function setBubbleLoading() { $('bubble').innerHTML = '<span class="dots"><span></span><span></span><span></span></span>'; }
 function setHint(t) { $('hint').textContent = t; }
 
-/* ══ Eltern-Gate (Ersteinrichtung) ══ */
-let mathSolution = 0;
-let gateFails = 0;
-function newMath() {
-  const a = 5 + Math.floor(Math.random() * 6), b = 5 + Math.floor(Math.random() * 6);
-  mathSolution = a * b;
-  $('mathQ').textContent = a + ' × ' + b + ' = ?';
-}
-function gateLockedUntil() { return parseInt(LS.get('lio_gate_lock', '0'), 10) || 0; }
-function updateGateLock() {
-  const rest = gateLockedUntil() - Date.now();
-  const on = rest > 0;
-  $('mathLock').style.display = on ? 'block' : 'none';
-  $('btnMath').disabled = on;
-  $('mathA').disabled = on;
-  if (on) {
-    $('mathLock').textContent = 'Zu viele falsche Versuche. Bitte warte ' + Math.ceil(rest / 1000) + ' Sekunden.';
-    setTimeout(updateGateLock, 1000);
-  }
-}
-function checkMath() {
-  if (gateLockedUntil() > Date.now()) return;
-  if (Number($('mathA').value) === mathSolution) {
-    gateFails = 0;
-    $('mathBox').style.display = 'none';
-    $('holdBox').style.display = 'block';
-  } else {
-    gateFails++;
-    $('mathA').value = '';
-    newMath();
-    if (gateFails >= 3) {
-      LS.set('lio_gate_lock', String(Date.now() + 30000));
-      gateFails = 0;
-      updateGateLock();
-    }
-  }
-}
-$('btnMath').addEventListener('click', checkMath);
-$('mathA').addEventListener('keydown', e => { if (e.key === 'Enter') checkMath(); });
-
-const HOLD_MS = 3000;
-let holdRaf = null, holdStart = 0;
-function holdTick() {
-  const pct = Math.min(100, ((Date.now() - holdStart) / HOLD_MS) * 100);
-  $('holdBar').style.width = pct + '%';
-  if (pct >= 100) {
-    $('holdLbl').textContent = 'Bestätigt ✓';
-    setTimeout(() => { $('holdBox').style.display = 'none'; $('setupBox').style.display = 'block'; }, 200);
-    return;
-  }
-  holdRaf = requestAnimationFrame(holdTick);
-}
-function holdEnd() {
-  if (holdRaf) cancelAnimationFrame(holdRaf);
-  holdRaf = null;
-  $('holdBar').style.width = '0';
-  $('holdLbl').textContent = 'Gedrückt halten…';
-}
-$('holdBtn').addEventListener('pointerdown', e => { e.preventDefault(); holdStart = Date.now(); holdTick(); });
-['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('holdBtn').addEventListener(ev, holdEnd));
-
 async function hashPin(pin) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('lio:' + pin));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+/* ══ Start & Einrichtung für Eltern ══ */
+$('btnStart').addEventListener('click', () => showScreen('setup'));
+$('btnSetupBack').addEventListener('click', () => showScreen('welcome'));
+
 $('btnSetup').addEventListener('click', async () => {
   const name = $('nameIn').value.trim();
   const pin = $('pinIn').value.trim();
+  const pin2 = $('pinIn2').value.trim();
   if (!name) { alert('Bitte einen Spitznamen eingeben.'); return; }
   if (!/^\d{4,6}$/.test(pin)) { alert('Bitte eine PIN mit 4–6 Ziffern vergeben.'); return; }
+  if (pin !== pin2) { alert('Die beiden PINs stimmen nicht überein.'); return; }
   if (!$('consent').checked) { alert('Bitte bestätige die Einwilligung.'); return; }
   LS.set('lio_pin', await hashPin(pin));
   LS.set('lio_consent', new Date().toISOString());
@@ -853,14 +872,8 @@ function renderWho() {
   const box = $('whoList');
   box.innerHTML = '';
   profiles.forEach(p => {
-    const b = document.createElement('button');
-    b.className = 'who-card';
-    b.textContent = '🧒 ' + p.name;
-    if (p.grade) {
-      const s = document.createElement('small');
-      s.textContent = gradeLabel(p.grade);
-      b.appendChild(s);
-    }
+    const b = el('button', 'who-card', '🧒 ' + p.name);
+    if (p.grade) b.appendChild(el('small', '', gradeLabel(p.grade)));
     b.addEventListener('click', () => loginAs(p.id));
     box.appendChild(b);
   });
@@ -871,6 +884,7 @@ function loginAs(id) {
   if (!p) return;
   me = p;
   if (typeof me.points !== 'number') me.points = 0;
+  if (!me.activity) me.activity = {};
   LS.set('lio_active', p.id);
   messages = [];
   processPending();
@@ -891,14 +905,9 @@ function renderGrades() {
   const box = $('gradeList');
   box.innerHTML = '';
   GRADES.forEach(group => {
-    const h = document.createElement('div');
-    h.className = 'group-label';
-    h.textContent = group.g;
-    const grid = document.createElement('div');
-    grid.className = 'grid3';
+    const grid = el('div', 'grid3');
     group.items.forEach(v => {
-      const b = document.createElement('button');
-      b.className = 'grade-card';
+      const b = el('button', 'grade-card');
       b.innerHTML = v === '11-13' ? 'Klasse<br>11–13' : 'Klasse ' + v;
       b.addEventListener('click', () => {
         me.grade = v;
@@ -907,15 +916,14 @@ function renderGrades() {
       });
       grid.appendChild(b);
     });
-    box.append(h, grid);
+    box.append(el('div', 'group-label', group.g), grid);
   });
 
   const sel = $('gradeSel');
   sel.innerHTML = '';
   GRADES.forEach(group => group.items.forEach(v => {
-    const o = document.createElement('option');
+    const o = el('option', '', v === '11-13' ? 'Oberstufe (11–13)' : 'Klasse ' + v);
     o.value = v;
-    o.textContent = v === '11-13' ? 'Oberstufe (11–13)' : 'Klasse ' + v;
     sel.appendChild(o);
   }));
 }
@@ -956,35 +964,27 @@ function renderHub() {
   $('btnAvatar').style.cursor = profiles.length > 1 ? 'pointer' : 'default';
   updatePoints(false);
 
-  // Lernarten
   const mr = $('modeRow');
   mr.innerHTML = '';
   MODES.forEach(m => {
-    const b = document.createElement('button');
-    b.className = 'mode' + (hubMode === m.k ? ' sel' : '');
-    b.textContent = m.i + ' ' + m.l;
+    const b = el('button', 'mode' + (hubMode === m.k ? ' sel' : ''), m.i + ' ' + m.l);
     b.addEventListener('click', () => { hubMode = m.k; renderHub(); });
     mr.appendChild(b);
   });
 
-  // Weitermachen
   const rb = $('resumeBox');
   rb.innerHTML = '';
   if (me.open && me.open.topic) {
-    const b = document.createElement('button');
-    b.className = 'resume';
-    b.textContent = '▶️ Weitermachen: ' + (me.open.subject ? subjLabel(me.open.subject) + ' – ' : '') + me.open.topic;
+    const b = el('button', 'resume', '▶️ Weitermachen: ' + (me.open.subject ? subjLabel(me.open.subject) + ' – ' : '') + me.open.topic);
     b.addEventListener('click', () => startSession(me.open.subject || null, me.open.mode || 'hausaufgabe'));
     rb.appendChild(b);
   }
 
-  // Vier Kacheln
   const tiles = $('tiles');
   tiles.innerHTML = '';
   mainTiles(gradeNum(me.grade)).forEach(k => {
     const meta = TILE_META[k];
-    const b = document.createElement('button');
-    b.className = 'tile ' + meta.cls;
+    const b = el('button', 'tile ' + meta.cls);
     b.innerHTML = '<span class="ti"></span><span><h3></h3><small></small></span><span class="go">›</span>';
     b.querySelector('.ti').textContent = meta.icon;
     b.querySelector('h3').textContent = subjLabel(k);
@@ -994,7 +994,6 @@ function renderHub() {
   });
 }
 
-/* Alle Fächer dieser Klassenstufe */
 $('btnOther').addEventListener('click', () => {
   const n = gradeNum(me.grade);
   const box = $('allBody');
@@ -1002,14 +1001,9 @@ $('btnOther').addEventListener('click', () => {
   Object.entries(GROUPS).forEach(([gk, gl]) => {
     const subs = CATALOG.filter(c => c.g === gk && n >= c.min && n <= c.max);
     if (!subs.length) return;
-    const h = document.createElement('div');
-    h.className = 'group-label';
-    h.textContent = gl;
-    const grid = document.createElement('div');
-    grid.className = 'grid3';
+    const grid = el('div', 'grid3');
     subs.forEach(c => {
-      const b = document.createElement('button');
-      b.className = 'sub-card';
+      const b = el('button', 'sub-card');
       b.innerHTML = '<span class="ic"></span><span class="nm"></span><small></small>';
       b.querySelector('.ic').textContent = c.i;
       b.querySelector('.nm').textContent = c.l;
@@ -1018,13 +1012,12 @@ $('btnOther').addEventListener('click', () => {
       b.addEventListener('click', () => { $('panelAll').classList.remove('show'); startSession(c.k, hubMode); });
       grid.appendChild(b);
     });
-    box.append(h, grid);
+    box.append(el('div', 'group-label', gl), grid);
   });
   $('panelAll').classList.add('show');
 });
 $('btnAllClose').addEventListener('click', () => $('panelAll').classList.remove('show'));
 
-/* Eingabeoptionen im Menü: Fach wird automatisch erkannt */
 $('optPhoto').addEventListener('click', () => { startSession(null, hubMode, { quiet: true }); $('photoInput').click(); });
 $('optSpeak').addEventListener('click', () => { startSession(null, hubMode, { quiet: true }); toggleMic(); });
 $('optWrite').addEventListener('click', () => { startSession(null, hubMode, { quiet: true }); openText(); });
@@ -1068,7 +1061,7 @@ function startSession(sk, mk, opts) {
 }
 $('btnHome').addEventListener('click', enterHub);
 
-/* ══ Punkte ══ */
+/* ══ Punkte & Aktivität ══ */
 function addPoints(n, label) {
   if (!me || !n) return;
   me.points = (me.points || 0) + n;
@@ -1081,6 +1074,26 @@ function addPoints(n, label) {
     void p.offsetWidth;
     p.classList.add('show');
   }
+}
+
+function dayKey(d) { return (d || new Date()).toLocaleDateString('sv-SE'); }   // YYYY-MM-DD (lokal)
+
+// Zählt pro Tag Nachrichten und geschätzte Lernminuten (für die Auswertung im Eltern-Bereich)
+function trackActivity() {
+  if (!me) return;
+  const a = me.activity = me.activity || {};
+  const k = dayKey();
+  const rec = a[k] = a[k] || { m: 0, min: 0 };
+  const now = Date.now();
+  const gap = now - (me.lastTs || 0);
+  rec.m++;
+  rec.min += (gap > 0 && gap < 5 * 60000) ? gap / 60000 : 1;
+  me.lastTs = now;
+  me.lastActive = new Date().toISOString();
+  me.msgs = (me.msgs || 0) + 1;
+  const keys = Object.keys(a).sort();
+  while (keys.length > 60) delete a[keys.shift()];
+  saveProfiles();
 }
 
 /* ══ Lernstand merken (Zusammenfassung per Claude, gespeichert auf dem Gerät) ══ */
@@ -1157,30 +1170,24 @@ function buildMemory() {
   return lines.join('\n').slice(0, 1400);
 }
 
-/* ══ Mein Lernstand (Anzeige) ══ */
+/* ══ Mein Lernstand (Anzeige für das Kind) ══ */
 function renderProgress() {
   updatePoints(false);
   const box = $('progressBody');
   box.innerHTML = '';
   const entries = Object.entries(me.subjects).filter(([, r]) => r.topics && r.topics.length);
   if (!entries.length) {
-    box.innerHTML = '<p>Noch nichts gespeichert. Lerne mit Lio, dann siehst du hier, was du schon geschafft hast.</p>';
+    box.appendChild(el('p', '', 'Noch nichts gespeichert. Lerne mit Lio, dann siehst du hier, was du schon geschafft hast.'));
     return;
   }
   entries.forEach(([k, r]) => {
-    const d = document.createElement('div');
-    d.className = 'prog-subject';
-    const h = document.createElement('h3');
-    h.textContent = (catItem(k) ? catItem(k).i + ' ' : '') + subjLabel(k) + ' · ' + r.sessions + '× geübt';
-    d.appendChild(h);
+    const d = el('div', 'prog-subject');
+    d.appendChild(el('h3', '', (catItem(k) ? catItem(k).i + ' ' : '') + subjLabel(k) + ' · ' + r.sessions + '× geübt'));
     r.topics.slice(0, 4).forEach(t => {
-      const x = document.createElement('div');
-      x.className = 't';
-      x.textContent = (STATUS_ICON[t.status] || '') + ' ' + fmtDate(t.date) + ' – ' + t.topic + (t.summary ? ': ' + t.summary : '');
-      d.appendChild(x);
+      d.appendChild(el('div', 't', (STATUS_ICON[t.status] || '') + ' ' + fmtDate(t.date) + ' – ' + t.topic + (t.summary ? ': ' + t.summary : '')));
     });
-    if (r.strengths) { const m = document.createElement('div'); m.className = 'meta'; m.textContent = '💪 ' + r.strengths; d.appendChild(m); }
-    if (r.difficulties) { const m = document.createElement('div'); m.className = 'meta'; m.style.color = '#B7791F'; m.textContent = '🎯 Üben: ' + r.difficulties; d.appendChild(m); }
+    if (r.strengths) d.appendChild(el('div', 'meta', '💪 ' + r.strengths));
+    if (r.difficulties) { const m = el('div', 'meta', '🎯 Üben: ' + r.difficulties); m.style.color = '#B7791F'; d.appendChild(m); }
     box.appendChild(d);
   });
 }
@@ -1198,9 +1205,7 @@ function renderQuick(items) {
   const box = $('quick');
   box.innerHTML = '';
   items.forEach(it => {
-    const c = document.createElement('button');
-    c.className = 'chip';
-    c.textContent = it.label;
+    const c = el('button', 'chip', it.label);
     c.addEventListener('click', () => {
       renderQuick([]);
       if (it.action) it.action(); else sendMessage(it.prompt);
@@ -1258,67 +1263,81 @@ function clearTask(silent) {
 $('btnTaskX').addEventListener('click', (e) => { e.stopPropagation(); clearTask(); });
 $('taskImg').addEventListener('click', () => $('taskCard').classList.toggle('big'));
 
-/* ══ REINE GERÄTE-STIMME (TTS ohne Audio-Dateien) ══ */
-function setTalking(on) { $('robot').classList.toggle('talking', on); }
+/* ══ Sprachausgabe ══ */
+let speechGen = 0;
+let queue = [];
+let playing = false;
+let currentAudio = null;
+let currentResolve = null;
 
+function setTalking(on) { $('robot').classList.toggle('talking', on); }
 function stopSpeaking() {
-  currentSpeechId++; // Bricht alle laufenden Queues ab
+  speechGen++;
+  queue = [];
+  playing = false;
+  if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+  if (currentResolve) { currentResolve(); currentResolve = null; }
   if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) {} }
   setTalking(false);
 }
-
-async function speakDevice(text, thisSpeechId) {
-  if (!soundOn || skipAudio || !('speechSynthesis' in window)) return;
-  
-  // Emoji & Klammern ausblenden fürs Vorlesen
-  let cleanText = text.trim()
-    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') 
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') 
-    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') 
-    .replace(/\[.*?\]/g, '')
-    .replace(/\*.*?\*/g, '')
-    .trim();
-
-  if (!cleanText) return;
-
+function playAudio(src) {
   return new Promise((resolve) => {
-    if (thisSpeechId !== currentSpeechId) { resolve(); return; }
-    
-    const u = new SpeechSynthesisUtterance(cleanText);
+    currentResolve = resolve;
+    const a = new Audio(src);
+    currentAudio = a;
+    a.onended = a.onerror = () => { currentAudio = null; currentResolve = null; resolve(); };
+    a.play().catch(() => { currentAudio = null; currentResolve = null; resolve(); });
+  });
+}
+function speakDevice(text) {
+  return new Promise((resolve) => {
+    if (!('speechSynthesis' in window)) { resolve(); return; }
+    currentResolve = resolve;
+    const u = new SpeechSynthesisUtterance(text);
     const de = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('de'));
-    if (de.length) {
-      const preferred = de.find(v => v.name.includes('Anna') || v.name.includes('Google') || v.name.includes('Katja'));
-      u.voice = preferred || de[0];
-    }
-    
+    if (de.length) u.voice = de[0];
     u.lang = 'de-DE';
     u.rate = 1.0;
     u.pitch = 1.1;
-    
-    u.onstart = () => {
-      if (thisSpeechId === currentSpeechId) setTalking(true);
-    };
-    
-    u.onend = u.onerror = () => {
-      if (thisSpeechId === currentSpeechId && !speechSynthesis.speaking) setTalking(false);
-      resolve();
-    };
-    
+    u.onend = u.onerror = () => { currentResolve = null; resolve(); };
     speechSynthesis.speak(u);
   });
 }
-
+async function playNext(gen) {
+  if (gen !== speechGen) return;
+  const item = queue.shift();
+  if (!item) { playing = false; setTalking(false); return; }
+  playing = true;
+  setTalking(true);
+  if (item.audio) await playAudio(item.audio);
+  else await speakDevice(item.text);
+  playNext(gen);
+}
+function enqueue(item) {
+  if (!soundOn || skipAudio) return;
+  queue.push(item);
+  if (!playing) playNext(speechGen);
+}
+async function speakText(text) {
+  if (!soundOn || !text) return;
+  stopSpeaking();
+  skipAudio = false;
+  try {
+    const res = await apiFetch('/api/speak', { text });
+    if (!res.ok) throw new Error('kein Audio');
+    const url = URL.createObjectURL(await res.blob());
+    enqueue({ audio: url, text });
+  } catch (e) {
+    enqueue({ text });
+  }
+}
 function lioSay(text) {
   setBubble(text);
   lastReply = text;
-  if (!soundOn || skipAudio) return;
-  stopSpeaking();
-  const thisSpeechId = currentSpeechId;
-  speakDevice(text, thisSpeechId);
+  speakText(text);
 }
-
 $('robot').addEventListener('click', () => { skipAudio = true; stopSpeaking(); });
-$('btnRepeat').addEventListener('click', () => { if (lastReply) { skipAudio = false; lioSay(lastReply); } });
+$('btnRepeat').addEventListener('click', () => { if (lastReply) { skipAudio = false; speakText(lastReply); } });
 if ('speechSynthesis' in window) speechSynthesis.getVoices();
 
 /* ══ Spracheingabe ══ */
@@ -1393,26 +1412,21 @@ function logNotice(category) {
   try {
     const n = JSON.parse(LS.get('lio_notices', '[]'));
     n.push({ category, date: new Date().toISOString(), name: me ? me.name : '' });
-    LS.set('lio_notices', JSON.stringify(n.slice(-20)));
+    LS.set('lio_notices', JSON.stringify(n.slice(-30)));
   } catch (e) {}
 }
 
-/* ══ Nachricht senden (Reines Text-Streaming von Claude & lokales Vorlesen) ══ */
+/* ══ Nachricht senden (Streaming von Claude) ══ */
 async function sendMessage(userText) {
   if (!userText || !userText.trim() || busy || !me) return;
   userText = userText.trim().slice(0, 500);
 
   busy = true;
   skipAudio = false;
-  stopSpeaking(); // Stoppt laufende Sprache und erhöht currentSpeechId
-  const thisSpeechId = currentSpeechId; 
-  
+  stopSpeaking();
   renderQuick([]);
   $('micBtn').disabled = true;
   $('robot').classList.add('thinking');
-
-  interactions++;
-  LS.set('kb_interactions', String(interactions));
 
   const signal = detectSignal(userText);
   if (signal) logNotice(signal);
@@ -1441,38 +1455,23 @@ async function sendMessage(userText) {
     let buf = '';
     let full = '';
 
-    setBubble("");
-
     while (true) {
-      if (thisSpeechId !== currentSpeechId) break;
-
       const { done, value } = await reader.read();
       if (done) break;
-      
       buf += dec.decode(value, { stream: true });
       let i;
       while ((i = buf.indexOf('\n\n')) >= 0) {
         const ev = buf.slice(0, i);
         buf = buf.slice(i + 2);
         if (!ev.startsWith('data: ')) continue;
-        
         const d = ev.slice(6).trim();
         if (!d || d === '[DONE]') continue;
-        
-        try {
-          const p = JSON.parse(d);
-          if (p.error) throw new Error(p.error);
-          
-          full += (full ? ' ' : '') + p.text;
-          setBubble(full.trim());
-          $('robot').classList.remove('thinking');
-          
-          // Direktes Vorlesen des Satzes über den Browser
-          speakDevice(p.text, thisSpeechId);
-
-        } catch (e) {
-          console.error('[Streaming-JSON-Error]', e);
-        }
+        const p = JSON.parse(d);
+        if (p.error) throw new Error(p.error);
+        full += (full ? ' ' : '') + p.text;
+        setBubble(full);
+        $('robot').classList.remove('thinking');
+        enqueue({ audio: p.audio || null, text: p.text });
       }
     }
 
@@ -1480,11 +1479,11 @@ async function sendMessage(userText) {
     messages.push({ role: 'assistant', content: full });
     lastReply = full;
     savePending();
+    trackActivity();
     setHint('📷 Foto machen, 🎤 sprechen oder ⌨️ schreiben');
     renderQuick(FOLLOWUPS);
     if (sessionPts < SESSION_POINTS_CAP) { sessionPts += 2; addPoints(2, '+2 ⭐'); }
     if (signal) setTimeout(() => $('panelHelp').classList.add('show'), 900);
-
   } catch (err) {
     console.error('[sendMessage]', err.message);
     messages.pop();
@@ -1504,7 +1503,7 @@ async function sendMessage(userText) {
 ['btnHelp', 'btnHelpHub'].forEach(id => $(id).addEventListener('click', () => $('panelHelp').classList.add('show')));
 $('btnHelpClose').addEventListener('click', () => $('panelHelp').classList.remove('show'));
 
-/* ══ Eltern-Bereich ══ */
+/* ══ PIN & Zurücksetzen ══ */
 function openPin() {
   stopSpeaking();
   $('panelPin').classList.add('show');
@@ -1528,130 +1527,403 @@ async function checkPin() {
   }
 }
 
-function openParent() {
-  $('statChats').textContent = interactions;
-  $('soundToggle').checked = soundOn;
-  renderKids();
-  renderNotices();
-  $('panelParent').classList.add('show');
+function wipeAll() {
+  profiles.forEach(p => LS.del(pendingKey(p)));
+  ['lio_profiles', 'lio_active', 'lio_name', 'lio_grade', 'lio_pin', 'lio_notices', 'lio_consent', 'lio_device',
+   'lio_gate_lock', 'lio_sound', 'kb_interactions'].forEach(k => LS.del(k));
+  location.reload();
 }
 
-function renderKids() {
-  const box = $('kidList');
-  box.innerHTML = '';
-  profiles.forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'kid-row';
-    const nm = document.createElement('span');
-    nm.textContent = '🧒 ' + p.name + (p.grade ? ' · ' + gradeLabel(p.grade) : '') + ' · ⭐ ' + (p.points || 0);
-    const act = document.createElement('div');
-
-    const reset = document.createElement('button');
-    reset.className = 'btn ghost small';
-    reset.textContent = 'Lernstand löschen';
-    reset.addEventListener('click', () => {
-      if (!confirm('Lernstand und Punkte von ' + p.name + ' wirklich löschen?')) return;
-      p.subjects = {};
-      p.open = null;
-      p.points = 0;
-      LS.del(pendingKey(p));
-      saveProfiles();
-      if (me && me.id === p.id) updatePoints(false);
-      renderKids();
-    });
-
-    const del = document.createElement('button');
-    del.className = 'btn ghost small';
-    del.textContent = 'Entfernen';
-    del.addEventListener('click', () => {
-      if (!confirm(p.name + ' und den gesamten Lernstand wirklich entfernen?')) return;
-      LS.del(pendingKey(p));
-      profiles = profiles.filter(x => x.id !== p.id);
-      saveProfiles();
-      if (!profiles.length) {
-        LS.del('lio_consent');
-        location.reload();
-        return;
-      }
-      if (me && me.id === p.id) {
-        $('panelParent').classList.remove('show');
-        me = null;
-        renderWho();
-        showScreen('who');
-      }
-      renderKids();
-    });
-
-    act.append(reset, del);
-    row.append(nm, act);
-    box.appendChild(row);
-  });
-}
-
-$('btnAddKid').addEventListener('click', () => {
-  const name = $('newKid').value.trim().slice(0, 24);
-  if (!name) { alert('Bitte einen Spitznamen eingeben.'); return; }
-  profiles.push(newProfile(name, ''));
-  saveProfiles();
-  $('newKid').value = '';
-  renderKids();
-  if (me) $('btnAvatar').style.cursor = 'pointer';
+$('btnForgotPin').addEventListener('click', () => {
+  if (!confirm('Ohne PIN lässt sich der Eltern-Bereich nur zurücksetzen, indem ALLE Daten (Kinder, Lernstände, Punkte) von diesem Gerät gelöscht werden. Fortfahren?')) return;
+  const t = prompt('Zur Bestätigung bitte LÖSCHEN eingeben:');
+  if (t && t.trim().toUpperCase() === 'LÖSCHEN') wipeAll();
 });
 
-function renderNotices() {
-  const box = $('notices');
-  let list = [];
-  try { list = JSON.parse(LS.get('lio_notices', '[]')); } catch (e) {}
-  box.innerHTML = '';
-  if (!list.length) {
-    box.innerHTML = '<div class="note-row">Keine besonderen Hinweise.</div>';
-    return;
+/* ══ Eltern-Bereich: Übersicht, Lernstand, Hinweise, Einstellungen ══ */
+let parentTab = 'overview';
+let parentKid = 0;
+
+function lastDays(n) {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); out.push(d); }
+  return out;
+}
+function totalSessions(p) { return Object.values(p.subjects || {}).reduce((s, r) => s + (r.sessions || 0), 0); }
+function streakDays(p) {
+  const a = p.activity || {};
+  const d = new Date();
+  if (!a[dayKey(d)]) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (a[dayKey(d)]) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function weekTotals(p) {
+  const a = p.activity || {};
+  let min = 0, msgs = 0, days = 0;
+  lastDays(7).forEach(d => {
+    const r = a[dayKey(d)];
+    if (r) { min += r.min; msgs += r.m; days++; }
+  });
+  return { min: Math.round(min), msgs, days };
+}
+function readNotices() { try { return JSON.parse(LS.get('lio_notices', '[]')) || []; } catch (e) { return []; } }
+
+function openParent() {
+  if (parentKid >= profiles.length) parentKid = 0;
+  renderParent();
+  $('panelParent').classList.add('show');
+}
+function closeParent() { $('panelParent').classList.remove('show'); }
+$('btnParentClose').addEventListener('click', closeParent);
+$('btnParentClose2').addEventListener('click', closeParent);
+
+function renderParent() {
+  const kt = $('kidTabs');
+  kt.innerHTML = '';
+  if (profiles.length > 1) {
+    profiles.forEach((p, i) => {
+      const b = el('button', 'p-tab' + (i === parentKid ? ' sel' : ''), '🧒 ' + p.name);
+      b.addEventListener('click', () => { parentKid = i; renderParent(); });
+      kt.appendChild(b);
+    });
   }
+
+  const nCount = readNotices().length;
+  const tabs = [
+    ['overview', '📊 Übersicht'],
+    ['progress', '📚 Lernstand'],
+    ['notices', '🚨 Hinweise' + (nCount ? ' (' + nCount + ')' : '')],
+    ['settings', '⚙️ Einstellungen'],
+  ];
+  const pt = $('pTabs');
+  pt.innerHTML = '';
+  tabs.forEach(([k, l]) => {
+    const b = el('button', 'p-tab' + (parentTab === k ? ' sel' : ''), l);
+    b.addEventListener('click', () => { parentTab = k; renderParent(); });
+    pt.appendChild(b);
+  });
+
+  const body = $('pBody');
+  body.innerHTML = '';
+  const p = profiles[parentKid];
+  if (!p) { body.appendChild(el('p', '', 'Noch kein Kind angelegt.')); return; }
+  if (parentTab === 'overview') body.appendChild(pOverview(p));
+  else if (parentTab === 'progress') body.appendChild(pProgress(p));
+  else if (parentTab === 'notices') body.appendChild(pNotices());
+  else body.appendChild(pSettings());
+}
+
+function sbox(value, label) {
+  const b = el('div', 'sbox');
+  b.append(el('b', '', String(value)), el('span', '', label));
+  return b;
+}
+
+function pOverview(p) {
+  const w = el('div');
+  w.appendChild(el('div', 'psec', 'Übersicht für ' + p.name + (p.grade ? ' · ' + gradeLabel(p.grade) : '')));
+
+  const wk = weekTotals(p);
+  const g = el('div', 'sgrid');
+  g.append(
+    sbox(wk.min, 'Min. diese Woche'),
+    sbox(wk.days + ' / 7', 'Lerntage'),
+    sbox(streakDays(p), 'Tage in Folge'),
+    sbox('⭐ ' + (p.points || 0), 'Punkte')
+  );
+  w.appendChild(g);
+
+  const g2 = el('div', 'sgrid');
+  g2.append(
+    sbox(totalSessions(p), 'Sitzungen gesamt'),
+    sbox(p.msgs || 0, 'Nachrichten gesamt'),
+    sbox(Object.values(p.subjects || {}).filter(r => r.sessions).length, 'Fächer geübt'),
+    sbox(Object.values(p.subjects || {}).reduce((s, r) => s + r.topics.filter(t => t.status === 'verstanden').length, 0), 'Themen verstanden')
+  );
+  w.appendChild(g2);
+
+  if (p.lastActive) w.appendChild(el('div', 'entry', 'Zuletzt aktiv: ' + fmtDateTime(p.lastActive)));
+
+  // Lernzeit der letzten 7 Tage
+  w.appendChild(el('div', 'psec', 'Lernzeit der letzten 7 Tage (Minuten)'));
+  const days = lastDays(7);
+  const a = p.activity || {};
+  const max = Math.max(5, ...days.map(d => (a[dayKey(d)] ? a[dayKey(d)].min : 0)));
+  const bars = el('div', 'bars');
+  days.forEach((d, i) => {
+    const rec = a[dayKey(d)];
+    const min = rec ? Math.round(rec.min) : 0;
+    const col = el('div', 'bar-col');
+    col.append(el('i', '', min ? String(min) : ''));
+    const bar = el('div', 'bar' + (i === days.length - 1 ? ' today' : ''));
+    bar.style.height = Math.max(4, Math.round((min / max) * 78)) + 'px';
+    col.append(bar, el('span', '', ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][d.getDay()]));
+    bars.appendChild(col);
+  });
+  w.appendChild(bars);
+  w.appendChild(el('div', 'entry', 'Die Lernzeit ist eine Schätzung aus dem Abstand der Nachrichten an Lio.'));
+
+  // Fächer
+  const subs = Object.entries(p.subjects || {}).filter(([, r]) => r.sessions).sort((x, y) => y[1].sessions - x[1].sessions);
+  w.appendChild(el('div', 'psec', 'Womit sich ' + p.name + ' beschäftigt'));
+  if (!subs.length) {
+    w.appendChild(el('div', 'infobox', 'Noch keine abgeschlossene Lernsitzung. Sobald ' + p.name + ' mit Lio gelernt und das Menü wieder geöffnet hat, erscheinen hier Fächer und Themen.'));
+  } else {
+    const top = subs[0][1].sessions;
+    subs.slice(0, 6).forEach(([k, r]) => {
+      const row = el('div', 'hrow');
+      const track = el('div', 'track');
+      const fill = el('div', 'fill');
+      fill.style.width = Math.round((r.sessions / top) * 100) + '%';
+      track.appendChild(fill);
+      row.append(el('span', 'nm', (catItem(k) ? catItem(k).i + ' ' : '') + subjLabel(k)), track, el('span', 'ct', r.sessions + '×'));
+      w.appendChild(row);
+    });
+  }
+
+  // Offene Aufgabe
+  if (p.open && p.open.topic) {
+    w.appendChild(el('div', 'psec', 'Noch offen'));
+    w.appendChild(el('div', 'infobox tip', '⏳ ' + (p.open.subject ? subjLabel(p.open.subject) + ': ' : '') + p.open.topic + ' (' + fmtDate(p.open.date) + ')'));
+  }
+
+  // Zuletzt geübt
+  const all = [];
+  Object.entries(p.subjects || {}).forEach(([k, r]) => r.topics.forEach(t => all.push(Object.assign({ k }, t))));
+  all.sort((x, y) => String(y.date).localeCompare(String(x.date)));
+  if (all.length) {
+    w.appendChild(el('div', 'psec', 'Zuletzt geübt'));
+    all.slice(0, 6).forEach(t => {
+      const e = el('div', 'entry');
+      e.append(el('b', '', (STATUS_ICON[t.status] || '') + ' ' + subjLabel(t.k) + ': ' + t.topic), el('small', '', fmtDate(t.date) + ' · ' + (STATUS_TEXT[t.status] || '')));
+      if (t.summary) e.appendChild(document.createTextNode(t.summary));
+      w.appendChild(e);
+    });
+  }
+  return w;
+}
+
+function tipFor(p, k, r) {
+  if (r.difficulties) {
+    return 'Tipp für zu Hause: ' + r.difficulties + ' in kleinen Schritten üben, zum Beispiel täglich 10 Minuten, und ' + p.name + ' den Lösungsweg laut erklären lassen.';
+  }
+  const unsure = r.topics.find(t => t.status === 'unsicher');
+  if (unsure) return 'Tipp für zu Hause: Lassen Sie ' + p.name + ' das Thema „' + unsure.topic + '" in eigenen Worten erklären und eine ähnliche Aufgabe allein versuchen.';
+  return '';
+}
+
+function pProgress(p) {
+  const w = el('div');
+  w.appendChild(el('div', 'psec', 'Lernstand von ' + p.name));
+  const entries = Object.entries(p.subjects || {}).filter(([, r]) => r.topics && r.topics.length);
+  if (!entries.length) {
+    w.appendChild(el('div', 'infobox', 'Noch kein Lernstand gespeichert. Nach der ersten Lernsitzung fasst Lio zusammen, was geübt wurde, wo es gut lief und wo es hakt.'));
+    return w;
+  }
+  w.appendChild(el('div', 'infobox', 'Die Einträge sind automatische Zusammenfassungen durch die KI und können ungenau sein. Gesprächsverläufe werden nicht gespeichert.'));
+  entries.sort((x, y) => String(y[1].last).localeCompare(String(x[1].last))).forEach(([k, r]) => {
+    const c = el('div', 'subj-card');
+    c.appendChild(el('h3', '', (catItem(k) ? catItem(k).i + ' ' : '') + subjLabel(k)));
+    const cnt = { verstanden: 0, unsicher: 0, offen: 0 };
+    r.topics.forEach(t => { if (cnt[t.status] !== undefined) cnt[t.status]++; });
+    c.appendChild(el('div', 'counts', r.sessions + ' Sitzungen · zuletzt ' + fmtDate(r.last) + ' · ✅ ' + cnt.verstanden + ' · ⚠️ ' + cnt.unsicher + ' · ⏳ ' + cnt.offen));
+    r.topics.forEach(t => {
+      const e = el('div', 'entry');
+      e.append(el('b', '', (STATUS_ICON[t.status] || '') + ' ' + t.topic), el('small', '', fmtDate(t.date) + ' · ' + (STATUS_TEXT[t.status] || '')));
+      if (t.summary) e.appendChild(document.createTextNode(t.summary));
+      c.appendChild(e);
+    });
+    if (r.strengths) c.appendChild(el('div', 'entry', '💪 Stärken: ' + r.strengths));
+    if (r.difficulties) c.appendChild(el('div', 'entry', '🎯 Schwierigkeiten: ' + r.difficulties));
+    const tip = tipFor(p, k, r);
+    if (tip) c.appendChild(el('div', 'infobox tip', '💡 ' + tip));
+    w.appendChild(c);
+  });
+  return w;
+}
+
+function pNotices() {
+  const w = el('div');
+  w.appendChild(el('div', 'psec', 'Hinweise'));
+  const list = readNotices();
   const labels = {
     self_harm: '⚠️ Ein Gespräch deutete auf große Traurigkeit oder Hoffnungslosigkeit hin',
     abuse: '⚠️ Ein Gespräch deutete darauf hin, dass jemand dem Kind wehtut',
     bullying: '⚠️ Ein Gespräch deutete auf Mobbing oder Ausgrenzung hin',
   };
-  list.slice().reverse().forEach(n => {
-    const d = new Date(n.date);
-    const row = document.createElement('div');
-    row.className = 'note-row';
-    row.textContent = (n.name ? n.name + ': ' : '') + (labels[n.category] || n.category);
-    const t = document.createElement('div');
-    t.className = 'note-time';
-    t.textContent = d.toLocaleDateString('de-DE') + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    row.appendChild(t);
-    box.appendChild(row);
-  });
-  const clear = document.createElement('button');
-  clear.className = 'btn ghost';
-  clear.textContent = 'Hinweise löschen';
-  clear.addEventListener('click', () => { LS.del('lio_notices'); renderNotices(); });
-  box.appendChild(clear);
+  if (!list.length) {
+    w.appendChild(el('div', 'infobox', '✅ Keine besonderen Hinweise.'));
+  } else {
+    list.slice().reverse().forEach(n => {
+      const e = el('div', 'entry');
+      e.append(el('b', '', (n.name ? n.name + ': ' : '') + (labels[n.category] || n.category)), el('small', '', fmtDateTime(n.date)));
+      w.appendChild(e);
+    });
+    const clear = el('button', 'btn ghost small', 'Hinweise löschen');
+    clear.style.marginTop = '10px';
+    clear.addEventListener('click', () => { LS.del('lio_notices'); renderParent(); });
+    w.appendChild(clear);
+  }
+
+  const info = el('div', 'infobox');
+  info.append(
+    el('p', '', 'Wie entstehen Hinweise? Lio achtet in den Eingaben des Kindes auf Wörter, die auf Mobbing, Traurigkeit oder Gewalt hindeuten können. In dem Fall blendet die App dem Kind Hilfsnummern ein und merkt sich nur die Art des Hinweises und den Zeitpunkt, nicht den Gesprächsinhalt.'),
+    el('p', '', 'Ein Hinweis ist kein Beweis und kann auch ein Fehlalarm sein. Sprechen Sie in Ruhe mit Ihrem Kind und hören Sie erst einmal zu.')
+  );
+  w.appendChild(info);
+
+  const help = el('div', 'help-box');
+  help.innerHTML = '📞 <b>Elterntelefon</b> (kostenlos): <a href="tel:08001110550">0800 111 0 550</a><br>📞 <b>Kinder- und Jugendtelefon</b>: <a href="tel:116111">116 111</a><br>🚨 <b>Notruf</b>: <a href="tel:112" class="em">112</a>';
+  w.appendChild(help);
+  return w;
 }
 
-$('soundToggle').addEventListener('change', (e) => {
-  soundOn = e.target.checked;
-  LS.set('lio_sound', soundOn ? '1' : '0');
-  if (!soundOn) stopSpeaking();
-});
-$('btnNewPin').addEventListener('click', async () => {
-  const pin = $('newPin').value.trim();
-  if (!/^\d{4,6}$/.test(pin)) { alert('Die PIN muss 4–6 Ziffern haben.'); return; }
-  LS.set('lio_pin', await hashPin(pin));
-  $('newPin').value = '';
-  alert('PIN geändert.');
-});
-$('btnWipe').addEventListener('click', () => {
-  if (!confirm('Wirklich alle Daten von diesem Gerät löschen?')) return;
-  profiles.forEach(p => LS.del(pendingKey(p)));
-  ['lio_profiles', 'lio_active', 'lio_name', 'lio_grade', 'lio_pin', 'lio_notices', 'lio_consent', 'lio_device',
-   'lio_gate_lock', 'lio_sound', 'kb_interactions'].forEach(k => LS.del(k));
-  location.reload();
-});
-$('btnParentClose').addEventListener('click', () => $('panelParent').classList.remove('show'));
+function exportData() {
+  const blob = new Blob([JSON.stringify({ exportiert: new Date().toISOString(), kinder: profiles }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lio-daten.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 
-/* ══ Blinzeln (beide Roboter) ══ */
+function pSettings() {
+  const w = el('div');
+
+  // Kinder
+  w.appendChild(el('div', 'psec', '👧 Kinder'));
+  profiles.forEach(p => {
+    const row = el('div', 'kid-row');
+    row.appendChild(el('span', '', '🧒 ' + p.name));
+    const act = el('div', 'act');
+
+    const sel = el('select', 'msel');
+    const ph = el('option', '', 'Klasse wählen');
+    ph.value = '';
+    sel.appendChild(ph);
+    GRADES.forEach(g => g.items.forEach(v => {
+      const o = el('option', '', v === '11-13' ? 'Oberstufe (11–13)' : 'Klasse ' + v);
+      o.value = v;
+      sel.appendChild(o);
+    }));
+    sel.value = p.grade || '';
+    sel.addEventListener('change', () => { p.grade = sel.value; saveProfiles(); });
+
+    const reset = el('button', 'btn ghost small', 'Lernstand löschen');
+    reset.addEventListener('click', () => {
+      if (!confirm('Lernstand, Aktivität und Punkte von ' + p.name + ' wirklich löschen?')) return;
+      p.subjects = {}; p.open = null; p.points = 0; p.activity = {}; p.msgs = 0;
+      LS.del(pendingKey(p));
+      saveProfiles();
+      if (me && me.id === p.id) updatePoints(false);
+      renderParent();
+    });
+
+    const del = el('button', 'btn ghost small', 'Entfernen');
+    del.addEventListener('click', () => {
+      if (!confirm(p.name + ' und den gesamten Lernstand wirklich entfernen?')) return;
+      LS.del(pendingKey(p));
+      profiles = profiles.filter(x => x.id !== p.id);
+      saveProfiles();
+      if (!profiles.length) { LS.del('lio_consent'); location.reload(); return; }
+      parentKid = 0;
+      if (me && me.id === p.id) {
+        closeParent();
+        me = null;
+        renderWho();
+        showScreen('who');
+        return;
+      }
+      renderParent();
+    });
+    act.append(sel, reset, del);
+    row.appendChild(act);
+    w.appendChild(row);
+  });
+
+  const add = el('div', 'inline');
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.maxLength = 24;
+  inp.placeholder = 'Weiteres Kind: Spitzname';
+  inp.className = 'kid-in';
+  inp.style.cssText = 'flex:1;padding:10px 12px;border:2px solid #D5E5FB;border-radius:12px;font-size:15px;font-weight:800;color:var(--navy);background:#F4F8FF';
+  const addBtn = el('button', 'btn small', 'Hinzufügen');
+  addBtn.addEventListener('click', () => {
+    const name = inp.value.trim().slice(0, 24);
+    if (!name) { alert('Bitte einen Spitznamen eingeben.'); return; }
+    profiles.push(newProfile(name, ''));
+    saveProfiles();
+    parentKid = profiles.length - 1;
+    renderParent();
+  });
+  add.append(inp, addBtn);
+  w.appendChild(add);
+
+  // Sprachausgabe
+  w.appendChild(el('div', 'psec', '🔊 Sprachausgabe'));
+  const sRow = el('label', 'consent');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.checked = soundOn;
+  cb.addEventListener('change', () => {
+    soundOn = cb.checked;
+    LS.set('lio_sound', soundOn ? '1' : '0');
+    if (!soundOn) stopSpeaking();
+  });
+  sRow.append(cb, el('span', '', 'Lio liest seine Antworten vor. Bei „aus“ werden keine Texte an den Sprachdienst übermittelt.'));
+  w.appendChild(sRow);
+
+  // PIN
+  w.appendChild(el('div', 'psec', '🔑 PIN ändern'));
+  const pRow = el('div', 'inline');
+  const pin = document.createElement('input');
+  pin.type = 'password';
+  pin.inputMode = 'numeric';
+  pin.maxLength = 6;
+  pin.placeholder = 'Neue PIN (4–6 Ziffern)';
+  pin.style.cssText = 'flex:1;padding:10px 12px;border:2px solid #D5E5FB;border-radius:12px;font-size:15px;font-weight:800;color:var(--navy);background:#F4F8FF';
+  const pBtn = el('button', 'btn small', 'Ändern');
+  pBtn.addEventListener('click', async () => {
+    const v = pin.value.trim();
+    if (!/^\d{4,6}$/.test(v)) { alert('Die PIN muss 4–6 Ziffern haben.'); return; }
+    LS.set('lio_pin', await hashPin(v));
+    pin.value = '';
+    alert('PIN geändert.');
+  });
+  pRow.append(pin, pBtn);
+  w.appendChild(pRow);
+
+  // So arbeitet Lio
+  w.appendChild(el('div', 'psec', 'ℹ️ So arbeitet Lio'));
+  const info = el('div', 'infobox');
+  info.append(
+    el('p', '', 'Lio gibt keine fertigen Lösungen vor, sondern stellt Fragen und gibt kleine Hinweise. Die Antworten stammen von einer KI und können Fehler enthalten. Bitte prüfen Sie wichtige Ergebnisse, besonders in Mathe und bei Handschrift auf Fotos.'),
+    el('p', '', 'Gespeichert werden auf diesem Gerät: Spitzname, Klasse, Punkte, Lernzeit pro Tag und kurze Zusammenfassungen der Lernsitzungen. Fragen, Fotos von Aufgaben und diese Zusammenfassungen werden zur Beantwortung an den KI-Dienstleister übermittelt. Chatverläufe und Fotos speichern wir nicht auf unserem Server.'),
+    el('p', '', 'Wird das Gerät gewechselt oder werden die Browserdaten gelöscht, ist der Lernstand weg. Mit dem Export können Sie ihn vorher sichern.')
+  );
+  w.appendChild(info);
+
+  // Daten
+  w.appendChild(el('div', 'psec', '🗂️ Daten'));
+  const ex = el('button', 'btn ghost', '⬇️ Daten exportieren (JSON)');
+  ex.addEventListener('click', exportData);
+  const wipe = el('button', 'btn ghost', '🗑️ Alle Daten löschen');
+  wipe.addEventListener('click', () => {
+    if (!confirm('Wirklich alle Daten von diesem Gerät löschen? Das betrifft alle Kinder, Lernstände, Punkte und die PIN.')) return;
+    wipeAll();
+  });
+  w.append(ex, wipe);
+
+  const links = el('p', 'fine');
+  links.innerHTML = '<a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · <a href="/impressum.html" target="_blank" rel="noopener">Impressum</a>';
+  w.appendChild(links);
+  return w;
+}
+
+/* ══ Blinzeln (alle Roboter) ══ */
 function blinkLoop() {
   const all = document.querySelectorAll('.robot-container');
   all.forEach(c => c.classList.add('is-blinking'));
@@ -1666,12 +1938,10 @@ function boot() {
   loadProfiles();
   migrateOldSingleProfile();
   setTimeout(blinkLoop, 2000);
-  newMath();
-  updateGateLock();
   renderGrades();
 
   if (!LS.get('lio_consent') || !profiles.length) {
-    showScreen('gate');
+    showScreen('welcome');
   } else if (profiles.length === 1) {
     loginAs(profiles[0].id);
   } else {
@@ -1681,11 +1951,8 @@ function boot() {
 }
 document.addEventListener('DOMContentLoaded', boot);
 
-// Entfernt alte Service-Worker-Caches automatisch
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    for (let reg of regs) reg.unregister();
-  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
 window.addEventListener('unhandledrejection', e => console.warn('[promise]', e.reason));
 </script>
