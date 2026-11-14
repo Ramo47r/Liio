@@ -224,6 +224,6 @@ app.post('/api/speak', (req, res) => {
   res.status(404).json({ error: 'Lokales Browser-TTS aktiv.' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 KidsBot.ai Server läuft mit Claude (${CLAUDE_MODEL}) auf Port ${PORT}`);
 });
